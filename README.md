@@ -1,1 +1,1 @@
-# robpy
+This project contains code for various robust statistics methods. It is intended as the python equivalent of the R package [robustbase](https://cran.r-project.org/web/packages/robustbase/index.html)

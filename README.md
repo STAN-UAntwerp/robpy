@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|PythonVersion|_ |PyPi|_ |DOI|_ 
+|PythonVersion| |PyPi| |DOI|_ 
 
 .. |PythonVersion| image:: https://img.shields.io/pypi/pyversions/scikit-learn.svg
 
@@ -25,9 +25,8 @@
   :target: https://scikit-learn.org/
 
 **Robpy** is a Python module for robust statistical methods built on top of scikit-learn and
-SciPy and is distributed under the MIT License. The project was started in 2023 by Tim Verdonck, Jakob Raymaekers, Thomas Servotte & Thomas Decorte at the University of Antwerp, imec IDLab. See
-the `About us <https://scikit-learn.org/dev/about.html#authors>`__ page
-for more information. The project is currently maintained by a the same team.
+SciPy. The project was started in 2023 by Tim Verdonck, Jakob Raymaekers, Thomas Servotte & Thomas Decorte at the University of Antwerp, imec IDLab. See the `About us <https://scikit-learn.org/dev/about.html#authors>`__ page
+for more information. The project is currently maintained by a the same team and distributed under MIT license.
 
 Learn more about the various functionalities and methods at: URL
 

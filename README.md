@@ -3,10 +3,8 @@
 |PythonVersion|_ |PyPi|_ |DOI|_ 
 
 .. |PythonVersion| image:: https://img.shields.io/pypi/pyversions/scikit-learn.svg
-.. _PythonVersion: https://pypi.org/project/scikit-learn/
 
 .. |PyPi| image:: https://img.shields.io/pypi/v/scikit-learn
-.. _PyPi: https://pypi.org/project/scikit-learn
 
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
@@ -27,7 +25,9 @@
   :target: https://scikit-learn.org/
 
 **Robpy** is a Python module for robust statistical methods built on top of scikit-learn and
-SciPy and is distributed under the MIT License.
+SciPy and is distributed under the MIT License. The project was started in 2023 by Tim Verdonck, Jakob Raymaekers, Thomas Servotte & Thomas Decorte at the University of Antwerp, imec IDLab. See
+the `About us <https://scikit-learn.org/dev/about.html#authors>`__ page
+for more information. The project is currently maintained by a the same team.
 
 Learn more about the various functionalities and methods at: URL
 
@@ -69,44 +69,20 @@ The documentation includes more detailed `installation instructions <https://sci
 
 
 Changelog
----------
+=======
 
 See the `changelog <https://scikit-learn.org/dev/whats_new.html>`__
 for a history of notable changes to scikit-learn.
 
 Important links
-~~~~~~~~~~~~~~~
+=======
 
 - Official source code repo: URL
 - Download releases: URL
 - Issue tracker: URL
 
-Testing
-~~~~~~~
-
-After installation, you can launch the test suite from outside the source
-directory (you will need to have ``pytest`` >= |PyTestMinVersion| installed)::
-
-    pytest sklearn
-
-See the web page URL
-for more information.
-
-    Random number generation can be controlled during testing by setting
-    the ``SKLEARN_SEED`` environment variable.
-
-Project History
----------------
-
-The project was started in 2023 by Tim Verdonck, Jakob Raymaekers, Thomas Servotte & Thomas Decorte at the University of Antwerp, imec IDLab. See
-the `About us <https://scikit-learn.org/dev/about.html#authors>`__ page
-for more information.
-
-The project is currently maintained by a the same team.
-
-
 Help and Support
-----------------
+=======
 
 Documentation
 ~~~~~~~~~~~~~

@@ -5,12 +5,34 @@ description = ""
 authors = ["Thomas Decorte <thomas.decorte@uantwerpen.be>", "Thomas Servotte <servottethomas@gmail.com>", ]
 readme = "README.md"
 
+[tool.black]
+line-length = 100
+exclude = ".ipynb"
+
+[tool.flake8]
+extend-ignore = "E203"
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv"
+]
+max-complexity = 10
+max-line-length = 100
+
 [tool.poetry.dependencies]
 python = "^3.10"
 scikit-learn = ">=1.3"
+matplotlib = "^3.8.2"
+scipy = "^1.11.4"
+tqdm = "^4.66.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.4"
+black = "^23.11.0"
+flake8 = "^6.1.0"
+jupyter = "^1.0.0"
+
+
 
 
 [build-system]

@@ -4,13 +4,14 @@ import numpy as np
 
 from scipy.stats import median_abs_deviation, chi2
 from sklearn.base import RegressorMixin, BaseEstimator
+from sklearn.covariance import MinCovDet
 
 from robpy.utils import mahalanobis_distance
 
 logger = logging.getLogger(__name__)
 
 
-class BaseRobustRegressor(RegressorMixin, BaseEstimator):
+class RobustRegressor(RegressorMixin, BaseEstimator):
     def __init__(
         self,
     ):
@@ -50,7 +51,14 @@ class BaseRobustRegressor(RegressorMixin, BaseEstimator):
             residuals / (median_abs_deviation(residuals) if robust_scaling else np.std(residuals))
         ).flatten()
 
-        distances = mahalanobis_distance(X, robust=robust_distance)
+        if robust_distance:
+            mcd = MinCovDet().fit(X)
+            covariance = mcd.covariance_
+            location = mcd.location_
+        else:
+            covariance = np.cov(X, rowvar=False)
+            location = np.mean(X, axis=0)
+        distances = mahalanobis_distance(X, location=location, covariance=covariance)
 
         fig, ax = plt.subplots(1, 1, figsize=figsize)
 

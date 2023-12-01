@@ -1,8 +1,7 @@
 import numpy as np
-from sklearn.covariance import MinCovDet
 
 
-def mahalanobis_distance(data: np.ndarray, robust: bool = False, random_state: int = 101):
+def mahalanobis_distance(data: np.ndarray, location: np.ndarray, covariance: np.ndarray):
     """
     Calculate the Mahalanobis distance for multiple data vectors.
 
@@ -12,15 +11,8 @@ def mahalanobis_distance(data: np.ndarray, robust: bool = False, random_state: i
     Returns:
     - distances: An array of Mahalanobis distances for each data vector.
     """
-    if robust:  # TODO: implement custom MCD (issue #3)
-        mcd = MinCovDet(random_state=random_state).fit(data)
-        mean = mcd.location_
-        cov = mcd.covariance_
-    else:
-        mean = np.mean(data, axis=0)
-        cov = np.cov(data, rowvar=False)
 
-    cov_inv = np.linalg.inv(cov)
+    cov_inv = np.linalg.inv(covariance)
 
-    centered_data = data - mean
+    centered_data = data - location
     return np.sqrt(np.sum(centered_data.dot(cov_inv) * centered_data, axis=1))

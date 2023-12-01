@@ -7,10 +7,10 @@ from sklearn.exceptions import NotFittedError
 from tqdm.auto import tqdm
 from sklearn.linear_model import LinearRegression
 
-from robpy.regression.base import BaseRobustRegressor
+from robpy.regression.base import RobustRegressor
 
 
-class FastLTSRegressor(BaseRobustRegressor):
+class FastLTSRegressor(RobustRegressor):
     """
     Implementation of FAST-LTS model based on R implementation of the
     ltsReg method in the robustbase R package

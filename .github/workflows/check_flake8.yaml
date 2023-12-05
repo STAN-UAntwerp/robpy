@@ -24,4 +24,4 @@ jobs:
 
     - name: Run flake8
       run: |
-        poetry run flake8 --max-line-length 100
+        poetry run flake8

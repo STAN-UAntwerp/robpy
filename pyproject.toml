@@ -15,7 +15,9 @@ exclude = [
     ".git",
     "__pycache__",
     ".venv",
-    "__init__.py"
+]
+per-file-ignores = [
+    '__init__.py:F401',
 ]
 max-complexity = 10
 max-line-length = 100
@@ -32,6 +34,7 @@ pytest = ">=7.4"
 black = "^23.11.0"
 flake8 = "^6.1.0"
 jupyter = "^1.0.0"
+flake8-pyproject = "^1.2.3"
 
 
 

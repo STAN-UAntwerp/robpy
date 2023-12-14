@@ -1,7 +1,7 @@
 import numpy as np
 
 from scipy.spatial.distance import mahalanobis
-from robpy.utils import mahalanobis_distance
+from robpy.utils.distance import mahalanobis_distance
 
 
 def test_mahalanobis_distance_normal():

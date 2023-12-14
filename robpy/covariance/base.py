@@ -6,7 +6,7 @@ from scipy.stats import chi2
 from scipy.linalg import pinvh
 from sklearn.covariance import EmpiricalCovariance
 from sklearn.exceptions import NotFittedError
-from robpy.utils import mahalanobis_distance
+from robpy.utils.distance import mahalanobis_distance
 
 
 class RobustCovarianceEstimator(EmpiricalCovariance):

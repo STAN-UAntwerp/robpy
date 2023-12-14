@@ -6,7 +6,7 @@ from scipy.stats import median_abs_deviation, chi2
 from sklearn.base import RegressorMixin, BaseEstimator
 from sklearn.covariance import MinCovDet
 
-from robpy.utils import mahalanobis_distance
+from robpy.utils.distance import mahalanobis_distance
 
 logger = logging.getLogger(__name__)
 

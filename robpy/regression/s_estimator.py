@@ -102,7 +102,7 @@ class SEstimator(RobustRegressor):
             n_iter = 0
             while True:
                 try:
-                    m, s = self._i_step(X, y, (previous_m.predict(X) - y).flatten(), previous_s)
+                    m, s = self._i_step(X, y, (previous_m.predict(X) - y).flatten())
                     n_iter += 1
                 except np.linalg.LinAlgError as e:
                     self.logger.warning(
@@ -175,7 +175,7 @@ class SEstimator(RobustRegressor):
             scale = np.median(np.abs(residuals)) / 0.6745
             try:
                 for _ in range(self.n_initial_i_steps):
-                    model, scale = self._i_step(X, y, residuals, scale)
+                    model, scale = self._i_step(X, y, residuals)
                     residuals = model.resid
                 models.append(model)
                 scales.append(scale)

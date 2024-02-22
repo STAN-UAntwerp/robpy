@@ -108,6 +108,9 @@ class FastLTSRegressor(RobustRegressor):
                 best_h_subset = current_h_subset
         self.model = best_model
         self.best_h_subset = best_h_subset
+        self._scale = get_correction_factor(p=X.shape[1], n=X.shape[0], alpha=self.alpha) * np.sqrt(
+            best_loss
+        )
 
         return self
 
@@ -273,3 +276,57 @@ class FastLTSRegressor(RobustRegressor):
         h_subset_idx = FastLTSRegressor._get_h_subset(lr_model, X, y, h)
         lr_model = LinearRegression().fit(X[h_subset_idx], y[h_subset_idx])
         return h_subset_idx, lr_model
+
+
+def get_correction_factor(p: int, n: int, alpha: float) -> float:
+    """
+    Calculate the small sample correction factor for the scale resulting from LTS regression.
+    References:
+        Pison, G., Van Aelst, S. & Willems, G. Small sample corrections for LTS and MCD.
+        Metrika 55, 111–123 (2002). https://doi.org/10.1007/s001840200191
+
+        https://github.com/cran/robustbase/blob/c4b9d21cfc4beb64653bb2ffba9e549e2dbb98ed/R/ltsReg.R
+    """
+    if alpha < 0.5 or alpha > 1:
+        raise ValueError(f"alpha must be between 0.5 and 1, but received {alpha}")
+    if p == 0:  # intercept only
+        fp_500_n = 1 - np.exp(0.262024211897096) / n**0.604756680630497
+        fp_875_n = 1 - np.exp(-0.351584646688712) / n**1.01646567502486
+        if 0.5 <= alpha <= 0.875:
+            fp_alpha_n = fp_500_n + (fp_875_n - fp_500_n) / 0.375 * (alpha - 0.5)
+            fp_alpha_n = np.sqrt(fp_alpha_n)
+        else:  # 0.875 < alpha < 1
+            fp_alpha_n = fp_875_n + (1 - fp_875_n) / 0.125 * (alpha - 0.875)
+            fp_alpha_n = np.sqrt(fp_alpha_n)
+    else:
+        if p == 1:
+            fp_500_n = 1 - np.exp(0.630869217886906) / n**0.650789250442946
+            fp_875_n = 1 - np.exp(0.565065391014791) / n**1.03044199012509
+        else:
+            coefgqpkwad875 = np.array(
+                [
+                    [-0.458580153984614, 1.12236071104403, 3],
+                    [-0.267178168108996, 1.1022478781154, 5],
+                ]
+            )
+            coefeqpkwad500 = np.array(
+                [
+                    [-0.746945886714663, 0.56264937192689, 3],
+                    [-0.535478048924724, 0.543323462033445, 5],
+                ]
+            )
+            y_500 = np.log(-coefeqpkwad500[:, 0] / (p ** coefeqpkwad500[:, 1]))
+            y_875 = np.log(-coefgqpkwad875[:, 0] / (p ** coefgqpkwad875[:, 1]))
+            A_500 = np.column_stack((np.ones(2), -np.log(coefeqpkwad500[:, 2] * p**2)))
+            coeffic_500 = np.linalg.solve(A_500, y_500)
+            A_875 = np.column_stack((np.ones(2), -np.log(coefgqpkwad875[:, 2] * p**2)))
+            coeffic_875 = np.linalg.solve(A_875, y_875)
+
+            fp_500_n = 1 - np.exp(coeffic_500[0]) / n ** coeffic_500[1]
+            fp_875_n = 1 - np.exp(coeffic_875[0]) / n ** coeffic_875[1]
+
+        if alpha <= 0.875:
+            fp_alpha_n = fp_500_n + (fp_875_n - fp_500_n) / 0.375 * (alpha - 0.5)
+        else:
+            fp_alpha_n = fp_875_n + (1 - fp_875_n) / 0.125 * (alpha - 0.875)
+    return 1 / fp_alpha_n

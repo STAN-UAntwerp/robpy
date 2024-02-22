@@ -124,7 +124,7 @@ class SEstimator(RobustRegressor):
 
         best_idx = np.argmin(best_scales)
         self.model = best_models[best_idx]
-        self.scale = best_scales[best_idx]
+        self._scale = best_scales[best_idx]
         return self
 
     def predict(self, X) -> np.ndarray:

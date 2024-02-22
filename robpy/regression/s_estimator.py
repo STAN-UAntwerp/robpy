@@ -104,7 +104,7 @@ class SEstimator(RobustRegressor):
                 try:
                     m, s = self._i_step(X, y, (previous_m.predict(X) - y).flatten())
                     n_iter += 1
-                except np.linalg.LinAlgError as e:
+                except np.linalg.LinAlgError:
                     self.logger.warning(
                         f"Failed to aply i-steps untill convergence. "
                         f"Starting scale was: {previous_s}. Failed iteration = {n_iter}."

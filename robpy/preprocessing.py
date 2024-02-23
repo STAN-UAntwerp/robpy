@@ -1,5 +1,11 @@
 import numpy as np
+from typing import Protocol
 from scipy.stats import median_abs_deviation
+
+
+class LocationOrScaleEstimator(Protocol):
+    def __call__(self, x: np.ndarray, axis: int = 0) -> np.ndarray | float:
+        ...
 
 
 def wrapping_transformation(

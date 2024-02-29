@@ -36,6 +36,18 @@ class RobustCovarianceEstimator(EmpiricalCovariance):
     def calculate_covariance(self, X) -> np.ndarray:
         raise NotImplementedError
 
+    @property
+    def covariance(self) -> np.ndarray:
+        if not hasattr(self, "covariance_") or self.covariance_ is None:
+            raise NotFittedError()
+        return self.covariance_
+
+    @property
+    def correlation(self) -> np.ndarray:
+        if not hasattr(self, "correlation_"):
+            raise AttributeError("This estimator does not calculate correlation.")
+        return self.correlation_
+
     def distance_distance_plot(
         self, chi2_percentile: float = 0.975, figsize: tuple[int, int] = (10, 4)
     ):

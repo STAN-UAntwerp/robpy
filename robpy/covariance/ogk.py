@@ -74,7 +74,9 @@ class OGKEstimator(RobustCovarianceEstimator):
 
         if self.reweighting:
             mahalanobis = mahalanobis_distance(X, location=mu_X, covariance=cov_X)
-            cutoff = chi2.ppf(self.reweighting_beta, p) / chi2.ppf(0.5, p) * np.median(mahalanobis)
+            cutoff = np.sqrt(chi2.ppf(self.reweighting_beta, p) / chi2.ppf(0.5, p)) * np.median(
+                mahalanobis
+            )  # mahalanobis is the sqrt distance, so we need to take the sqrt of the chi2 quantiles
             mask = mahalanobis < cutoff
             cov_X = np.cov(X[mask], rowvar=False)
             mu_X = np.mean(X[mask])

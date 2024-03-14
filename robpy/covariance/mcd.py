@@ -76,10 +76,12 @@ class FastMCDEstimator(RobustCovarianceEstimator):
         self.verbosity = verbosity
 
     def calculate_covariance(self, X) -> np.ndarray:
+        # partition data (n_partitions > 1 can speed up algorithm for large datasets)
         partitions = self._partition_data(X)
         self.logger.info(f"Partitioned data into {len(partitions)} partitions")
         n_initial_subsets = self.n_initial_subsets // len(partitions)
         best_subsets = []
+        # perform initial c steps on all initial subsets
         for data in partitions:
             subsets = self._get_initial_subsets(data, n_initial_subsets)
             subsets = [
@@ -88,12 +90,14 @@ class FastMCDEstimator(RobustCovarianceEstimator):
             ]
             best_subsets.extend(sorted(subsets, key=lambda x: x.determinant)[: self.n_best_subsets])
         self.logger.info(f"Selecting {self.n_best_subsets} best subsets from {len(best_subsets)}")
+        # perform additional c-steps on the best subsets
         best_subsets = [
             self._perform_multiple_c_steps(subset, X, n_iterations=self.n_initial_c_steps)
             for subset in best_subsets
         ]
         best_subsets = sorted(best_subsets, key=lambda x: x.determinant)[: self.n_best_subsets]
-        best_subset = best_subsets[0]
+        best_subset = best_subsets[0]  # reference subset
+        # perform c-steps until convergence
         for subset in best_subsets:
             while True:
                 new_subset = self._perform_c_step(subset, X)
@@ -106,6 +110,8 @@ class FastMCDEstimator(RobustCovarianceEstimator):
             if subset.determinant < best_subset.determinant:
                 best_subset = subset
         self.best_subset = best_subset
+
+        # post processing
         self.location_ = best_subset.location
         scale = best_subset.scale
         if self.correct_covariance:

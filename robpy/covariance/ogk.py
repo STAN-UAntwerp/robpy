@@ -51,6 +51,7 @@ class OGKEstimator(RobustCovarianceEstimator):
         """
         p = X.shape[1]
         Z = X
+        DE = []
         for _ in range(self.n_iterations):
             D = np.diag(self.scale_estimator(Z, axis=0))  # (p x p)
             Y = Z @ np.linalg.inv(D).T  # (n x p)
@@ -62,15 +63,15 @@ class OGKEstimator(RobustCovarianceEstimator):
                     scale_diff = self.scale_estimator(Y[:, i] - Y[:, j])
                     cor = (scale_sum**2 - scale_diff**2) / (scale_sum**2 + scale_diff**2)
                     U[i, j] = U[j, i] = cor
-            _, E = np.linalg.eig(U)  # (p x p)
+            _, E = np.linalg.eigh(U)  # (p x p)
             Z = Y @ E  # (n x p)
+            DE.append(D @ E)
         var = np.diag(np.power(self.scale_estimator(Z, axis=0), 2))  # (p x p)
         m = self.location_estimator(Z, axis=0)  # (p, )
-        mu_Y = E @ m  # (p, )
-        cov_Y = E @ var @ E.T  # (p x p)
 
-        mu_X = D @ mu_Y  # (p, )
-        cov_X = D @ cov_Y @ D.T  # (p x p)
+        for mat in reversed(DE):
+            mu_X = mat @ m
+            cov_X = mat @ var @ mat.T
 
         if self.reweighting:
             mahalanobis = mahalanobis_distance(X, location=mu_X, covariance=cov_X)

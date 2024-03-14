@@ -53,7 +53,7 @@ class OGKEstimator(RobustCovarianceEstimator):
         Z = X
         for _ in range(self.n_iterations):
             D = np.diag(self.scale_estimator(Z, axis=0))  # (p x p)
-            Y = (D @ Z.T).T  # (n x p)
+            Y = Z @ np.linalg.inv(D).T  # (n x p)
             U = np.ones(shape=(p, p))
             # Loop over pairs of variables, lower triangle suffises as U is symmetric
             for i in range(p):

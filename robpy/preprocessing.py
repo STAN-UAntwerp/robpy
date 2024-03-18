@@ -53,3 +53,35 @@ def wrapping_transformation(
         )
     else:
         return z_wrapped * mad + median
+
+
+def univariateMCD(X: np.array, h_size: float | int | None = None) -> np.array:
+    """
+    Implementation of univariate MCD
+
+    Returns:
+        raw_var: raw variance estimate
+        raw_location: raw location estimate
+    """
+    n = len(X)
+    if h_size is None:
+        h_size = int(np.floor(n / 2) + 1)
+    elif isinstance(h_size, int) and (1 <= h_size <= n):
+        pass
+    elif isinstance(h_size, float) and (0 < h_size < 1):
+        h_size = int(h_size * n)
+    else:
+        raise ValueError(
+            f"h_size must be an integer > 1 and <= n or a float between 0 and 1 "
+            f"but received {h_size}"
+        )
+    var_best = np.inf
+    index_best = 1
+    for i in range(n - h_size + 1):
+        var_new = np.var(X[i : (i + h_size)])
+        if var_new < var_best:
+            var_best = var_new
+            index_best = i
+    raw_var = var_best
+    raw_location = np.mean(X[index_best : (index_best + h_size)])
+    return raw_var, raw_location

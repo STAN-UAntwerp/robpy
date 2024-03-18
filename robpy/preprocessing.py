@@ -79,14 +79,19 @@ def univariateMCD(
         )
     var_best = np.inf
     index_best = 1
-    X = sorted(X)
+    X = np.array(sorted(X))
     for i in range(n - h_size + 1):
         var_new = np.var(X[i : (i + h_size)])
         if var_new < var_best:
             var_best = var_new
             index_best = i
     raw_var = var_best
-    raw_location = np.mean(X[index_best : (index_best + h_size)])
+    raw_loc = np.mean(X[index_best : (index_best + h_size)])
     if consistency_correction:
         raw_var = raw_var * (h_size / n) / chi2.cdf(chi2.ppf(h_size / n, df=1), df=3)
-    return raw_var, raw_location
+    distances = (X - raw_loc) ** 2 / raw_var
+    mask = distances < chi2.ppf(0.975, df=1)
+    loc = np.mean(X[mask])
+    var = np.var(X[mask])
+    # to do: second consistency factor
+    return var, loc, raw_var, raw_loc

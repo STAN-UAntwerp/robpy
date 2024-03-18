@@ -60,6 +60,7 @@ def univariateMCD(
 ) -> np.array:
     """
     Implementation of univariate MCD
+    [Minimum covariance determinant, Mia Hubert & Michiel Debruyne (2009)]
 
     Returns:
         raw_var: raw variance estimate

@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.stats import median_abs_deviation
+from scipy.stats import median_abs_deviation, chi2
 
 
 def wrapping_transformation(
@@ -55,7 +55,9 @@ def wrapping_transformation(
         return z_wrapped * mad + median
 
 
-def univariateMCD(X: np.array, h_size: float | int | None = None) -> np.array:
+def univariateMCD(
+    X: np.array, h_size: float | int | None = None, consistency_correction=True
+) -> np.array:
     """
     Implementation of univariate MCD
 
@@ -77,6 +79,7 @@ def univariateMCD(X: np.array, h_size: float | int | None = None) -> np.array:
         )
     var_best = np.inf
     index_best = 1
+    X = sorted(X)
     for i in range(n - h_size + 1):
         var_new = np.var(X[i : (i + h_size)])
         if var_new < var_best:
@@ -84,4 +87,6 @@ def univariateMCD(X: np.array, h_size: float | int | None = None) -> np.array:
             index_best = i
     raw_var = var_best
     raw_location = np.mean(X[index_best : (index_best + h_size)])
+    if consistency_correction:
+        raw_var = raw_var * (h_size / n) / chi2.cdf(chi2.ppf(h_size / n, df=1), df=3)
     return raw_var, raw_location

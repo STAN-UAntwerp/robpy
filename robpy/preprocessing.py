@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.stats import median_abs_deviation, chi2
+from scipy.stats import median_abs_deviation, chi2, gamma
 
 
 def wrapping_transformation(
@@ -62,9 +62,16 @@ def univariateMCD(
     Implementation of univariate MCD
     [Minimum covariance determinant, Mia Hubert & Michiel Debruyne (2009)]
 
+    Args:
+        X: univariate data
+        h_size: parameter determining the size of the h-subset
+        consistency_correction: whether the estimates should be consistent at the normal model
+
     Returns:
         raw_var: raw variance estimate
-        raw_location: raw location estimate
+        raw_loc: raw location estimate
+        var: reweigthed variance estimate
+        loc: reweigthed location estimate
     """
     n = len(X)
     if h_size is None:
@@ -89,10 +96,15 @@ def univariateMCD(
     raw_var = var_best
     raw_loc = np.mean(X[index_best : (index_best + h_size)])
     if consistency_correction:
+        """[Minimum covariance determinant, Mia Hubert & Michiel Debruyne (2009)]"""
         raw_var = raw_var * (h_size / n) / chi2.cdf(chi2.ppf(h_size / n, df=1), df=3)
     distances = (X - raw_loc) ** 2 / raw_var
     mask = distances < chi2.ppf(0.975, df=1)
     loc = np.mean(X[mask])
     var = np.var(X[mask])
-    # to do: second consistency factor
+    if consistency_correction:
+        """[Influence function and efficiency of the MCD scatter matrix estimator,
+        Christophe Croux & Gentiane Haesbroeck (1999)]"""
+        delta = np.sum(mask) / n
+        var = var * delta * np.reciprocal(gamma.cdf(chi2.ppf(delta, df=1) / 2, a=3 / 2))
     return var, loc, raw_var, raw_loc

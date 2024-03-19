@@ -132,6 +132,62 @@ def Qn(X: np.array, consistency_correction=True) -> float:
     k = h * (h - 1) / 2  # quantile
     c = 2.219144  # consistency at normal model
 
+    # first needed: weighted median function
+
     # Also small sample correction factors, see Croux & Rousseeuw (1992)
 
     return 1
+
+
+def weighted_median(X: np.array, weights: np.array) -> float:
+    """based on [Time-efficient algorithms for two highly robust estimators of scale,
+    Christophe Croux and Peter J. Rousseeuw (1992)]"""
+    n = len(X)
+    wrest = 0
+    check = 1
+    wtotal = np.sum(weights)
+    while check < 1000:
+        k = np.ceil(n / 2).astype("int")
+        if n > 1:
+            trial = np.partition(X, k)[:k].max()  # k^th order statistic
+        else:
+            trial = Xcand
+        wleft = np.sum(weights[X < trial])
+        wright = np.sum(weights[X > trial])
+        wmid = np.sum(weights[X == trial])
+        if (2 * (wrest + wleft)) > wtotal:
+            Xcand = X[X < trial]
+            weightscand = weights[X < trial]
+        elif (2 * (wrest + wleft + wmid)) > wtotal:
+            print(check)
+            return trial
+        else:
+            Xcand = X[X > trial]
+            weightscand = weights[X > trial]
+            wrest = wrest + wleft + wmid
+        X = Xcand
+        weights = weightscand
+        n = len(X)
+        check = check + 1
+    return trial
+
+
+def weighted_median2(data, weights):
+    """
+    Args:
+      data (list or numpy.array): data
+      weights (list or numpy.array): weights
+    """
+    data, weights = np.array(data).squeeze(), np.array(weights).squeeze()
+    s_data, s_weights = map(np.array, zip(*sorted(zip(data, weights))))
+    midpoint = 0.5 * sum(s_weights)
+    if any(weights > midpoint):
+        w_median = (data[weights == np.max(weights)])[0]
+    else:
+        cs_weights = np.cumsum(s_weights)
+        idx = np.where(cs_weights <= midpoint)[0][-1]
+        if cs_weights[idx] == midpoint:
+            w_median = np.mean(s_data[idx : idx + 2])
+        else:
+            w_median = s_data[idx + 1]
+    return w_median

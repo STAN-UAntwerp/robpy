@@ -1,4 +1,5 @@
 import numpy as np
+import math as math
 from scipy.stats import median_abs_deviation, chi2, gamma
 
 
@@ -60,6 +61,7 @@ def univariateMCD(
 ) -> np.array:
     """
     Implementation of univariate MCD
+
     [Minimum covariance determinant, Mia Hubert & Michiel Debruyne (2009)]
 
     Args:
@@ -108,3 +110,28 @@ def univariateMCD(
         delta = np.sum(mask) / n
         var = var * delta * np.reciprocal(gamma.cdf(chi2.ppf(delta, df=1) / 2, a=3 / 2))
     return var, loc, raw_var, raw_loc
+
+
+def Qn(X: np.array, consistency_correction=True) -> float:
+    """
+    Implementation of Qn estimator
+
+    [Time-efficient algorithms for two highly robust estimators of scale,
+    Christophe Croux and Peter J. Rousseeuw (1992)]
+    [Selecting the k^th element in X+Y and X1+...+Xm,
+    Donald B. Johnson and Tetsuo Mizoguchi (1978)]
+
+    Args:
+        X: univariate data
+        consistency_correction: whether the estimates should be consistent at the normal model
+    Returns:
+        scale: robust Qn scale estimator
+    """
+    n = len(X)
+    h = int(np.floor(n / 2) + 1)
+    k = h * (h - 1) / 2  # quantile
+    c = 2.219144  # consistency at normal model
+
+    # Also small sample correction factors, see Croux & Rousseeuw (1992)
+
+    return 1

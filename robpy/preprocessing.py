@@ -112,7 +112,7 @@ def univariateMCD(
     return var, loc, raw_var, raw_loc
 
 
-def Qn(X: np.array, consistency_correction=True) -> float:
+def Qn(X: np.array) -> float:
     """
     Implementation of Qn estimator
 
@@ -123,16 +123,15 @@ def Qn(X: np.array, consistency_correction=True) -> float:
 
     Args:
         X: univariate data
-        consistency_correction: whether the estimates should be consistent at the normal model
     Returns:
         scale: robust Qn scale estimator
     """
     n = len(X)
     h = n // 2 + 1
-    k = h * (h - 1) // 2  # quantile
-    c = 2.219144  # consistency at normal model
+    k = h * (h - 1) // 2
+    c = 2.219144
     y = np.sort(X)
-    left = n + 1 - np.array(range(n))
+    left = n + 1 - np.arange(n)
     right = np.full(n, n)
     jhelp = n * (n + 1) // 2
     knew = k + jhelp
@@ -141,47 +140,29 @@ def Qn(X: np.array, consistency_correction=True) -> float:
     found = False
 
     while (nR - nL) > n and (not found):
-        j = 0
-        weight = []
-        work = []
-        for i in range(1, n):
-            if left[i] <= right[i]:
-                weight.append(right[i] - left[i] + 1)  # number of elements in row i
-                jhelp = int(left[i] + weight[j] // 2)
-                work.append(y[i] - y[n - jhelp])  # median of the row
-                j = j + 1
-        trial = weighted_median(np.array(work)[: (j - 1)], np.array(weight)[: (j - 1)])
-        j = 0
-        P = np.zeros(n)
-        Q = np.zeros(n)
-        for i in reversed(range(n)):
-            while (j < n) and ((y[i] - y[n - j - 1]) < trial):
-                j = j + 1
-            P[i] = j
-        j = n + 1
-        for i in range(n):
-            while (y[i] - y[n - j + 2 - 1]) > trial:
-                j = j - 1
-            Q[i] = j
+        weight = right - left + 1
+        jhelp = (left + weight // 2).astype(int)
+        work = y - y[n - jhelp]
+        trial = weighted_median(work, weight)
+        P = np.searchsorted(-np.flip(y), trial - y, "left", np.arange(n))
+        Q = np.searchsorted(-np.flip(y), trial - y, "right", np.arange(n)) + 1
         if knew <= np.sum(P):
-            right = P.copy()
+            right = P
             nR = np.sum(P)
         elif knew > (np.sum(Q) - n):
-            left = Q.copy()
+            left = Q
             nL = np.sum(Q) - n
         else:
             Qn = trial
             found = True
     if not found:
         work = []
-        j = 0
         for i in range(1, n):
             if left[i] <= right[i]:
                 for jj in range(int(left[i]), int(right[i] + 1)):
                     work.append(y[i] - y[n - jj - 1 + 1])
-                    j = j + 1
         k = int(knew - nL)
-        Qn = np.partition(np.array(work)[: (j - 1)], k)[:k].max()
+        Qn = np.partition(np.array(work), k)[:k].max()
     if n <= 9:
         dn_dict = {2: 0.399, 3: 0.994, 4: 0.512, 5: 0.844, 6: 0.611, 7: 0.857, 8: 0.669, 9: 0.872}
         dn = dn_dict.get(n)

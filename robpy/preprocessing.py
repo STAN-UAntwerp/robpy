@@ -128,15 +128,70 @@ def Qn(X: np.array, consistency_correction=True) -> float:
         scale: robust Qn scale estimator
     """
     n = len(X)
-    h = int(np.floor(n / 2) + 1)
-    k = h * (h - 1) / 2  # quantile
+    h = n // 2 + 1
+    k = h * (h - 1) // 2  # quantile
     c = 2.219144  # consistency at normal model
+    y = np.sort(X)
+    left = n + 1 - np.array(range(n))
+    right = np.full(n, n)
+    jhelp = n * (n + 1) // 2
+    knew = k + jhelp
+    nL = jhelp
+    nR = n * n
+    found = False
 
-    # first needed: weighted median function
-
-    # Also small sample correction factors, see Croux & Rousseeuw (1992)
-
-    return 1
+    while (nR - nL) > n and (not found):
+        j = 0
+        weight = []
+        work = []
+        for i in range(1, n):
+            if left[i] <= right[i]:
+                weight.append(right[i] - left[i] + 1)  # number of elements in row i
+                jhelp = int(left[i] + weight[j] // 2)
+                work.append(y[i] - y[n - jhelp])  # median of the row
+                j = j + 1
+        trial = weighted_median(np.array(work)[: (j - 1)], np.array(weight)[: (j - 1)])
+        j = 0
+        P = np.zeros(n)
+        Q = np.zeros(n)
+        for i in reversed(range(n)):
+            while (j < n) and ((y[i] - y[n - j - 1]) < trial):
+                j = j + 1
+            P[i] = j
+        j = n + 1
+        for i in range(n):
+            while (y[i] - y[n - j + 2 - 1]) > trial:
+                j = j - 1
+            Q[i] = j
+        if knew <= np.sum(P):
+            right = P.copy()
+            nR = np.sum(P)
+        elif knew > (np.sum(Q) - n):
+            left = Q.copy()
+            nL = np.sum(Q) - n
+        else:
+            Qn = trial
+            found = True
+    if not found:
+        work = []
+        j = 0
+        for i in range(1, n):
+            if left[i] <= right[i]:
+                for jj in range(int(left[i]), int(right[i] + 1)):
+                    work.append(y[i] - y[n - jj - 1 + 1])
+                    j = j + 1
+        k = int(knew - nL)
+        Qn = np.partition(np.array(work)[: (j - 1)], k)[:k].max()
+    if n <= 9:
+        dn_dict = {2: 0.399, 3: 0.994, 4: 0.512, 5: 0.844, 6: 0.611, 7: 0.857, 8: 0.669, 9: 0.872}
+        dn = dn_dict.get(n)
+    else:
+        if n % 2 != 0:
+            dn = n / (n + 1.4)
+        else:
+            dn = n / (n + 3.8)
+    Qn = dn * c * Qn
+    return Qn
 
 
 def weighted_median(X: np.array, weights: np.array) -> float:
@@ -144,12 +199,13 @@ def weighted_median(X: np.array, weights: np.array) -> float:
     Christophe Croux and Peter J. Rousseeuw (1992)]"""
     n = len(X)
     wrest = 0
-    check = 1
     wtotal = np.sum(weights)
-    while check < 1000:
+    while 1:
         k = np.ceil(n / 2).astype("int")
         if n > 1:
-            trial = np.partition(X, k)[:k].max()  # k^th order statistic
+            trial = np.partition(X, k)[
+                :k
+            ].max()  # k^th order statistic, I think this can be programmed better...
         else:
             trial = Xcand
         wleft = np.sum(weights[X < trial])
@@ -159,7 +215,6 @@ def weighted_median(X: np.array, weights: np.array) -> float:
             Xcand = X[X < trial]
             weightscand = weights[X < trial]
         elif (2 * (wrest + wleft + wmid)) > wtotal:
-            print(check)
             return trial
         else:
             Xcand = X[X > trial]
@@ -168,26 +223,4 @@ def weighted_median(X: np.array, weights: np.array) -> float:
         X = Xcand
         weights = weightscand
         n = len(X)
-        check = check + 1
     return trial
-
-
-def weighted_median2(data, weights):
-    """
-    Args:
-      data (list or numpy.array): data
-      weights (list or numpy.array): weights
-    """
-    data, weights = np.array(data).squeeze(), np.array(weights).squeeze()
-    s_data, s_weights = map(np.array, zip(*sorted(zip(data, weights))))
-    midpoint = 0.5 * sum(s_weights)
-    if any(weights > midpoint):
-        w_median = (data[weights == np.max(weights)])[0]
-    else:
-        cs_weights = np.cumsum(s_weights)
-        idx = np.where(cs_weights <= midpoint)[0][-1]
-        if cs_weights[idx] == midpoint:
-            w_median = np.mean(s_data[idx : idx + 2])
-        else:
-            w_median = s_data[idx + 1]
-    return w_median

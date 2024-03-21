@@ -78,7 +78,9 @@ def univariateMCD(
     n = len(X)
     if h_size is None:
         h_size = int(np.floor(n / 2) + 1)
-    elif isinstance(h_size, int) and (1 <= h_size <= n):
+    elif h_size == 1:
+        return np.var(X), np.mean(X), np.var(X), np.mean(X)
+    elif isinstance(h_size, int) and (1 < h_size <= n):
         pass
     elif isinstance(h_size, float) and (0 < h_size < 1):
         h_size = int(h_size * n)

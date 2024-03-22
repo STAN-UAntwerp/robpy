@@ -1,12 +1,12 @@
 import numpy as np
-from robpy.univariate.univariateMCD import univariateMCDEstimator
+from robpy.univariate.univariateMCD import UnivariateMCDEstimator
 
 
 def test_calculate_univariateMCD():
     # given
     X = np.random.randn(1000)
     # when
-    estimator = univariateMCDEstimator(X, estimator="univariateMCD")
+    estimator = UnivariateMCDEstimator(X, estimator="univariateMCD")
     estimator.calculate_univariateMCD()
     # then
     assert hasattr(estimator, "MCD_location")

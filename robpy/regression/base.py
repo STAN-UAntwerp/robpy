@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 import matplotlib.pyplot as plt
 import numpy as np
@@ -5,8 +6,9 @@ import numpy as np
 from scipy.stats import median_abs_deviation, chi2
 from sklearn.base import RegressorMixin, BaseEstimator
 from sklearn.covariance import MinCovDet
+from sklearn.exceptions import NotFittedError
 
-from robpy.utils import mahalanobis_distance
+from robpy.utils.distance import mahalanobis_distance
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +19,18 @@ class RobustRegressor(RegressorMixin, BaseEstimator):
     ):
         super().__init__()
 
+    def fit(self, X, y) -> RobustRegressor:
+        raise NotImplementedError
+
     def predict(self, X):
         raise NotImplementedError
+
+    @property
+    def scale(self) -> float:
+        scale = getattr(self, "_scale", None)
+        if scale is None:
+            raise NotFittedError("Model has not been fitted yet.")
+        return scale
 
     def diagnostic_plot(
         self,

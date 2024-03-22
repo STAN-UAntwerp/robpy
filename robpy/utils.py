@@ -26,6 +26,7 @@ def weighted_median(X: np.array, weights: np.array) -> float:
     n = len(X)
     wrest = 0
     wtotal = np.sum(weights)
+    Xcand = X
     while True:
         k = np.ceil(n / 2).astype("int")
         if n > 1:
@@ -35,7 +36,6 @@ def weighted_median(X: np.array, weights: np.array) -> float:
         else:
             trial = Xcand
         wleft = np.sum(weights[X < trial])
-        wright = np.sum(weights[X > trial])
         wmid = np.sum(weights[X == trial])
         if (2 * (wrest + wleft)) > wtotal:
             Xcand = X[X < trial]

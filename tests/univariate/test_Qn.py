@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from robpy.univariate.Qn import QnEstimator
+from robpy.univariate.qn import QnEstimator
 
 
 def test_calculate_Qn():

@@ -5,7 +5,6 @@ from robpy.utils import weighted_median
 
 
 class QnEstimator(RobustScaleEstimator):
-
     def calculate_Qn(self) -> float:
         """
         Implementation of Qn estimator

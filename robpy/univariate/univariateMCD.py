@@ -5,7 +5,6 @@ from scipy.stats import chi2, gamma
 
 
 class UnivariateMCDEstimator(RobustScaleEstimator):
-
     def calculate_univariateMCD(
         self, h_size: float | int | None = None, consistency_correction=True
     ) -> np.array:

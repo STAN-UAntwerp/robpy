@@ -159,7 +159,7 @@ class SEstimator(RobustRegressor):
             initial_scale = np.median(np.abs(residuals)) / 0.6745
         new_scale = self._get_scale(s0=initial_scale, residuals=residuals)
         residuals[residuals == 0] = np.finfo(np.float64).eps  # avoid divide by 0 errors
-        weights = self.rho.psi(residuals / new_scale) / residuals
+        weights = self.rho.psi(residuals / new_scale) / (residuals / new_scale)
         model = WLS(endog=y, exog=X, weights=weights).fit()
         model.weights = weights
         return model, new_scale

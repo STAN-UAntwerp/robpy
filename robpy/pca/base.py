@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from abc import abstractmethod
 from sklearn.decomposition._base import _BasePCA
 from scipy.stats import chi2, norm, median_abs_deviation
 
@@ -23,7 +24,7 @@ class RobustPCAEstimator(_BasePCA):
         """
         pass
 
-    def transform(self, X):
+    def transform(self, X: np.ndarray) -> np.ndarray:
         """Apply dimensionality reduction to X.
 
         X is projected on the first principal components previously extracted
@@ -43,9 +44,8 @@ class RobustPCAEstimator(_BasePCA):
         """
 
         if self.location_ is not None:
-            X = X - self.mean_
-        X_transformed = X @ self.components_.T
-        return X_transformed
+            self.location_ = np.mean(X, axis=0)
+        return (X - self.location_) @ self.components_
 
     def project(self, X: np.ndarray) -> np.ndarray:
         """Project the data onto the subspace spanned by the principal components
@@ -55,25 +55,38 @@ class RobustPCAEstimator(_BasePCA):
         Returns:
             np.ndarray: Projected data
         """
-        scores = self.transform(X)
+        return self.transform(X) @ self.components_.T
 
-        return scores @ self.components_
+    def plot_outlier_map(
+        self, X: np.ndarray, figsize: tuple[int, int] = (10, 4), return_distances: bool = False
+    ) -> None | tuple[np.ndarray, np.ndarray, float, float]:
+        """Plot Orthogonal distances vs Score distances to identify different types of outliers
 
-    def plot_outlier_map(self, X: np.ndarray, figsize: tuple[int, int] = (10, 4)):
-        orthogonal_distances = np.linalg.norm(X - self.location_ - self.project(X), axis=1)
-        score_distances = np.sqrt(np.sum(np.square(self.transform(X)) / self.eigen_values_, axis=1))
+        Args:
+            X (np.ndarray): Data  matrix (n x p)
+            figsize (tuple[int, int], optional): Size of the plot. Defaults to (10, 4).
+            return_distances (bool, optional):
+                Whether to return the distances and cutoff values. Defaults to False.
+        """
+        orthogonal_distances = np.linalg.norm((X - self.location_) - self.project(X), axis=1)
+        score_distances = np.sqrt(
+            np.sum(np.square(self.transform(X)) / self.explained_variance_, axis=1)
+        )
         _, ax = plt.subplots(1, 1, figsize=figsize)
         ax.scatter(score_distances, orthogonal_distances)
         ax.set_xlabel("Score distance")
         ax.set_ylabel("Orthogonal distance")
+        score_cutoff = float(chi2.ppf(0.975, self.n_components))
+        od_cutoff = get_od_cutoff(orthogonal_distances)
+        ax.axvline(score_cutoff, color="r", linestyle="--")
+        ax.axhline(od_cutoff, color="r", linestyle="--")
+        if return_distances:
+            return (score_distances, orthogonal_distances, score_cutoff, od_cutoff)
 
-        ax.axvline(chi2.ppf(0.975, self.n_components_), color="r", linestyle="--")
-        ax.axhline(
-            (
-                np.median(orthogonal_distances)
-                + (median_abs_deviation(orthogonal_distances) * norm.ppf(0.975))
-            )
-            ** (3 / 2),
-            color="r",
-            linestyle="--",
-        )
+
+def get_od_cutoff(orthogonal_distances: np.ndarray) -> float:
+    # TODO: replace median and mad by univariate MCD
+    return float(
+        np.median(orthogonal_distances)
+        + (median_abs_deviation(orthogonal_distances) * norm.ppf(0.975))
+    ) ** (3 / 2)

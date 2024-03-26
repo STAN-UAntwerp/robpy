@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from abc import abstractmethod
 from sklearn.decomposition._base import _BasePCA
 from scipy.stats import chi2, norm, median_abs_deviation
+from sklearn.decomposition import PCA
 
 
 class RobustPCAEstimator(_BasePCA):
@@ -42,7 +43,7 @@ class RobustPCAEstimator(_BasePCA):
             Projection of X in the first principal components, where `n_samples`
             is the number of samples and `n_components` is the number of the components.
         """
-
+        X = PCA().fit_transform(X)
         if self.location_ is not None:
             self.location_ = np.mean(X, axis=0)
         return (X - self.location_) @ self.components_
@@ -68,6 +69,8 @@ class RobustPCAEstimator(_BasePCA):
             return_distances (bool, optional):
                 Whether to return the distances and cutoff values. Defaults to False.
         """
+        X = PCA().fit_transform(X)
+
         orthogonal_distances = np.linalg.norm((X - self.location_) - self.project(X), axis=1)
         score_distances = np.sqrt(
             np.sum(np.square(self.transform(X)) / self.explained_variance_, axis=1)
@@ -76,7 +79,7 @@ class RobustPCAEstimator(_BasePCA):
         ax.scatter(score_distances, orthogonal_distances)
         ax.set_xlabel("Score distance")
         ax.set_ylabel("Orthogonal distance")
-        score_cutoff = float(chi2.ppf(0.975, self.n_components))
+        score_cutoff = np.sqrt(float(chi2.ppf(0.975, self.n_components)))
         od_cutoff = get_od_cutoff(orthogonal_distances)
         ax.axvline(score_cutoff, color="r", linestyle="--")
         ax.axhline(od_cutoff, color="r", linestyle="--")
@@ -87,6 +90,6 @@ class RobustPCAEstimator(_BasePCA):
 def get_od_cutoff(orthogonal_distances: np.ndarray) -> float:
     # TODO: replace median and mad by univariate MCD
     return float(
-        np.median(orthogonal_distances)
-        + (median_abs_deviation(orthogonal_distances) * norm.ppf(0.975))
+        np.median(orthogonal_distances ** (2 / 3))
+        + (median_abs_deviation(orthogonal_distances ** (2 / 3), scale="normal") * norm.ppf(0.975))
     ) ** (3 / 2)

@@ -73,16 +73,16 @@ class ROBPCAEstimator(RobustPCAEstimator):
         v_index = np.argwhere(orth_dist < get_od_cutoff(orth_dist)).flatten()
         eigvals_v, eigvecs_v = np.linalg.eigh(np.cov(X[v_index], rowvar=False))
         sorted_eig_v_idx = np.argsort(eigvals_v)[::-1]
-        self.components_ = eigvecs_v[:, sorted_eig_v_idx[: self.n_components]]
-        self.explained_variance_ = eigvals_v[sorted_eig_v_idx[: self.n_components]]
+        self.components_ = eigvecs_v[:, sorted_eig_v_idx[: self.k]]
+        self.explained_variance_ = eigvals_v[sorted_eig_v_idx[: self.k]]
         self.explained_variance_ratio_ = self.explained_variance_ / self.explained_variance_.sum()
         if self.final_MCD_step:
             # step 5: final MCD step
             mcd = FastMCDEstimator().fit(self.project(X))
             eigvals_mcd, eigvecs_mcd = np.linalg.eigh(mcd.covariance)
-            sorted_eig_mcd_idx = np.argsort(eigvals_v)[::-1]
-            self.components_ = eigvecs_mcd[:, sorted_eig_mcd_idx[: self.n_components]]
-            self.explained_variance_ = eigvals_mcd[sorted_eig_mcd_idx[: self.n_components]]
+            sorted_eig_mcd_idx = np.argsort(eigvals_mcd)[::-1]
+            self.components_ = eigvecs_mcd[:, sorted_eig_mcd_idx[: self.k]]
+            self.explained_variance_ = eigvals_mcd[sorted_eig_mcd_idx[: self.k]]
             self.explained_variance_ratio_ = (
                 self.explained_variance_ / self.explained_variance_.sum()
             )

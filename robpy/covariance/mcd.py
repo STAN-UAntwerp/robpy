@@ -2,7 +2,7 @@ import logging
 import numpy as np
 
 from dataclasses import dataclass
-from scipy.stats import chi2
+from scipy.stats import chi2, gamma
 
 from robpy.covariance.base import RobustCovarianceEstimator
 from robpy.utils import mahalanobis_distance, get_logger
@@ -115,14 +115,23 @@ class FastMCDEstimator(RobustCovarianceEstimator):
         self.location_ = best_subset.location
         scale = best_subset.scale
         if self.correct_covariance:
-            self.logger.info("Applying consistency correction to the raw covariance estimate")
+            self.logger.debug("Applying consistency correction to the raw covariance estimate")
             scale = self._correct_covariance(X, best_subset)
         if self.reweighting:
-            self.logger.info("Applying reweighting to the raw covariance estimate")
+            self.logger.debug("Applying reweighting to the raw covariance estimate")
             distances = mahalanobis_distance(X, best_subset.location, scale)
             self._mask = distances < np.sqrt(chi2.ppf(0.975, X.shape[1]))
             self.location_ = X[self._mask].mean(axis=0)
             scale = np.cov(X[self._mask], rowvar=False)
+            if self.correct_covariance:
+                # See Croux & Haesbroeck 1999 and R code for robustbase>covMcd>MCDCons
+                # (https://rdrr.io/cran/robustbase/src/R/covMcd.R)
+                self.logger.debug("Applying consistency correction after reweighting.")
+                factor = 1 / (
+                    gamma.ppf((chi2.ppf(0.975, X.shape[1]) / 2), X.shape[1] / 2 + 1) / 0.975
+                )
+                scale *= factor
+
         return scale
 
     def _correct_covariance(self, X: np.ndarray, best_subset: HSubset) -> np.ndarray:

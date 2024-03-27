@@ -5,7 +5,8 @@ from dataclasses import dataclass
 from scipy.stats import chi2, gamma
 
 from robpy.covariance.base import RobustCovarianceEstimator
-from robpy.utils import mahalanobis_distance, get_logger
+from robpy.utils.distance import mahalanobis_distance
+from robpy.utils.logging import get_logger
 
 
 @dataclass
@@ -128,7 +129,7 @@ class FastMCDEstimator(RobustCovarianceEstimator):
                 # (https://rdrr.io/cran/robustbase/src/R/covMcd.R)
                 self.logger.debug("Applying consistency correction after reweighting.")
                 factor = 1 / (
-                    gamma.ppf((chi2.ppf(0.975, X.shape[1]) / 2), X.shape[1] / 2 + 1) / 0.975
+                    gamma.cdf((chi2.ppf(0.975, X.shape[1]) / 2), X.shape[1] / 2 + 1) / 0.975
                 )
                 scale *= factor
 

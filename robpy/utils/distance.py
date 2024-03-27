@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def mahalanobis_distance(data: np.ndarray, location: np.ndarray, covariance: np.ndarray):
     """
     Calculate the Mahalanobis distance for multiple data vectors.

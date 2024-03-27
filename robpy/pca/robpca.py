@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from matplotlib.pylab import eig, f
 import numpy as np
 
 from sklearn.decomposition import PCA
-from scipy.stats import median_abs_deviation, norm
 from robpy.pca.base import RobustPCAEstimator, get_od_cutoff
 from robpy.utils.outlyingness import stahel_donoho
 from robpy.covariance import FastMCDEstimator

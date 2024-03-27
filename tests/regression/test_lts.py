@@ -4,7 +4,7 @@ import numpy as np
 
 from sklearn.linear_model import LinearRegression
 
-from robpy.regression.lts import FastLTSRegressor
+from robpy.regression.lts import FastLTSRegressor, get_correction_factor
 
 
 @pytest.fixture
@@ -115,3 +115,19 @@ def test_apply_C_step(sample_data):
     assert len(h_subset) == h
     assert isinstance(new_lr_model, LinearRegression)
     assert new_loss <= original_loss
+
+
+@pytest.mark.parametrize(
+    "n, p, alpha, expected_output",
+    [
+        (10, 0, 0.5, 1.21523),
+        (100, 1, 0.5, 1.10356),
+        (100, 5, 0.9, 1.047415),
+        (1000, 10, 0.9, 1.008717),
+    ],
+)
+def test_get_correction_factor(n, p, alpha, expected_output):
+    # when
+    result = get_correction_factor(p=p, n=n, alpha=alpha)
+    # then
+    assert result == pytest.approx(expected_output, abs=0.0001)

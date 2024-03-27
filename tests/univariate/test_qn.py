@@ -1,17 +1,16 @@
 import numpy as np
 import pytest
-from robpy.univariate.qn import QnEstimator
+
+from robpy.univariate import QnEstimator
 
 
-def test_calculate_Qn():
+def test_Qn_sets_scale():
     # given
     X = np.random.rand(1000)
     # when
-    estimator = QnEstimator(X, estimator="Qn")
-    estimator.calculate_Qn()
+    estimator = QnEstimator().fit(X)
     # then
-    assert hasattr(estimator, "Qn")
-    assert isinstance(estimator.Qn, float)
+    assert isinstance(estimator.scale, float)
 
 
 @pytest.mark.parametrize(
@@ -60,7 +59,8 @@ def test_calculate_Qn():
         ),
     ],
 )
-def test_eval(X, expected_result):
-    np.testing.assert_almost_equal(
-        QnEstimator(X, estimator="Qn").calculate_Qn(), expected_result, decimal=1
-    )
+def test_Qn_calculates_correctly(X, expected_result):
+    # when
+    estimate = QnEstimator().fit(X).scale
+    # then
+    np.testing.assert_almost_equal(estimate, expected_result, decimal=1)

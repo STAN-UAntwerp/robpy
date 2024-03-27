@@ -13,7 +13,7 @@ class RobustPCAEstimator(_BasePCA):
                 Number of components to select. If None, it is set during fit to min (X.shape)
         """
         self.n_components = n_components
-    
+
     def transform(self, X):
         """Apply dimensionality reduction to X.
 
@@ -37,7 +37,7 @@ class RobustPCAEstimator(_BasePCA):
             X = X - self.mean_
         X_transformed = X @ self.components_.T
         return X_transformed
-    
+
     def project(self, X: np.ndarray) -> np.ndarray:
         """Project the data onto the subspace spanned by the principal components
         Args:
@@ -47,22 +47,24 @@ class RobustPCAEstimator(_BasePCA):
             np.ndarray: Projected data
         """
         scores = self.transform(X)
-        
+
         return scores @ self.components_
-    
+
     def plot_outlier_map(self, X: np.ndarray, figsize: tuple[int, int] = (10, 4)):
-        orthogonal_distances = np.linalg.norm(X - self.location_ - self.project(X), self.axis=1)
+        orthogonal_distances = np.linalg.norm(X - self.location_ - self.project(X), axis=1)
         score_distances = np.sqrt(np.sum(np.square(self.transform(X)) / self.eigen_values_, axis=1))
         _, ax = plt.subplots(1, 1, figsize=figsize)
         ax.scatter(score_distances, orthogonal_distances)
         ax.set_xlabel("Score distance")
         ax.set_ylabel("Orthogonal distance")
-        
+
         ax.axvline(chi2.ppf(0.975, self.n_components_), color="r", linestyle="--")
         ax.axhline(
             (
-                np.median(orthogonal_distances) 
+                np.median(orthogonal_distances)
                 + (median_abs_deviation(orthogonal_distances) * norm.ppf(0.975))
-            )**(3/2), 
-        color="r", linestyle="--")
-        
+            )
+            ** (3 / 2),
+            color="r",
+            linestyle="--",
+        )

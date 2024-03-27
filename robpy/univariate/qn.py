@@ -1,11 +1,11 @@
 import numpy as np
 
-from robpy.univariate.base import RobustScaleEstimator
-from robpy.utils import weighted_median
+from robpy.univariate.base import RobustScaleEstimator, LocationOrScaleEstimator
+from robpy.utils.weighted import weighted_median
 
 
 class QnEstimator(RobustScaleEstimator):
-    def calculate_Qn(self) -> float:
+    def __init__(self, location_func: LocationOrScaleEstimator = np.median):
         """
         Implementation of Qn estimator
 
@@ -15,15 +15,22 @@ class QnEstimator(RobustScaleEstimator):
         Donald B. Johnson and Tetsuo Mizoguchi (1978)]
 
         Args:
-            X: univariate data
-        Returns:
-            scale: robust Qn scale estimator
+            location_func: as the location estimator does not estimate location,
+                a location function should be explicitly passed
         """
-        n = len(self.X)
+        self.location_func = location_func
+
+    def _calculate(self, X: np.ndarray):
+        """
+        Args:
+            X: univariate data
+        """
+
+        n = len(X)
         h = n // 2 + 1
         k = h * (h - 1) // 2
         c = 2.219144
-        y = np.sort(self.X)
+        y = np.sort(X)
         left = n + 1 - np.arange(n)
         right = np.full(n, n)
         jhelp = n * (n + 1) // 2
@@ -56,31 +63,31 @@ class QnEstimator(RobustScaleEstimator):
                         work.append(y[i] - y[n - jj - 1 + 1])
             k = int(knew - nL)
             Qn = np.partition(np.array(work), k)[:k].max()
-        dn = self.get_small_sample_dn(n)
+        dn = _get_small_sample_dn(n)
         Qn = dn * c * Qn
 
-        self.Qn = Qn
+        self.scale_ = Qn
+        self.location_ = self.location_func(X)
 
-        return Qn
 
-    def get_small_sample_dn(self, n: int):
-        """
-        Calculates the correction factor for the Qn estimator
-        at small samples [Time-efficient algorithms for two highly robust estimators of scale,
-        Christophe Croux and Peter J. Rousseeuw (1992)].
-        """
-        DNDICT = {
-            2: 0.399,
-            3: 0.994,
-            4: 0.512,
-            5: 0.844,
-            6: 0.611,
-            7: 0.857,
-            8: 0.669,
-            9: 0.872,
-        }
-        if n <= 9:
-            return DNDICT.get(n)
-        elif n % 2 != 0:
-            return n / (n + 1.4)
-        return n / (n + 3.8)
+def _get_small_sample_dn(n: int):
+    """
+    Calculates the correction factor for the Qn estimator
+    at small samples [Time-efficient algorithms for two highly robust estimators of scale,
+    Christophe Croux and Peter J. Rousseeuw (1992)].
+    """
+    DNDICT = {
+        2: 0.399,
+        3: 0.994,
+        4: 0.512,
+        5: 0.844,
+        6: 0.611,
+        7: 0.857,
+        8: 0.669,
+        9: 0.872,
+    }
+    if n <= 9:
+        return DNDICT.get(n)
+    elif n % 2 != 0:
+        return n / (n + 1.4)
+    return n / (n + 3.8)

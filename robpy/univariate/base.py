@@ -1,19 +1,38 @@
+from __future__ import annotations
+
 import numpy as np
+from sklearn.exceptions import NotFittedError
+from abc import abstractmethod, ABC
+from typing import Protocol
 
 
-class RobustScaleEstimator:
-    def __init__(self, X: np.array, estimator: str):
-        """
-        Args:
-            X: univariate data
-            estimator: "Qn" or "univariateMCD"
-        """
+class LocationOrScaleEstimator(Protocol):
+    def __call__(self, x: np.ndarray, axis: int = 0) -> np.ndarray | float:
+        ...
 
-        self.X = X
-        if estimator == "Qn":
-            self.Qn = None
-        elif estimator == "univariateMCD":
-            self.MCD_variance = None
-            self.MCD_location = None
-            self.MCD_raw_variance = None
-            self.MCD_raw_location = None
+
+class RobustScaleEstimator(ABC):
+    def fit(self, X: np.ndarray) -> RobustScaleEstimator:
+        if len(X.shape) != 1:
+            raise ValueError(
+                f"X must be univariate, but received a matrix with dimensions {X.shape}"
+            )
+        self._calculate(X)
+        return self
+
+    @abstractmethod
+    def _calculate(self, X: np.ndarray):
+        """Must set self.scale_ and self.location_"""
+        pass
+
+    @property
+    def scale(self):
+        if not hasattr(self, "scale_"):
+            raise NotFittedError("Scale not available. First run .fit()")
+        return self.scale_
+
+    @property
+    def location(self):
+        if not hasattr(self, "location_"):
+            raise NotFittedError("Location not available. First run .fit()")
+        return self.location_

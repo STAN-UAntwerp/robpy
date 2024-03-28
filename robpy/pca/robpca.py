@@ -55,7 +55,10 @@ class ROBPCAEstimator(RobustPCAEstimator):
         eigvals_h, eigvecs_h = np.linalg.eigh(h_cov)
         sorted_eig_h_idx = np.argsort(eigvals_h)[::-1]
         var_explained_ratio = eigvals_h[sorted_eig_h_idx].cumsum() / eigvals_h.sum()
-        k = np.argmax(var_explained_ratio >= self.k_min_var_explained) + 1
+        if self.n_components is None:
+            k = np.argmax(var_explained_ratio >= self.k_min_var_explained) + 1
+        else:
+            k = self.n_components
         h_components = eigvecs_h[:, sorted_eig_h_idx[:k]]  # (p, k)
         X_proj = (X - self.location_) @ h_components @ h_components.T
         # step 4: orthogonal distance

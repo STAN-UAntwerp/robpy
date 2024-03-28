@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from abc import abstractmethod
 from sklearn.decomposition._base import _BasePCA
 from scipy.stats import chi2, norm, median_abs_deviation
-from sklearn.decomposition import PCA
 
 
 class RobustPCAEstimator(_BasePCA):
@@ -43,7 +42,6 @@ class RobustPCAEstimator(_BasePCA):
             Projection of X in the first principal components, where `n_samples`
             is the number of samples and `n_components` is the number of the components.
         """
-        X = PCA().fit_transform(X)
         if self.location_ is not None:
             self.location_ = np.mean(X, axis=0)
         return (X - self.location_) @ self.components_
@@ -69,7 +67,6 @@ class RobustPCAEstimator(_BasePCA):
             return_distances (bool, optional):
                 Whether to return the distances and cutoff values. Defaults to False.
         """
-        X = PCA().fit_transform(X)
 
         orthogonal_distances = np.linalg.norm((X - self.location_) - self.project(X), axis=1)
         score_distances = np.sqrt(

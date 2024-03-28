@@ -42,11 +42,11 @@ class ROBPCAEstimator(RobustPCAEstimator):
         self.final_MCD_step = final_MCD_step
 
     def fit(self, X: np.ndarray) -> ROBPCAEstimator:
-        # step 0: set n_components if not set and location
-        self.location_ = np.mean(X, axis=0)
-
         # step 1: singular value decomposition = applying standard PCA
-        X = PCA().fit_transform(X)
+        pca = PCA()
+        X = pca.fit_transform(X)
+        self.location_ = np.mean(X, axis=0)
+        loadings = pca.components_.T
         # step 2: stahel donoho outlyingness --> h subset
         outlyingness = stahel_donoho(X)
         h_index = np.argsort(outlyingness)[: int(self.alpha * X.shape[0])]
@@ -54,27 +54,46 @@ class ROBPCAEstimator(RobustPCAEstimator):
         # step 3: project on k-dimensional subspace
         eigvals_h, eigvecs_h = np.linalg.eigh(h_cov)
         sorted_eig_h_idx = np.argsort(eigvals_h)[::-1]
-        var_explained = eigvals_h[sorted_eig_h_idx].cumsum() / eigvals_h.sum()
-        if self.n_components is None:
-            self.n_components = np.argmax(var_explained >= self.k_min_var_explained) + 1
-        h_components = eigvecs_h[:, sorted_eig_h_idx[: self.n_components]]  # (p, k)
+        var_explained_ratio = eigvals_h[sorted_eig_h_idx].cumsum() / eigvals_h.sum()
+        k = np.argmax(var_explained_ratio >= self.k_min_var_explained) + 1
+        h_components = eigvecs_h[:, sorted_eig_h_idx[:k]]  # (p, k)
         X_proj = (X - self.location_) @ h_components @ h_components.T
         # step 4: orthogonal distance
         orth_dist = np.linalg.norm((X - self.location_) - X_proj, axis=1)
         v_index = np.argwhere(orth_dist < get_od_cutoff(orth_dist)).flatten()
         eigvals_v, eigvecs_v = np.linalg.eigh(np.cov(X[v_index], rowvar=False))
         sorted_eig_v_idx = np.argsort(eigvals_v)[::-1]
-        self.components_ = eigvecs_v[:, sorted_eig_v_idx[: self.n_components]]
-        self.explained_variance_ = eigvals_v[sorted_eig_v_idx[: self.n_components]]
-        self.explained_variance_ratio_ = self.explained_variance_ / self.explained_variance_.sum()
+        self.components_ = eigvecs_v[:, sorted_eig_v_idx[:k]]
         if self.final_MCD_step:
             # step 5: final MCD step
             mcd = FastMCDEstimator().fit(self.project(X))
             eigvals_mcd, eigvecs_mcd = np.linalg.eigh(mcd.covariance)
-            sorted_eig_mcd_idx = np.argsort(eigvals_mcd)[::-1]
-            self.components_ = eigvecs_mcd[:, sorted_eig_mcd_idx[: self.n_components]]
-            self.explained_variance_ = eigvals_mcd[sorted_eig_mcd_idx[: self.n_components]]
-            self.explained_variance_ratio_ = (
-                self.explained_variance_ / self.explained_variance_.sum()
+            sorted_eig_mcd = np.argsort(eigvals_mcd)[::-1]
+            # step 6: get the right number of components
+            self.explained_variance_ratio = eigvals_mcd[sorted_eig_mcd].cumsum() / eigvals_mcd.sum()
+            if self.n_components is None:
+                self.n_components = (
+                    np.argmax(self.explained_variance_ratio >= self.k_min_var_explained) + 1
+                )
+            self.components_ = eigvecs_mcd[:, sorted_eig_mcd[: self.n_components]]
+            self.explained_variance_ = eigvals_mcd[sorted_eig_mcd[: self.n_components]]
+            self.explained_variance_ratio = (
+                self.explained_variance_[: self.n_components].cumsum() / eigvals_mcd.sum()
             )
+        else:
+            # step 6: get the right number of components
+            self.explained_variance_ratio = eigvals_v[sorted_eig_v_idx].cumsum() / eigvals_v.sum()
+            if self.n_components is None:
+                self.n_components = (
+                    np.argmax(self.explained_variance_ratio >= self.k_min_var_explained) + 1
+                )
+            self.components_ = eigvecs_v[:, sorted_eig_v_idx[: self.n_components]]
+            self.explained_variance_ = eigvals_v[sorted_eig_v_idx[: self.n_components]]
+            self.explained_variance_ratio = (
+                self.explained_variance_[: self.n_components].cumsum() / eigvals_v.sum()
+            )
+        # step 7: transform back to original X
+        X = pca.inverse_transform(X)
+        self.components_ = loadings @ self.components_
+        self.location_ = np.mean(X, axis=0)
         return self

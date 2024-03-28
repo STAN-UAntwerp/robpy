@@ -12,8 +12,14 @@ class UnivariateMCDEstimator(RobustScaleEstimator):
         [Minimum covariance determinant, Mia Hubert & Michiel Debruyne (2009)]
 
         Args:
-            h_size: parameter determining the size of the h-subset. Defaults to floor(n/2) + 1.
-            consistency_correction: whether the estimates should be consistent at the normal model
+            h_size: size of the h subset.
+                If an integer > 1 is passed, it is interpreted as an absolute value.
+                If a float < 1 is passed, it is interpreted as a proportation
+                    of n (the training set size).
+                If None, it is set to floor(n/2) + 1.
+                Defaults to None.
+            consistency_correction: whether the estimates should be consistent at the normal model.
+                Defaults to True.
         """
         self.h_size = h_size
         self.consistency_correction = consistency_correction
@@ -28,7 +34,7 @@ class UnivariateMCDEstimator(RobustScaleEstimator):
 
         self.raw_variance_, self.raw_location_ = self._get_raw_estimates(X)
         self.variance_, self.location_ = self._reweighting(X)
-        self.raw_scale_ = np.sqrt(self.variance_)
+        self.raw_scale_ = np.sqrt(self.raw_variance_)
         self.scale_ = np.sqrt(self.variance_)
 
     def _get_raw_estimates(self, X: np.ndarray):
@@ -63,7 +69,7 @@ class UnivariateMCDEstimator(RobustScaleEstimator):
         n = len(X)
         if self.h_size is None:
             self.h_size = n // 2 + 1
-        elif isinstance(self.h_size, int) and (1 < self.h_size <= n):
+        elif isinstance(self.h_size, int) and (1 <= self.h_size <= n):
             pass
         elif isinstance(self.h_size, float) and (0 < self.h_size < 1):
             self.h_size = int(self.h_size * n)

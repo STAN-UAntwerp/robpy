@@ -5,7 +5,12 @@ from robpy.utils.weighted import weighted_median
 
 
 class QnEstimator(RobustScaleEstimator):
-    def __init__(self, location_func: LocationOrScaleEstimator = np.median):
+    def __init__(
+        self,
+        location_func: LocationOrScaleEstimator = np.median,
+        consistency_correction: bool = True,
+        finite_correction: bool = True,
+    ):
         """
         Implementation of Qn estimator
 
@@ -16,20 +21,28 @@ class QnEstimator(RobustScaleEstimator):
 
         Args:
             location_func: as the location estimator does not estimate location,
-                a location function should be explicitly passed
+                a location function should be explicitly passed.
+            consistency_correction (bool, optional):
+                boolean indicating if consistency for normality should be applied.
+                Defaults to True.
+            finite_correction (bool, optional):
+                boolean indicating if finite sample correction should be applied.
+                Defaults to True.
         """
         self.location_func = location_func
+        self.consistency_correction = consistency_correction
+        self.finite_correction = finite_correction
 
     def _calculate(self, X: np.ndarray):
         """
         Args:
-            X: univariate data
+            X (np.ndarray):
+                univariate data
         """
 
         n = len(X)
         h = n // 2 + 1
         k = h * (h - 1) // 2
-        c = 2.219144
         y = np.sort(X)
         left = n + 1 - np.arange(n)
         right = np.full(n, n)
@@ -63,8 +76,13 @@ class QnEstimator(RobustScaleEstimator):
                         work.append(y[i] - y[n - jj - 1 + 1])
             k = int(knew - nL)
             Qn = np.partition(np.array(work), k)[:k].max()
-        dn = _get_small_sample_dn(n)
-        Qn = dn * c * Qn
+
+        if self.finite_correction:
+            dn = _get_small_sample_dn(n)
+            Qn = dn * Qn
+        if self.consistency_correction:
+            c = 2.219144
+            Qn = c * Qn
 
         self.scale_ = Qn
         self.location_ = self.location_func(X)

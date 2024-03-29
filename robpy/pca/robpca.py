@@ -73,7 +73,7 @@ class ROBPCAEstimator(RobustPCAEstimator):
             eigvals_mcd, eigvecs_mcd = np.linalg.eigh(mcd.covariance)
             sorted_eig_mcd = np.argsort(eigvals_mcd)[::-1]
             # step 6: get the right number of components
-            self.explained_variance_ratio = eigvals_mcd[sorted_eig_mcd].cumsum() / eigvals_mcd.sum()
+            self.explained_variance_ratio = eigvals_mcd[sorted_eig_mcd].cumsum() / eigvals_v.sum()
             if self.n_components is None:
                 self.n_components = (
                     np.argmax(self.explained_variance_ratio >= self.k_min_var_explained) + 1
@@ -83,7 +83,7 @@ class ROBPCAEstimator(RobustPCAEstimator):
             )
             self.explained_variance_ = eigvals_mcd[sorted_eig_mcd[: self.n_components]]
             self.explained_variance_ratio = (
-                self.explained_variance_[: self.n_components].cumsum() / eigvals_mcd.sum()
+                self.explained_variance_[: self.n_components].cumsum() / eigvals_v.sum()
             )
         else:
             # step 6: get the right number of components

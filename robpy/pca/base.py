@@ -42,7 +42,7 @@ class RobustPCAEstimator(_BasePCA):
             Projection of X in the first principal components, where `n_samples`
             is the number of samples and `n_components` is the number of the components.
         """
-        if self.location_ is not None:
+        if self.location_ is None:
             self.location_ = np.mean(X, axis=0)
         return (X - self.location_) @ self.components_
 

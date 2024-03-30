@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from sklearn.decomposition import PCA
-from robpy.pca.base import RobustPCAEstimator, get_od_cutoff
+from robpy.pca.base import RobustPCAEstimator
 from robpy.utils.l1median import l1median
 from scipy.stats import median_abs_deviation
 

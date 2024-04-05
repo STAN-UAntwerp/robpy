@@ -1,7 +1,7 @@
 import numpy as np
 
 from robpy.univariate.base import RobustScaleEstimator, LocationOrScaleEstimator
-from robpy.utils.weighted_median import weighted_median
+from robpy.utils.median import weighted_median
 
 
 class QnEstimator(RobustScaleEstimator):

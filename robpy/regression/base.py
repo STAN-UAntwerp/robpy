@@ -58,7 +58,7 @@ class RobustRegressor(RegressorMixin, BaseEstimator):
                 to use to set as threshold for leverage points
         """
 
-        residuals = self.predict(X).reshape(-1, 1) - y.reshape(-1, 1)
+        residuals = y.reshape(-1, 1) - self.predict(X).reshape(-1, 1)
         standardized_residuals = (
             residuals / (median_abs_deviation(residuals) if robust_scaling else np.std(residuals))
         ).flatten()

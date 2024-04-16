@@ -76,9 +76,9 @@ class ROBPCAEstimator(RobustPCAEstimator):
             mcd = FastMCDEstimator().fit(self.transform(X))
             _, eigvecs_mcd = np.linalg.eigh(mcd.covariance)
             k = min(k, np.linalg.matrix_rank(mcd.covariance, hermitian=True))
-            self.components_ = self.components_ @ eigvecs_mcd[:, :k]
-            self.n_components = k
+            self.components_ = self.components_ @ np.flip(eigvecs_mcd[:, -k:], axis=1)
         # step 6: transform back to original X
+        self.n_components = k
         X = pca.inverse_transform(X)
         self.components_ = loadings @ self.components_
         self.location_ = np.mean(X, axis=0)

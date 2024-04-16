@@ -76,6 +76,8 @@ class FastLTSRegressor(RobustRegressor):
             The fitted FastLTS object
         """
         self.logger.setLevel(verbosity)
+        if self.alpha < 0.5 or self.alpha > 1:
+            raise ValueError(f"alpha must be between 0.5 and 1, but received {self.alpha}")
         h = int(X.shape[0] * self.alpha)
         self.logger.info(
             f"Applying {self.n_initial_c_steps} initial c-steps "

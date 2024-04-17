@@ -77,6 +77,9 @@ class FastMCDEstimator(RobustCovarianceEstimator):
         self.verbosity = verbosity
 
     def calculate_covariance(self, X) -> np.ndarray:
+        if self.h_size == 1 or self.h_size == X.shape[0]:
+            self.location_ = X.mean(0)
+            return np.cov(X, rowvar=False)
         # partition data (n_partitions > 1 can speed up algorithm for large datasets)
         partitions = self._partition_data(X)
         self.logger.info(f"Partitioned data into {len(partitions)} partitions")

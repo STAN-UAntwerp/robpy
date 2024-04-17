@@ -41,8 +41,8 @@ class FastMCDEstimator(RobustCovarianceEstimator):
         Args:
             h_size (int | None, optional):
                 size of the h subset.
-                If an integer > 1 is passed, it is interpreted as an absolute value.
-                If a float < 1 is passed, it is interpreted as a proportation
+                If an integer between n/2 and n is passed, it is interpreted as an absolute value.
+                If a float between 0.5 and 1 is passed, it is interpreted as a proportation
                     of n (the training set size).
                 If None, it is set to (n+p+1) / 2.
                 Defaults to None.
@@ -170,13 +170,13 @@ class FastMCDEstimator(RobustCovarianceEstimator):
     def _get_h(self, X: np.ndarray) -> int:
         if self.h_size is None:
             return int((X.shape[0] + X.shape[1] + 1) / 2)
-        elif isinstance(self.h_size, int) and (self.h_size > 1):
+        elif isinstance(self.h_size, int) and (X.shape[0] / 2 <= self.h_size <= X.shape[0]):
             return self.h_size
-        elif isinstance(self.h_size, float) and (0 < self.h_size < 1):
+        elif (isinstance(self.h_size, float) and (0.5 <= self.h_size <= 1)) or self.h_size == 1:
             return int(self.h_size * X.shape[0])
         else:
             raise ValueError(
-                f"h_size must be an integer > 1 or a float between 0 and 1 "
+                f"h_size must be an integer between n/2 and n or a float between 0.5 and 1 "
                 f"but received {self.h_size}"
             )
 

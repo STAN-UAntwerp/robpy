@@ -195,6 +195,12 @@ class FastMCDEstimator(RobustCovarianceEstimator):
         mu = X[indices].mean(axis=0)
         cov = np.cov(X[indices], rowvar=False)
         det = np.linalg.det(cov)
+        while det == 0:
+            new_index = np.random.choice(np.delete(np.arange(X.shape[0]), indices))
+            indices = np.append(indices, new_index)
+            mu = X[indices].mean(axis=0)
+            cov = np.cov(X[indices], rowvar=False)
+            det = np.linalg.det(cov)
         return HSubset(indices, mu, cov, det, n_c_steps=n_c_steps)
 
     def _get_initial_subsets(self, X: np.ndarray, n_subsets: int) -> list[HSubset]:

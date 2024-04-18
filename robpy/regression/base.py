@@ -41,10 +41,10 @@ class RobustRegressor(RegressorMixin, BaseEstimator):
         vertical_outlier_threshold: float = 2.5,
         leverage_threshold_percentile: float = 0.975,
         figsize: tuple[int, int] = (10, 4),
-    ) -> plt.Figure:
+        return_residuals: bool = False,
+    ) -> None | tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Create a diagnostic plot where robust residuals are plotted against the robust
         mahalabobis distances of the training data.
-        Horizontal thresholds (i.e. the thresholds for vertical outliers )
 
         Args:
             X (array like of shape (n_samples, n_features)): training features
@@ -54,13 +54,22 @@ class RobustRegressor(RegressorMixin, BaseEstimator):
                 for calculating the Mahalanobis distances
             vertical_outlier_threshold: where to draw the upper (and lower) limit for
                 the standardized residuals to indicate outliers
-            horizontal_threshold_percentile: which percentile from the chisquare distribution
+            leverage_threshold_percentile: which percentile from the chisquare distribution
                 to use to set as threshold for leverage points
+            figsize (tuple[int, int], optional): Size of the plot. Defaults to (10, 4).
+            return_residuals (bool, optional):
+                Whether to return the residuals, the standardized residuals and the distances.
+                Defaults to False.
         """
 
         residuals = y.reshape(-1, 1) - self.predict(X).reshape(-1, 1)
         standardized_residuals = (
-            residuals / (median_abs_deviation(residuals) if robust_scaling else np.std(residuals))
+            residuals
+            / (
+                median_abs_deviation(residuals, scale="normal")
+                if robust_scaling
+                else np.std(residuals)
+            )
         ).flatten()
 
         if robust_distance:
@@ -72,7 +81,7 @@ class RobustRegressor(RegressorMixin, BaseEstimator):
             location = np.mean(X, axis=0)
         distances = mahalanobis_distance(X, location=location, covariance=covariance)
 
-        fig, ax = plt.subplots(1, 1, figsize=figsize)
+        _, ax = plt.subplots(1, 1, figsize=figsize)
 
         ax.scatter(x=distances, y=standardized_residuals)
         ax.set_xlabel(f"Mahalanobis distance {'(robust)' if robust_distance else ''}")
@@ -85,4 +94,5 @@ class RobustRegressor(RegressorMixin, BaseEstimator):
         leverage_threshold = np.sqrt(chi2.ppf(leverage_threshold_percentile, df))
         ax.axvline(leverage_threshold, ls="--", c="grey")
 
-        return fig
+        if return_residuals:
+            return (residuals, standardized_residuals, distances)

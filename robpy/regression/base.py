@@ -41,7 +41,7 @@ class RobustRegressor(RegressorMixin, BaseEstimator):
         vertical_outlier_threshold: float = 2.5,
         leverage_threshold_percentile: float = 0.975,
         figsize: tuple[int, int] = (10, 4),
-        return_residuals: bool = False,
+        return_data: bool = False,
     ) -> None | tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Create a diagnostic plot where robust residuals are plotted against the robust
         mahalabobis distances of the training data.
@@ -57,7 +57,7 @@ class RobustRegressor(RegressorMixin, BaseEstimator):
             leverage_threshold_percentile: which percentile from the chisquare distribution
                 to use to set as threshold for leverage points
             figsize (tuple[int, int], optional): Size of the plot. Defaults to (10, 4).
-            return_residuals (bool, optional):
+            return_data (bool, optional):
                 Whether to return the residuals, the standardized residuals and the distances.
                 Defaults to False.
         """
@@ -94,5 +94,5 @@ class RobustRegressor(RegressorMixin, BaseEstimator):
         leverage_threshold = np.sqrt(chi2.ppf(leverage_threshold_percentile, df))
         ax.axvline(leverage_threshold, ls="--", c="grey")
 
-        if return_residuals:
+        if return_data:
             return (residuals, standardized_residuals, distances)

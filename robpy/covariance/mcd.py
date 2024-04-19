@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+import math as math
 
 from dataclasses import dataclass
 from scipy.stats import chi2, gamma
@@ -78,6 +79,7 @@ class FastMCDEstimator(RobustCovarianceEstimator):
 
     def calculate_covariance(self, X) -> np.ndarray:
         if self.h_size == 1 or self.h_size == X.shape[0]:
+            self.logger.warning(f"Default covariance is returned as h_size is {self.h_size}.")
             self.location_ = X.mean(0)
             return np.cov(X, rowvar=False)
         # partition data (n_partitions > 1 can speed up algorithm for large datasets)
@@ -179,8 +181,8 @@ class FastMCDEstimator(RobustCovarianceEstimator):
             return int(self.h_size * X.shape[0])
         else:
             raise ValueError(
-                f"h_size must be an integer between n/2 and n or a float between 0.5 and 1 "
-                f"but received {self.h_size}"
+                f"h_size must be an integer between n/2 ({X.shape[0] // 2}) and n ({X.shape[0]}) or"
+                f" a float between 0.5 and 1, but received {self.h_size}."
             )
 
     def _partition_data(self, X: np.ndarray) -> list[np.ndarray]:
@@ -191,22 +193,36 @@ class FastMCDEstimator(RobustCovarianceEstimator):
 
         return np.array_split(X, n_partitions)
 
-    def _get_subset(self, indices: np.ndarray, X: np.ndarray, n_c_steps: int = 0) -> HSubset:
+    def _get_subset(
+        self, indices: np.ndarray, X: np.ndarray, n_c_steps: int = 0, resample: bool = False
+    ) -> HSubset:
+        """Construct an HSubset from a set of data indices and calculate location, scale and
+         determinant.
+        Args:
+             - indices: data indices
+             - X: complete dataset
+             - n_c_steps: will be passed directly to the HSubset
+             - resample: whether to resample in case the determinant is 0 (relevant for sampling
+                 initial subsets)
+        """
         mu = X[indices].mean(axis=0)
         cov = np.cov(X[indices], rowvar=False)
         det = np.linalg.det(cov)
-        while det == 0:
-            new_index = np.random.choice(np.delete(np.arange(X.shape[0]), indices))
-            indices = np.append(indices, new_index)
-            mu = X[indices].mean(axis=0)
-            cov = np.cov(X[indices], rowvar=False)
-            det = np.linalg.det(cov)
+        if resample:
+            while math.isclose(det, 0):
+                new_index = np.random.choice(np.delete(np.arange(X.shape[0]), indices))
+                indices = np.append(indices, new_index)
+                mu = X[indices].mean(axis=0)
+                cov = np.cov(X[indices], rowvar=False)
+                det = np.linalg.det(cov)
         return HSubset(indices, mu, cov, det, n_c_steps=n_c_steps)
 
     def _get_initial_subsets(self, X: np.ndarray, n_subsets: int) -> list[HSubset]:
         return [
             self._get_subset(
-                indices=np.random.choice(X.shape[0], X.shape[1] + 1, replace=False), X=X
+                indices=np.random.choice(X.shape[0], X.shape[1] + 1, replace=False),
+                X=X,
+                resample=True,
             )
             for _ in range(n_subsets)
         ]

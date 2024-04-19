@@ -194,7 +194,11 @@ class FastMCDEstimator(RobustCovarianceEstimator):
         return np.array_split(X, n_partitions)
 
     def _get_subset(
-        self, indices: np.ndarray, X: np.ndarray, n_c_steps: int = 0, resample: bool = False
+        self,
+        indices: np.ndarray,
+        X: np.ndarray,
+        n_c_steps: int = 0,
+        ensure_non_singular: bool = False,
     ) -> HSubset:
         """Construct an HSubset from a set of data indices and calculate location, scale and
          determinant.
@@ -202,13 +206,13 @@ class FastMCDEstimator(RobustCovarianceEstimator):
              - indices: data indices
              - X: complete dataset
              - n_c_steps: will be passed directly to the HSubset
-             - resample: whether to resample in case the determinant is 0 (relevant for sampling
-                 initial subsets)
+             - ensure_non_singular: whether to resample in case the determinant is 0 (relevant for
+             sampling initial subsets)
         """
         mu = X[indices].mean(axis=0)
         cov = np.cov(X[indices], rowvar=False)
         det = np.linalg.det(cov)
-        if resample:
+        if ensure_non_singular:
             while math.isclose(det, 0):
                 new_index = np.random.choice(np.delete(np.arange(X.shape[0]), indices))
                 indices = np.append(indices, new_index)
@@ -222,7 +226,7 @@ class FastMCDEstimator(RobustCovarianceEstimator):
             self._get_subset(
                 indices=np.random.choice(X.shape[0], X.shape[1] + 1, replace=False),
                 X=X,
-                resample=True,
+                ensure_non_singular=True,
             )
             for _ in range(n_subsets)
         ]

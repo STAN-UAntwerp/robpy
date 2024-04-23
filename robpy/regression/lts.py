@@ -3,6 +3,7 @@ import logging
 
 import numpy as np
 from sklearn.exceptions import NotFittedError
+from scipy.stats import norm
 
 from tqdm.auto import tqdm
 from sklearn.linear_model import LinearRegression
@@ -25,6 +26,7 @@ class FastLTSRegressor(RobustRegressor):
         n_initial_subsets: int = 500,
         n_initial_c_steps: int = 2,
         n_best_models: int = 10,
+        reweighting: bool = True,
         tolerance: float = 1e-15,
         random_state: int = 42,
     ):
@@ -41,6 +43,7 @@ class FastLTSRegressor(RobustRegressor):
                                      before final c-steps until convergenge . Defaults to 2.
             n_best_models (int): number of best models after initial c-steps to consider
                                  until convergence. Defaults to 10.
+            reweighting (bool): Whether to apply reweighting to the raw estimates. Defaults to True.
             tolerance (float): Acceptable delta in loss value between C-steps.
                                If current loss  -  previous loss <= tolerance, model is converged.
                                Defaults to 1e-15.
@@ -49,6 +52,7 @@ class FastLTSRegressor(RobustRegressor):
         self.n_initial_subsets = n_initial_subsets
         self.n_initial_c_steps = n_initial_c_steps
         self.n_best_models = n_best_models
+        self.reweighting = reweighting
         self.tolerance = tolerance
         self.random_state = random_state
         self.logger = logging.getLogger("FastLTS")
@@ -76,6 +80,8 @@ class FastLTSRegressor(RobustRegressor):
             The fitted FastLTS object
         """
         self.logger.setLevel(verbosity)
+        if self.alpha < 0.5 or self.alpha > 1:
+            raise ValueError(f"alpha must be between 0.5 and 1, but received {self.alpha}")
         h = int(X.shape[0] * self.alpha)
         self.logger.info(
             f"Applying {self.n_initial_c_steps} initial c-steps "
@@ -111,6 +117,15 @@ class FastLTSRegressor(RobustRegressor):
         self._scale = get_correction_factor(p=X.shape[1], n=X.shape[0], alpha=self.alpha) * np.sqrt(
             best_loss
         )
+        if self.reweighting:
+            residuals = y.reshape(-1, 1) - self.predict(X)
+            mask = (np.abs(residuals / np.std(residuals)) <= norm.ppf(0.9875)).flatten()
+            self.model = LinearRegression().fit(X[mask, :], y[mask])
+            new_subset = np.arange(X.shape[0])[mask]
+            best_loss = self._get_loss_value(X, y, new_subset, self.model)
+            self._scale = get_correction_factor_reweighting(
+                p=X.shape[1], n=X.shape[0], alpha=self.alpha
+            ) * np.sqrt(best_loss)
 
         return self
 
@@ -294,10 +309,9 @@ def get_correction_factor(p: int, n: int, alpha: float) -> float:
         fp_875_n = 1 - np.exp(-0.351584646688712) / n**1.01646567502486
         if 0.5 <= alpha <= 0.875:
             fp_alpha_n = fp_500_n + (fp_875_n - fp_500_n) / 0.375 * (alpha - 0.5)
-            fp_alpha_n = np.sqrt(fp_alpha_n)
         else:  # 0.875 < alpha < 1
             fp_alpha_n = fp_875_n + (1 - fp_875_n) / 0.125 * (alpha - 0.875)
-            fp_alpha_n = np.sqrt(fp_alpha_n)
+        fp_alpha_n = np.sqrt(fp_alpha_n)
     else:
         if p == 1:
             fp_500_n = 1 - np.exp(0.630869217886906) / n**0.650789250442946
@@ -313,6 +327,59 @@ def get_correction_factor(p: int, n: int, alpha: float) -> float:
                 [
                     [-0.746945886714663, 0.56264937192689, 3],
                     [-0.535478048924724, 0.543323462033445, 5],
+                ]
+            )
+            y_500 = np.log(-coefeqpkwad500[:, 0] / (p ** coefeqpkwad500[:, 1]))
+            y_875 = np.log(-coefgqpkwad875[:, 0] / (p ** coefgqpkwad875[:, 1]))
+            A_500 = np.column_stack((np.ones(2), -np.log(coefeqpkwad500[:, 2] * p**2)))
+            coeffic_500 = np.linalg.solve(A_500, y_500)
+            A_875 = np.column_stack((np.ones(2), -np.log(coefgqpkwad875[:, 2] * p**2)))
+            coeffic_875 = np.linalg.solve(A_875, y_875)
+
+            fp_500_n = 1 - np.exp(coeffic_500[0]) / n ** coeffic_500[1]
+            fp_875_n = 1 - np.exp(coeffic_875[0]) / n ** coeffic_875[1]
+
+        if alpha <= 0.875:
+            fp_alpha_n = fp_500_n + (fp_875_n - fp_500_n) / 0.375 * (alpha - 0.5)
+        else:
+            fp_alpha_n = fp_875_n + (1 - fp_875_n) / 0.125 * (alpha - 0.875)
+    return 1 / fp_alpha_n
+
+
+def get_correction_factor_reweighting(p: int, n: int, alpha: float) -> float:
+    """
+    Calculate the small sample correction factor for the scale resulting from LTS regression.
+    References:
+        Pison, G., Van Aelst, S. & Willems, G. Small sample corrections for LTS and MCD.
+        Metrika 55, 111–123 (2002). https://doi.org/10.1007/s001840200191
+
+        https://github.com/cran/robustbase/blob/c4b9d21cfc4beb64653bb2ffba9e549e2dbb98ed/R/ltsReg.R
+    """
+    if alpha < 0.5 or alpha > 1:
+        raise ValueError(f"alpha must be between 0.5 and 1, but received {alpha}")
+    if p == 0:  # intercept only
+        fp_500_n = 1 - np.exp(1.11098143415027) / n**1.5182890270453
+        fp_875_n = 1 - np.exp(-0.66046776772861) / n**0.88939595831888
+        if 0.5 <= alpha <= 0.875:
+            fp_alpha_n = fp_500_n + (fp_875_n - fp_500_n) / 0.375 * (alpha - 0.5)
+        else:  # 0.875 < alpha < 1
+            fp_alpha_n = fp_875_n + (1 - fp_875_n) / 0.125 * (alpha - 0.875)
+        fp_alpha_n = np.sqrt(fp_alpha_n)
+    else:
+        if p == 1:
+            fp_500_n = 1 - np.exp(1.58609654199605) / n**1.46340162526468
+            fp_875_n = 1 - np.exp(0.391653958727332) / n**1.03167487483316
+        else:
+            coefgqpkwad875 = np.array(
+                [
+                    [-0.474174840843602, 1.39681715704956, 3],
+                    [-0.276640353112907, 1.42543242287677, 5],
+                ]
+            )
+            coefeqpkwad500 = np.array(
+                [
+                    [-0.773365715932083, 2.02013996406346, 3],
+                    [-0.337571678986723, 2.02037467454833, 5],
                 ]
             )
             y_500 = np.log(-coefeqpkwad500[:, 0] / (p ** coefeqpkwad500[:, 1]))

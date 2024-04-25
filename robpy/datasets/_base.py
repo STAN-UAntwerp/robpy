@@ -247,10 +247,10 @@ def load_topgear(*, as_frame=False):
     --------
     Fitting a robust regression estimator
 
-    >>> from robpy.datasets import load_animals
+    >>> from robpy.datasets import load_topgear
     >>> from robpy.regression import FastLTSRegressor
     >>> data = load_topgear(as_frame=True)
-    >>> data = data.dropna(subset=["Cylinders", "Torque", "TopSpeed", "Price"])
+    >>> data.data = data.data.dropna(subset=["Cylinders", "Torque", "TopSpeed", "Price"])
     >>> lts = FastLTSRegressor().fit(
             data.data[["Cylinders", "Torque", "TopSpeed"]], data.data["Price"]
         )

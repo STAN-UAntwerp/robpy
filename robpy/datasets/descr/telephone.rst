@@ -9,7 +9,7 @@ Telephone dataset
 - Number of Attributes: 2 numeric
 - Attribute Information:
     * Year (1950 - 1973)
-*  Calls (in tens of millions)
+    * Calls (in tens of millions)
 
 - Missing Attribute Values: None
 - Creator: Ministry of Economy, Belgium

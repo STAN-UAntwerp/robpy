@@ -40,8 +40,6 @@ def load_telephone(*, as_frame=False):
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric). The target is
         a pandas DataFrame or Series depending on the number of target columns.
-        If `return_X_y` is True, then (`data`, `target`) will be pandas
-        DataFrames or Series as described below.
 
 
     Returns
@@ -58,12 +56,6 @@ def load_telephone(*, as_frame=False):
             The full description of the dataset.
         filename: str
             The path to the location of the data.
-
-    (data, target) : tuple if ``return_X_y`` is True
-        A tuple of two ndarray. The first containing a 2D array of shape
-        (n_samples, n_features) with each row representing one sample and
-        each column representing the features. The second ndarray of shape
-        (n_samples,) containing the target samples.
 
     Examples
     --------
@@ -135,7 +127,7 @@ def load_stars(*, as_frame=False):
     >>> from robpy.datasets import load_stars
     >>> from robpy.covariance import FastMCDEstimator
     >>> data = load_stars()
-    >>> mm = MMEstimator().fit(data.data)
+    >>> mcd = FastMCDEstimator().fit(data.data)
     """
     data_file_name = "stars.csv"
     descr_file_name = "stars.rst"
@@ -195,7 +187,7 @@ def load_animals(*, as_frame=False):
     >>> from robpy.datasets import load_animals
     >>> from robpy.covariance import FastMCDEstimator
     >>> data = load_animals()
-    >>> mm = MMEstimator().fit(data.data)
+    >>> mcd = FastMCDEstimator().fit(data.data)
     """
     data_file_name = "animals.csv"
     descr_file_name = "animals.rst"
@@ -258,7 +250,8 @@ def load_topgear(*, as_frame=False):
     >>> from robpy.datasets import load_animals
     >>> from robpy.regression import FastLTSRegressor
     >>> data = load_topgear(as_frame=True)
-    >>> mm = FastLTSRegressor().fit(
+    >>> data = data.dropna(subset=["Cylinders", "Torque", "TopSpeed", "Price"])
+    >>> lts = FastLTSRegressor().fit(
             data.data[["Cylinders", "Torque", "TopSpeed"]], data.data["Price"]
         )
     """

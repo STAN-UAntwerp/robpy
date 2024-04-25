@@ -5,7 +5,7 @@ from sklearn.exceptions import NotFittedError
 from statsmodels.api import WLS, add_constant
 from statsmodels.regression.linear_model import RegressionResultsWrapper
 
-from robpy.regression.base import RobustRegressor
+from robpy.regression.base import RobustRegressor, _convert_input_to_array
 from robpy.utils.rho import BaseRho, TukeyBisquare
 
 
@@ -86,6 +86,8 @@ class SEstimator(RobustRegressor):
 
     def fit(self, X, y, verbosity=logging.WARNING):
         self.logger.setLevel(verbosity)
+
+        X, y = _convert_input_to_array(X, y)
         if self.fit_intercept:
             X = add_constant(X)
         models, scales = self._get_initial_models(X, y)
@@ -130,6 +132,7 @@ class SEstimator(RobustRegressor):
     def predict(self, X) -> np.ndarray:
         if self.model is None:
             raise NotFittedError
+        X, _ = _convert_input_to_array(X)
         if self.fit_intercept:
             X = add_constant(X)
         return self.model.predict(X)

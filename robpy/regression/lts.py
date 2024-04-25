@@ -2,13 +2,14 @@ from __future__ import annotations
 import logging
 
 import numpy as np
+import pandas as pd
 from sklearn.exceptions import NotFittedError
 from scipy.stats import norm
 
 from tqdm.auto import tqdm
 from sklearn.linear_model import LinearRegression
 
-from robpy.regression.base import RobustRegressor
+from robpy.regression.base import RobustRegressor, _convert_input_to_array
 
 
 class FastLTSRegressor(RobustRegressor):
@@ -59,8 +60,8 @@ class FastLTSRegressor(RobustRegressor):
 
     def fit(
         self,
-        X: np.ndarray,
-        y: np.ndarray,
+        X: np.ndarray | pd.DataFrame,
+        y: np.ndarray | pd.Series,
         initial_weights: np.ndarray | None = None,
         verbosity: int = logging.INFO,
     ) -> FastLTSRegressor:
@@ -80,6 +81,9 @@ class FastLTSRegressor(RobustRegressor):
             The fitted FastLTS object
         """
         self.logger.setLevel(verbosity)
+
+        X, y = _convert_input_to_array(X, y)
+        y = y.reshape(-1, 1)
         if self.alpha < 0.5 or self.alpha > 1:
             raise ValueError(f"alpha must be between 0.5 and 1, but received {self.alpha}")
         h = int(X.shape[0] * self.alpha)
@@ -87,7 +91,7 @@ class FastLTSRegressor(RobustRegressor):
             f"Applying {self.n_initial_c_steps} initial c-steps "
             f"on {self.n_initial_subsets} initial subsets"
         )
-        y = y.reshape(-1, 1)
+
         lr_models, losses, h_subsets = self._apply_initial_C_steps(
             X, y, h, initial_weights=initial_weights, verbosity=verbosity
         )
@@ -129,9 +133,12 @@ class FastLTSRegressor(RobustRegressor):
 
         return self
 
-    def predict(self, X: np.ndarray) -> np.ndarray:
+    def predict(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
         if not hasattr(self, "model"):
             raise NotFittedError
+
+        X, _ = _convert_input_to_array(X)
+
         return self.model.predict(X).reshape(-1, 1)
 
     def _apply_initial_C_steps(

@@ -6,10 +6,10 @@ Telephone dataset
 **Data Set Characteristics:**
 
 - Number of Instances: 24 
-- Number of Attributes: 1 numeric
+- Number of Attributes: 2 numeric
 - Attribute Information:
     * Year (1950 - 1973)
-
+*  Calls (in tens of millions)
 
 - Missing Attribute Values: None
 - Creator: Ministry of Economy, Belgium

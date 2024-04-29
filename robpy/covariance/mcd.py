@@ -287,10 +287,8 @@ class DetMCDEstimator(RobustCovarianceEstimator):
         # Step 0: standardize X
         if n < 1000:
             Z = (X - np.median(X, axis=0)) / self._Qn_scale(X)
-            print("Qn used")
         else:
             Z = (X - np.median(X, axis=0)) / self._tau_scale(X)
-            print("tau used")
 
         # Step 1: construct 6 preliminary estimates Sk of covariance or correlation
         Y = np.tanh(Z)
@@ -369,7 +367,7 @@ class DetMCDEstimator(RobustCovarianceEstimator):
 
         return scale
 
-    # TODO: de functies hieronder moeten nog naar ergens anders. base.py bijvoorbeeld?
+    # TODO: de functies hieronder moeten nog naar ergens anders.
 
     def _Qn_scale(self, X, axis=0):
         if X.ndim == 1:

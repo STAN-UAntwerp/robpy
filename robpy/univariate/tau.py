@@ -44,11 +44,11 @@ class TauEstimator(RobustScaleEstimator):
             1 / n * np.sum(self._rho_function((X - self.location_) / sigma0))
         )
         if self.consistency_correction:
-            """ 
+            """
             expectation of rho(X/qnorm(3/4)) for X standard normal
             """
-            b = self.c2*norm.ppf(3/4)
-            corr = 2 * ((1 - b**2) * norm.cdf(b) - b * norm.pdf(b) + b**2)- 1
+            b = self.c2 * norm.ppf(3 / 4)
+            corr = 2 * ((1 - b**2) * norm.cdf(b) - b * norm.pdf(b) + b**2) - 1
             self.scale_ = self.scale_ / np.sqrt(corr)
 
     def _weight_function(self, X):

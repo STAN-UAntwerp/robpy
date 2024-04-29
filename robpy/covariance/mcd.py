@@ -4,13 +4,14 @@ import math as math
 
 from dataclasses import dataclass
 from scipy.linalg import sqrtm
-from scipy.stats import chi2, gamma, rankdata, norm, median_abs_deviation
+from scipy.stats import chi2, gamma, rankdata, norm
 
 from robpy.covariance.base import RobustCovarianceEstimator
 from robpy.utils.distance import mahalanobis_distance
 from robpy.utils.logging import get_logger
-from robpy.univariate import QnEstimator
+from robpy.univariate.qn import QnEstimator
 from robpy.covariance.ogk import OGKEstimator
+from robpy.univariate.tau import TauEstimator
 
 
 @dataclass
@@ -284,7 +285,12 @@ class DetMCDEstimator(RobustCovarianceEstimator):
         p = X.shape[1]
 
         # Step 0: standardize X
-        Z = (X - np.median(X, axis=0)) / self._Qn_scale(X)
+        if n < 1000:
+            Z = (X - np.median(X, axis=0)) / self._Qn_scale(X)
+            print("Qn used")
+        else:
+            Z = (X - np.median(X, axis=0)) / self._tau_scale(X)
+            print("tau used")
 
         # Step 1: construct 6 preliminary estimates Sk of covariance or correlation
         Y = np.tanh(Z)
@@ -370,6 +376,12 @@ class DetMCDEstimator(RobustCovarianceEstimator):
             return QnEstimator().fit(X).scale
         if axis == 0:
             return [QnEstimator().fit(col).scale for col in X.T]
+
+    def _tau_scale(self, X, axis=0):
+        if X.ndim == 1:
+            return TauEstimator().fit(X).scale
+        if axis == 0:
+            return [TauEstimator().fit(col).scale for col in X.T]
 
     def _get_h(self, X: np.ndarray) -> int:
         if self.h_size is None:

@@ -2,6 +2,7 @@ from __future__ import annotations
 import logging
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from scipy.stats import median_abs_deviation, chi2
 from sklearn.base import RegressorMixin, BaseEstimator
@@ -96,3 +97,14 @@ class RobustRegressor(RegressorMixin, BaseEstimator):
 
         if return_data:
             return (residuals, standardized_residuals, distances)
+
+
+def _convert_input_to_array(X, y=None) -> tuple[np.ndarray, np.ndarray | None]:
+    if isinstance(X, pd.DataFrame):
+        X = X.values
+    if (len(X.shape) == 1) or (X.shape[1] == 1):
+        X = X.reshape(-1, 1)
+    if isinstance(y, pd.Series):
+        y = y.values
+
+    return X, y

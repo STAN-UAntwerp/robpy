@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LinearRegression
 
-from robpy.regression.base import RobustRegressor
+from robpy.regression.base import RobustRegressor, _convert_input_to_array
 from robpy.regression.s_estimator import SEstimator
 from robpy.utils.rho import BaseRho, TukeyBisquare
 
@@ -24,7 +25,8 @@ class MMEstimator(RobustRegressor):
         self.epsilon = epsilon
         self.model = None
 
-    def fit(self, X, y) -> MMEstimator:
+    def fit(self, X: np.ndarray | pd.DataFrame, y: np.ndarray | pd.Series) -> MMEstimator:
+        X, y = _convert_input_to_array(X, y)
         self.model = self.initial_estimator.fit(X, y)
         self._scale = self.model.scale
         self.n_iter = 0
@@ -41,7 +43,8 @@ class MMEstimator(RobustRegressor):
                 break
         return self
 
-    def predict(self, X) -> np.ndarray:
+    def predict(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
         if self.model is None:
             raise NotFittedError
+        X, _ = _convert_input_to_array(X)
         return self.model.predict(X)

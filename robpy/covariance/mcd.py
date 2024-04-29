@@ -280,17 +280,17 @@ class DetMCDEstimator(RobustCovarianceEstimator):
             self.location_ = X.mean(0)
             return np.cov(X, rowvar=False)
 
+        n = X.shape[0]
+        p = X.shape[1]
+
         # Step 0: standardize X
-        median = np.median(X, axis=0)
-        qn = [QnEstimator().fit(col).scale for col in X.T]
-        Z = (X - median) / qn
+        Z = (X - np.median(X, axis=0)) / self._Qn_scale(X)
 
         # Step 1: construct 6 preliminary estimates Sk of covariance or correlation
         Y = np.tanh(Z)
         S1 = np.corrcoef(Y, rowvar=False)
         R = rankdata(Z, axis=0)
         S2 = np.corrcoef(R, rowvar=False)
-        n = X.shape[0]
         S3 = np.corrcoef(norm.ppf((R - 1 / 3) / (n + 1 / 3)), rowvar=False)
         znorm = np.sqrt(np.sum(Z * Z, axis=1))
         w = 1 / znorm
@@ -307,6 +307,7 @@ class DetMCDEstimator(RobustCovarianceEstimator):
         estimates_mu = []
         for S in estimates_S:
             _, E = np.linalg.eigh(S)
+            E = E[:, np.arange(p - 1, -1, -1)]
             B = Z @ E
             L = np.diag(np.power(self._Qn_scale(B), 2))
             cov = E @ L @ E.T
@@ -320,7 +321,7 @@ class DetMCDEstimator(RobustCovarianceEstimator):
         best_subsets = []
         for mu, cov in zip(estimates_mu, estimates_sigma):
             idx_h0 = np.argsort(mahalanobis_distance(Z, mu, cov))[: math.ceil(n / 2)]
-            H = self._get_subset(idx_h0, Z)  # h0
+            H = self._get_subset(idx_h0, X)  # h0
             H = self._perform_c_step(H, X)  # h
             best_subsets.append(H)
 
@@ -335,7 +336,6 @@ class DetMCDEstimator(RobustCovarianceEstimator):
                 ):
                     break
                 subset = new_subset
-                print(subset.determinant)
             if subset.determinant < best_subset.determinant:
                 best_subset = subset
         self.best_subset = best_subset

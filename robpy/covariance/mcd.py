@@ -12,6 +12,7 @@ from robpy.utils.logging import get_logger
 from robpy.univariate.qn import QnEstimator
 from robpy.covariance.ogk import OGKEstimator
 from robpy.univariate.tau import TauEstimator
+from robpy.univariate.mcd import UnivariateMCDEstimator
 
 
 @dataclass
@@ -83,10 +84,21 @@ class FastMCDEstimator(RobustCovarianceEstimator):
         self.verbosity = verbosity
 
     def calculate_covariance(self, X) -> np.ndarray:
+
+        p = X.shape[1]
+        if p == 1:
+            self.logger.warning(f"Univariate MCD is returned as p is {p}.")
+            mcd = UnivariateMCDEstimator(
+                h_size=self.h_size, consistency_correction=self.correct_covariance
+            ).fit(X)
+            self.location_ = mcd.location
+            return mcd.scale
+
         if self.h_size == 1 or self.h_size == X.shape[0]:
             self.logger.warning(f"Default covariance is returned as h_size is {self.h_size}.")
             self.location_ = X.mean(0)
             return np.cov(X, rowvar=False)
+
         # partition data (n_partitions > 1 can speed up algorithm for large datasets)
         partitions = self._partition_data(X)
         self.logger.info(f"Partitioned data into {len(partitions)} partitions")
@@ -276,13 +288,22 @@ class DetMCDEstimator(RobustCovarianceEstimator):
         self.verbosity = verbosity
 
     def calculate_covariance(self, X) -> np.ndarray:
+
+        n = X.shape[0]
+        p = X.shape[1]
+
+        if p == 1:
+            self.logger.warning(f"Univariate MCD is returned as p is {p}.")
+            mcd = UnivariateMCDEstimator(
+                h_size=self.h_size, consistency_correction=self.correct_covariance
+            ).fit(X)
+            self.location_ = mcd.location
+            return mcd.scale
+
         if self.h_size == 1 or self.h_size == X.shape[0]:
             self.logger.warning(f"Default covariance is returned as h_size is {self.h_size}.")
             self.location_ = X.mean(0)
             return np.cov(X, rowvar=False)
-
-        n = X.shape[0]
-        p = X.shape[1]
 
         # Step 0: standardize X
         if n < 1000:

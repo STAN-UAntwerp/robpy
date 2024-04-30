@@ -1,6 +1,6 @@
 import numpy as np
 
-from robpy.preprocessing import wrapping_transformation
+from robpy.preprocessing.utils import wrapping_transformation
 from robpy.covariance.base import RobustCovarianceEstimator
 
 

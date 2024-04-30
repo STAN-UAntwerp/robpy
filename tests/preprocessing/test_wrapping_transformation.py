@@ -1,7 +1,7 @@
 import numpy as np
 
 from typing import Any
-from robpy.preprocessing import wrapping_transformation
+from robpy.preprocessing.utils import wrapping_transformation
 
 
 def test_wrapping_transformation_case1():

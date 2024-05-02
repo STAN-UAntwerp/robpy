@@ -18,33 +18,33 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        fracNA: float = 0.5,
-        numDiscrete: int = 3,
-        precScale: float = 1e-12,
-        cleanNAfirst: str = "automatic",
+        frac_na: float = 0.5,
+        num_discrete: int = 3,
+        prec_scale: float = 1e-12,
+        clean_na_first: str = "automatic",
     ):
         """Initialize CheckDataset
 
         Args:
-            fracNA (float, optional): Keep only the columns and rows that have a proportion of
+            frac_na (float, optional): Keep only the columns and rows that have a proportion of
                             missing values lower than this threshold.
                            Defaults to 0.5.
-            numDiscrete (int, optional): Any column with numDiscrete or fewer distinct values will
+            num_discrete (int, optional): Any column with num_discrete or fewer distinct values will
                             be classified as discrete and excluded from the cleaned dataset.
                             Defaults to 3.
-            precScale (float, optional): Only columns whose scale is larger than precScale will be
+            prec_scale (float, optional): Only columns whose scale is larger than prec_scale will be
                             considered (scale is measure bu the mad).
                             Defaults to 1e-12.
-            cleanNAfirst (str, optional): One out of "automatic", "columns", "rows". Decides which
+            clean_na_first (str, optional): One out of "automatic", "columns", "rows". Decides which
                             are first checked for NAs. If "automatic", columns are checked first if
                             if p >= 5n, else rows are checked first.
                             Defaults to "automatic".
         """
 
-        self.fracNA = fracNA
-        self.numDiscrete = numDiscrete
-        self.precScale = precScale
-        self.cleanNAfirst = cleanNAfirst
+        self.frac_na = frac_na
+        self.num_discrete = num_discrete
+        self.prec_scale = prec_scale
+        self.clean_na_first = clean_na_first
 
     def fit(
         self,
@@ -90,40 +90,40 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             self._check_enough_cols(X)
 
         # 4)    Clean NAs:
-        if self.cleanNAfirst == "automatic":
+        if self.clean_na_first == "automatic":
             if X.shape[1] >= 5 * X.shape[0]:
-                self.cleanNAfirst = "columns"
+                self.clean_na_first = "columns"
             else:
-                self.cleanNAfirst = "rows"
+                self.clean_na_first = "rows"
 
         X.replace([np.inf, -np.inf], np.nan, inplace=True)
-        if self.cleanNAfirst == "columns":
+        if self.clean_na_first == "columns":
             X = self._clean_cols(X)
             X = self._clean_rows(X)
-        elif self.cleanNAfirst == "rows":
+        elif self.clean_na_first == "rows":
             X = self._clean_rows(X)
             X = self._clean_cols(X)
         else:
             raise ValueError(
-                'The argument cleanNAfirst should be "automatic", "rows" or "columns", '
-                f'but received "{self.cleanNAfirst}".'
+                'The argument clean_na_first should be "automatic", "rows" or "columns", '
+                f'but received "{self.clean_na_first}".'
             )
 
         # 5)    Remove discrete columns:
-        cols_discrete = X.columns[X.nunique() <= self.numDiscrete].tolist()
+        cols_discrete = X.columns[X.nunique() <= self.num_discrete].tolist()
         if len(cols_discrete) > 0:
             print(
                 f"\nThe data contains {len(cols_discrete)} discrete column(s) with "
-                f"{self.numDiscrete} or fewer unique values. "
+                f"{self.num_discrete} or fewer unique values. "
                 f"Their column names are:\n\t{', '.join(cols_discrete)}."
                 "\nThese columns will be ignored in the analysis."
             )
             X.drop(columns=cols_discrete, inplace=True)
             self._check_enough_cols(X)
 
-        # 6)    Remove columns with scale smaller than precScale
+        # 6)    Remove columns with scale smaller than prec_scale
         cols_bad_scale = X.columns[
-            median_abs_deviation(X, axis=0, nan_policy="omit") <= self.precScale
+            median_abs_deviation(X, axis=0, nan_policy="omit") <= self.prec_scale
         ].tolist()
         if len(cols_bad_scale) > 0:
             print(
@@ -142,12 +142,12 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return X
 
     def _clean_cols(self, X: pd.DataFrame):
-        acceptNA = X.shape[0] * self.fracNA
+        acceptNA = X.shape[0] * self.frac_na
         NAcounts = X.isna().sum()
         NAcol = X.columns[NAcounts > acceptNA].tolist()
         if len(NAcol) > 0:
             print(
-                f"\nThe data contains {len(NAcol)} column(s) with over {100*self.fracNA}% NAs. "
+                f"\nThe data contains {len(NAcol)} column(s) with over {100*self.frac_na}% NAs. "
                 f"Their column names are: \n\t{', '.join(NAcol)}."
                 "\nThese columns will be ignored in the analysis."
             )
@@ -156,12 +156,12 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return X
 
     def _clean_rows(self, X: pd.DataFrame):
-        acceptNA = X.shape[1] * self.fracNA
+        acceptNA = X.shape[1] * self.frac_na
         NAcounts = X.isna().sum(axis=1)
         NArow = NAcounts[NAcounts > acceptNA].index.tolist()
         if len(NArow) > 0:
             print(
-                f"\nThe data contains {len(NArow)} row(s) with over {100*self.fracNA}% NAs. "
+                f"\nThe data contains {len(NArow)} row(s) with over {100*self.frac_na}% NAs. "
                 f"Their row names/indices are: \n\t{', '.join(map(str, NArow))}."
                 "\nThese rows will be ignored in the analysis."
             )

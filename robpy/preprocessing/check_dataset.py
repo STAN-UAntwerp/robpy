@@ -208,8 +208,3 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             raise ValueError(f"Only {X.shape[0]} row(s) remain(s), this is not enough.")
         else:
             raise ValueError("No rows remain.")
-
-    def transform(self, X: np.ndarray | pd.DataFrame):
-        raise NotImplementedError
-
-    # TODO: I don't know what to put in fit and what to put in transform.

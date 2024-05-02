@@ -99,9 +99,9 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.cols_rownumbers = [col for col in X.columns if np.all(X[col] == np.arange(0, n))]
         if self.cols_rownumbers:
             self.logger.info(
-                f"\nThe input data contains {len(self.cols_rownumbers)} column(s) that is identical to "
-                f"the row numbers. Their column names are:\n\t{', '.join(self.cols_rownumbers)}."
-                "\nThese columns will be ignored in the analysis."
+                f"\nThe input data contains {len(self.cols_rownumbers)} column(s) that is identical"
+                f" to the row numbers. Their column names are:\n\t{', '.join(self.cols_rownumbers)}"
+                ".\nThese columns will be ignored in the analysis."
             )
             X.drop(columns=self.cols_rownumbers, inplace=True)
             self._check_enough_cols(X)
@@ -162,8 +162,8 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.na_col = X.columns[na_counts > accept_na].tolist()
         if self.na_col:
             self.logger.info(
-                f"\nThe data contains {len(self.na_col)} column(s) with over {100*self.frac_na}% NAs. "
-                f"Their column names are: \n\t{', '.join(self.na_col)}."
+                f"\nThe data contains {len(self.na_col)} column(s) with over {100*self.frac_na}"
+                f"% NAs. Their column names are: \n\t{', '.join(self.na_col)}."
                 "\nThese columns will be ignored in the analysis."
             )
             X.drop(columns=self.na_col, inplace=True)
@@ -207,7 +207,6 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             raise ValueError("No rows remain.")
 
     def transform(self, X: pd.DataFrame):
-
         X.drop(
             np.concatenate(
                 (

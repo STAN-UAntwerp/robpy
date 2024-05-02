@@ -28,5 +28,5 @@ def test_check_dataset():
     }
     df_clean = pd.DataFrame(data=d_clean)
     # then
-    result1 = CheckDataset().fit(df)
+    result1 = CheckDataset().fit_transform(df)
     np.testing.assert_array_almost_equal(result1, df_clean)

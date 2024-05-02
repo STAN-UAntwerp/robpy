@@ -74,7 +74,7 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         self.logger.info(f"The final data has {X.shape[0]} rows and {X.shape[1]} columns.")
 
-        return X
+        return self
 
     def _check_minimum_rows(self, n: int) -> None:
         """Check if there are enough rows in the dataset."""
@@ -83,27 +83,27 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def _retain_numeric_columns(self, X: pd.DataFrame) -> pd.DataFrame:
         """Retain only numeric columns."""
-        non_numeric_cols = X.select_dtypes(exclude=["number"]).columns.tolist()
-        if non_numeric_cols:
+        self.non_numeric_cols = X.select_dtypes(exclude=["number"]).columns.tolist()
+        if self.non_numeric_cols:
             self.logger.info(
-                f"\nThe input data contains {len(non_numeric_cols)} non-numeric column(s). "
-                f"Their column names are:\n\t{', '.join(non_numeric_cols)}."
+                f"\nThe input data contains {len(self.non_numeric_cols)} non-numeric column(s). "
+                f"Their column names are:\n\t{', '.join(self.non_numeric_cols)}."
                 f"\nThese columns will be ignored in the analysis."
             )
-            X.drop(columns=non_numeric_cols, inplace=True)
+            X.drop(columns=self.non_numeric_cols, inplace=True)
             self._check_enough_cols(X)
         return X
 
     def _check_no_row_numbers(self, X: pd.DataFrame, n: int) -> pd.DataFrame:
         """Check that no column consists of the row numbers."""
-        cols_rownumbers = [col for col in X.columns if np.all(X[col] == np.arange(0, n))]
-        if cols_rownumbers:
+        self.cols_rownumbers = [col for col in X.columns if np.all(X[col] == np.arange(0, n))]
+        if self.cols_rownumbers:
             self.logger.info(
-                f"\nThe input data contains {len(cols_rownumbers)} column(s) that is identical to "
-                f"the row numbers. Their column names are:\n\t{', '.join(cols_rownumbers)}."
+                f"\nThe input data contains {len(self.cols_rownumbers)} column(s) that is identical to "
+                f"the row numbers. Their column names are:\n\t{', '.join(self.cols_rownumbers)}."
                 "\nThese columns will be ignored in the analysis."
             )
-            X.drop(columns=cols_rownumbers, inplace=True)
+            X.drop(columns=self.cols_rownumbers, inplace=True)
             self._check_enough_cols(X)
         return X
 
@@ -128,59 +128,59 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def _remove_discrete_columns(self, X: pd.DataFrame) -> pd.DataFrame:
         """Remove columns with a small number of unique values."""
-        cols_discrete = X.columns[X.nunique() <= self.num_discrete].tolist()
-        if cols_discrete:
+        self.cols_discrete = X.columns[X.nunique() <= self.num_discrete].tolist()
+        if self.cols_discrete:
             self.logger.info(
-                f"\nThe data contains {len(cols_discrete)} discrete column(s) with "
+                f"\nThe data contains {len(self.cols_discrete)} discrete column(s) with "
                 f"{self.num_discrete} or fewer unique values. "
-                f"Their column names are:\n\t{', '.join(cols_discrete)}."
+                f"Their column names are:\n\t{', '.join(self.cols_discrete)}."
                 "\nThese columns will be ignored in the analysis."
             )
-            X.drop(columns=cols_discrete, inplace=True)
+            X.drop(columns=self.cols_discrete, inplace=True)
             self._check_enough_cols(X)
         return X
 
     def _remove_columns_with_bad_scale(self, X: pd.DataFrame) -> pd.DataFrame:
         """Remove columns with scale smaller than prec_scale."""
-        cols_bad_scale = X.columns[
+        self.cols_bad_scale = X.columns[
             median_abs_deviation(X, axis=0, nan_policy="omit") <= self.prec_scale
         ].tolist()
-        if cols_bad_scale:
+        if self.cols_bad_scale:
             self.logger.info(
-                f"\nThe data contains {len(cols_bad_scale)} column(s) with an (almost) zero "
+                f"\nThe data contains {len(self.cols_bad_scale)} column(s) with an (almost) zero "
                 "median absolute deviation. "
-                f"Their column names are:\n\t{', '.join(cols_bad_scale)}."
+                f"Their column names are:\n\t{', '.join(self.cols_bad_scale)}."
                 "\nThese columns will be ignored in the analysis."
             )
-            X.drop(columns=cols_bad_scale, inplace=True)
+            X.drop(columns=self.cols_bad_scale, inplace=True)
             self._check_enough_cols(X)
         return X
 
     def _clean_cols(self, X: pd.DataFrame):
         accept_na = X.shape[0] * self.frac_na
         na_counts = X.isna().sum()
-        na_col = X.columns[na_counts > accept_na].tolist()
-        if na_col:
+        self.na_col = X.columns[na_counts > accept_na].tolist()
+        if self.na_col:
             self.logger.info(
-                f"\nThe data contains {len(na_col)} column(s) with over {100*self.frac_na}% NAs. "
-                f"Their column names are: \n\t{', '.join(na_col)}."
+                f"\nThe data contains {len(self.na_col)} column(s) with over {100*self.frac_na}% NAs. "
+                f"Their column names are: \n\t{', '.join(self.na_col)}."
                 "\nThese columns will be ignored in the analysis."
             )
-            X.drop(columns=na_col, inplace=True)
+            X.drop(columns=self.na_col, inplace=True)
             self._check_enough_cols(X)
         return X
 
     def _clean_rows(self, X: pd.DataFrame):
         accept_na = X.shape[1] * self.frac_na
         na_counts = X.isna().sum(axis=1)
-        na_row = na_counts[na_counts > accept_na].index.tolist()
-        if na_row:
+        self.na_row = na_counts[na_counts > accept_na].index.tolist()
+        if self.na_row:
             self.logger.info(
-                f"\nThe data contains {len(na_row)} row(s) with over {100*self.frac_na}% NAs. "
-                f"Their row names/indices are: \n\t{', '.join(map(str, na_row))}."
+                f"\nThe data contains {len(self.na_row)} row(s) with over {100*self.frac_na}% NAs. "
+                f"Their row names/indices are: \n\t{', '.join(map(str, self.na_row))}."
                 "\nThese rows will be ignored in the analysis."
             )
-            X.drop(na_row, inplace=True)
+            X.drop(self.na_row, inplace=True)
             self._check_enough_rows(X)
         return X
 
@@ -205,3 +205,23 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             raise ValueError(f"Only {X.shape[0]} row(s) remain(s), this is not enough.")
         else:
             raise ValueError("No rows remain.")
+
+    def transform(self, X: pd.DataFrame):
+
+        X.drop(
+            np.concatenate(
+                (
+                    self.non_numeric_cols,
+                    self.cols_rownumbers,
+                    self.na_col,
+                    self.cols_discrete,
+                    self.cols_bad_scale,
+                )
+            ),
+            axis=1,
+            inplace=True,
+        )
+        X.drop(self.na_row, axis=0, inplace=True)
+        X.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+        return X

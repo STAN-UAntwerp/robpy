@@ -4,7 +4,10 @@ from robpy.preprocessing.check_dataset import CheckDataset
 
 
 def test_check_dataset():
-    # given
+    """
+    [https://rdrr.io/cran/cellWise/man/checkDataSet.html]
+    """
+    # given data
     d = {
         "i": [0, 1, 2, 3, 4, 5, 6, 7, 8],
         "name": ["aa", "bb", "cc", "dd", "ee", "ff", "gg", "hh", "ii"],
@@ -17,7 +20,7 @@ def test_check_dataset():
         "V0s": [1, 1.5, 2, 2, 2, 2, 2, 3, 2.5],
     }
     df = pd.DataFrame(data=d)
-    # when
+    # clean data
     d_clean = {
         "V1": [1.3, np.nan, 4.5, 2.7, 20.0, 4.4, -2.1, 1.1, -5],
         "V2": [2.3, np.nan, 5, 6, 7, 8, 4, -10, 0.5],
@@ -25,5 +28,5 @@ def test_check_dataset():
     }
     df_clean = pd.DataFrame(data=d_clean)
     # then
-    result = CheckDataset().fit(df)
-    np.testing.assert_array_almost_equal(result, df_clean)
+    result1 = CheckDataset().fit(df)
+    np.testing.assert_array_almost_equal(result1, df_clean)

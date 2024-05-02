@@ -15,7 +15,7 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     Typically used before DDC, cellMCD, transfo...
 
-    [https://rdrr.io/cran/cellWise/man/checkDataSet.html]
+    based on: [https://rdrr.io/cran/cellWise/man/checkDataSet.html]
     """
 
     def __init__(
@@ -49,14 +49,11 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.clean_na_first = clean_na_first
         self.logger = logging.getLogger("checkDataset")
 
-    def fit(
-        self,
-        df: pd.DataFrame,
-    ):
+    def fit(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Clean the dataset.
 
-        X (np.ndarray or pd.DataFrame): input dataset.
+        X (pd.DataFrame): input dataset.
         """
 
         X = df.copy()
@@ -75,7 +72,7 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         X = self._remove_columns_with_bad_scale(X)
 
-        self.logger.info(f"\nThe final data has {X.shape[0]} rows and {X.shape[1]} columns.")
+        self.logger.info(f"The final data has {X.shape[0]} rows and {X.shape[1]} columns.")
 
         return X
 

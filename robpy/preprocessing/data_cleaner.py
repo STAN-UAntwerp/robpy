@@ -10,7 +10,7 @@ from sklearn.base import (
 )
 
 
-class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Cleans a dataset before an analysis.
 
     Typically used before DDC, cellMCD, transfo...
@@ -20,39 +20,43 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        frac_na: float = 0.5,
-        num_discrete: int = 3,
-        prec_scale: float = 1e-12,
+        max_missing_fraction: float = 0.5,
+        min_unique_values: int = 3,
+        min_abs_scale: float = 1e-12,
         clean_na_first: str = "automatic",
+        min_n_rows: int = 3,
     ):
-        """Initialize CheckDataset
+        """Initialize DataCleaner
 
         Args:
-            frac_na (float, optional): Keep only the columns and rows that have a proportion of
-                            missing values lower than this threshold.
-                           Defaults to 0.5.
-            num_discrete (int, optional): Any column with num_discrete or fewer distinct values will
-                            be classified as discrete and excluded from the cleaned dataset.
+            max_missing_fraction (float, optional): Keep only the columns and rows that have a
+                            proportion of missing values lower than this threshold.
+                            Defaults to 0.5.
+            min_unique_values (int, optional): Any column with min_unique_values or fewer unique
+                            values will be classified as discrete and excluded from the cleaned
+                            dataset.
                             Defaults to 3.
-            prec_scale (float, optional): Only columns whose scale is larger than prec_scale will be
-                            considered (scale is measure bu the mad).
+            min_abs_scale (float, optional): Only columns whose scale is larger than min_abs_scale
+                            will be considered (scale is measure by the mad).
                             Defaults to 1e-12.
             clean_na_first (str, optional): One out of "automatic", "columns", "rows". Decides which
                             are first checked for NAs. If "automatic", columns are checked first if
                             if p >= 5n, else rows are checked first.
                             Defaults to "automatic".
+            min_n_rows (int, optional): Integer specifying the minimum number of rows/observations
+                            wanted for the input data.
+                            Defaults to 3.
         """
 
-        self.frac_na = frac_na
-        self.num_discrete = num_discrete
-        self.prec_scale = prec_scale
+        self.max_missing_fraction = max_missing_fraction
+        self.min_unique_values = min_unique_values
+        self.min_abs_scale = min_abs_scale
         self.clean_na_first = clean_na_first
+        self.min_n_rows = min_n_rows
         self.logger = logging.getLogger("checkDataset")
 
     def fit(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Clean the dataset.
-
         X (pd.DataFrame): input dataset.
         """
 
@@ -77,9 +81,12 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return self
 
     def _check_minimum_rows(self, n: int) -> None:
-        """Check if there are enough rows in the dataset."""
-        if n < 3:
-            raise ValueError(f"The input data must have at least 3 rows, but received only {n}.")
+        """Check if there are enough rows in the input dataset."""
+        if n < self.min_n_rows:
+            raise ValueError(
+                f"The input data must have at least {self.min_n_rows} rows, "
+                f"but received only {n}."
+            )
 
     def _retain_numeric_columns(self, X: pd.DataFrame) -> pd.DataFrame:
         """Retain only numeric columns."""
@@ -91,7 +98,6 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 f"\nThese columns will be ignored in the analysis."
             )
             X.drop(columns=self.non_numeric_cols, inplace=True)
-            self._check_enough_cols(X)
         return X
 
     def _check_no_row_numbers(self, X: pd.DataFrame, n: int) -> pd.DataFrame:
@@ -104,7 +110,6 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 ".\nThese columns will be ignored in the analysis."
             )
             X.drop(columns=self.cols_rownumbers, inplace=True)
-            self._check_enough_cols(X)
         return X
 
     def _clean_missing_values(self, X: pd.DataFrame) -> pd.DataFrame:
@@ -128,22 +133,21 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def _remove_discrete_columns(self, X: pd.DataFrame) -> pd.DataFrame:
         """Remove columns with a small number of unique values."""
-        self.cols_discrete = X.columns[X.nunique() <= self.num_discrete].tolist()
+        self.cols_discrete = X.columns[X.nunique() <= self.min_unique_values].tolist()
         if self.cols_discrete:
             self.logger.info(
                 f"\nThe data contains {len(self.cols_discrete)} discrete column(s) with "
-                f"{self.num_discrete} or fewer unique values. "
+                f"{self.min_unique_values} or fewer unique values. "
                 f"Their column names are:\n\t{', '.join(self.cols_discrete)}."
                 "\nThese columns will be ignored in the analysis."
             )
             X.drop(columns=self.cols_discrete, inplace=True)
-            self._check_enough_cols(X)
         return X
 
     def _remove_columns_with_bad_scale(self, X: pd.DataFrame) -> pd.DataFrame:
-        """Remove columns with scale smaller than prec_scale."""
+        """Remove columns with scale smaller than min_abs_scale."""
         self.cols_bad_scale = X.columns[
-            median_abs_deviation(X, axis=0, nan_policy="omit") <= self.prec_scale
+            median_abs_deviation(X, axis=0, nan_policy="omit") <= self.min_abs_scale
         ].tolist()
         if self.cols_bad_scale:
             self.logger.info(
@@ -153,58 +157,34 @@ class CheckDataset(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 "\nThese columns will be ignored in the analysis."
             )
             X.drop(columns=self.cols_bad_scale, inplace=True)
-            self._check_enough_cols(X)
         return X
 
     def _clean_cols(self, X: pd.DataFrame):
-        accept_na = X.shape[0] * self.frac_na
+        accept_na = X.shape[0] * self.max_missing_fraction
         na_counts = X.isna().sum()
         self.na_col = X.columns[na_counts > accept_na].tolist()
         if self.na_col:
             self.logger.info(
-                f"\nThe data contains {len(self.na_col)} column(s) with over {100*self.frac_na}"
-                f"% NAs. Their column names are: \n\t{', '.join(self.na_col)}."
-                "\nThese columns will be ignored in the analysis."
+                f"\nThe data contains {len(self.na_col)} column(s) with over"
+                f" {100*self.max_missing_fraction}% NAs. Their column names are: "
+                f"\n\t{', '.join(self.na_col)}. \nThese columns will be ignored in the analysis."
             )
             X.drop(columns=self.na_col, inplace=True)
-            self._check_enough_cols(X)
         return X
 
     def _clean_rows(self, X: pd.DataFrame):
-        accept_na = X.shape[1] * self.frac_na
+        accept_na = X.shape[1] * self.max_missing_fraction
         na_counts = X.isna().sum(axis=1)
         self.na_row = na_counts[na_counts > accept_na].index.tolist()
         if self.na_row:
             self.logger.info(
-                f"\nThe data contains {len(self.na_row)} row(s) with over {100*self.frac_na}% NAs. "
+                f"\nThe data contains {len(self.na_row)} row(s) with over "
+                f"{100*self.max_missing_fraction}% NAs. "
                 f"Their row names/indices are: \n\t{', '.join(map(str, self.na_row))}."
                 "\nThese rows will be ignored in the analysis."
             )
             X.drop(self.na_row, inplace=True)
-            self._check_enough_rows(X)
         return X
-
-    def _check_enough_cols(self, X: pd.DataFrame):
-        if X.shape[1] > 1:
-            self.logger.info(
-                f"We continue with the remaining {X.shape[1]} columns: "
-                f"\n\t{', '.join(X.columns)}."
-            )
-        elif X.shape[1] == 1:
-            raise ValueError("Only 1 column remains, this is not enough.")
-        else:
-            raise ValueError("No columns remain.")
-
-    def _check_enough_rows(self, X: pd.DataFrame):
-        if X.shape[0] > 2:
-            self.logger.info(
-                f"We continue with the remaining {X.shape[0]} rows: "
-                f"\n\t{', '.join(map(str, X.index))}."
-            )
-        elif X.shape[0] in [1, 2]:
-            raise ValueError(f"Only {X.shape[0]} row(s) remain(s), this is not enough.")
-        else:
-            raise ValueError("No rows remain.")
 
     def transform(self, X: pd.DataFrame):
         X.drop(

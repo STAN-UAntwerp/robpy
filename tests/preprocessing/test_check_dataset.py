@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from robpy.preprocessing.check_dataset import CheckDataset
+from robpy.preprocessing.data_cleaner import DataCleaner
 
 
 def test_check_dataset():
@@ -28,5 +28,5 @@ def test_check_dataset():
     }
     df_clean = pd.DataFrame(data=d_clean)
     # then
-    result1 = CheckDataset().fit_transform(df)
+    result1 = DataCleaner().fit_transform(df)
     np.testing.assert_array_almost_equal(result1, df_clean)

@@ -22,9 +22,9 @@ def test_check_dataset():
     df = pd.DataFrame(data=d)
     # clean data
     d_clean = {
-        "V1": [1.3, np.nan, 4.5, 2.7, 20.0, 4.4, -2.1, 1.1, -5],
-        "V2": [2.3, np.nan, 5, 6, 7, 8, 4, -10, 0.5],
-        "V3": [2, np.nan, 3, -4, 5, 6, 7, -2, 8],
+        "V1": [1.3, 4.5, 2.7, 20.0, 4.4, -2.1, 1.1, -5],
+        "V2": [2.3, 5, 6, 7, 8, 4, -10, 0.5],
+        "V3": [2, 3, -4, 5, 6, 7, -2, 8],
     }
     df_clean = pd.DataFrame(data=d_clean)
     # then

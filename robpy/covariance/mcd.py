@@ -275,14 +275,13 @@ class DetMCDEstimator(RobustCovarianceEstimator):
         self.logger = get_logger("DetMCDEstimator", level=verbosity)
         self.verbosity = verbosity
 
-    def calculate_covariance(self, X) -> np.ndarray:
+    def calculate_covariance(self, X: np.ndarray) -> np.ndarray:
         if self.h_size == 1 or self.h_size == X.shape[0]:
             self.logger.warning(f"Default covariance is returned as h_size is {self.h_size}.")
             self.location_ = X.mean(0)
             return np.cov(X, rowvar=False)
 
-        n = X.shape[0]
-        p = X.shape[1]
+        n, p = X.shape
 
         # Step 0: standardize X
         if n < 1000:
@@ -290,44 +289,8 @@ class DetMCDEstimator(RobustCovarianceEstimator):
         else:
             Z = (X - np.median(X, axis=0)) / self._tau_scale(X)
 
-        # Step 1: construct 6 preliminary estimates Sk of covariance or correlation
-        Y = np.tanh(Z)
-        S1 = np.corrcoef(Y, rowvar=False)
-        R = rankdata(Z, axis=0)
-        S2 = np.corrcoef(R, rowvar=False)
-        S3 = np.corrcoef(norm.ppf((R - 1 / 3) / (n + 1 / 3)), rowvar=False)
-        znorm = np.sqrt(np.sum(Z * Z, axis=1))
-        w = 1 / znorm
-        S4 = np.dot((Z * w[:, np.newaxis]).T, (Z * w[:, np.newaxis])) / n
-        idx = np.argsort(znorm)[: math.ceil(n / 2)]
-        S5 = np.cov(Z[idx, :], rowvar=False)
-        S6 = OGKEstimator(
-            location_estimator=np.median, scale_estimator=self._Qn_scale, reweighting=False
-        ).calculate_covariance(Z)
-        estimates_S = [S1, S2, S3, S4, S5, S6]
-
-        # Step 2: construct 6 initial location and scatter estimates
-        estimates_sigma = []
-        estimates_mu = []
-        for S in estimates_S:
-            _, E = np.linalg.eigh(S)
-            E = E[:, np.arange(p - 1, -1, -1)]
-            B = Z @ E
-            L = np.diag(np.power(self._Qn_scale(B), 2))
-            cov = E @ L @ E.T
-            estimates_sigma.append(cov)
-            root_cov = sqrtm(cov)
-            inv_root_cov = np.linalg.inv(root_cov)
-            mu = root_cov @ np.median(Z @ inv_root_cov, axis=0)
-            estimates_mu.append(mu)
-
-        # Step 3: calculate statistical distances
-        best_subsets = []
-        for mu, cov in zip(estimates_mu, estimates_sigma):
-            idx_h0 = np.argsort(mahalanobis_distance(Z, mu, cov))[: math.ceil(n / 2)]
-            H = self._get_subset(idx_h0, X)  # h0
-            H = self._perform_c_step(H, X)  # h
-            best_subsets.append(H)
+        # Steps 1-3:
+        best_subsets = self._get_initial_best_subsets(Z, X, n, p)
 
         # Step 4: C-steps until convergence
         best_subset = best_subsets[0]  # reference subset
@@ -367,19 +330,69 @@ class DetMCDEstimator(RobustCovarianceEstimator):
 
         return scale
 
-    # TODO: de functies hieronder moeten nog naar ergens anders.
-
-    def _Qn_scale(self, X, axis=0):
+    def _Qn_scale(self, X: np.ndarray, axis=0):
         if X.ndim == 1:
             return QnEstimator().fit(X).scale
-        if axis == 0:
+        elif axis == 0:
             return [QnEstimator().fit(col).scale for col in X.T]
+        elif axis == 1:
+            return [QnEstimator().fit(col).scale for col in X]
+        else:
+            raise ValueError(f"axis {axis} not supported")
 
-    def _tau_scale(self, X, axis=0):
+    def _tau_scale(self, X: np.ndarray, axis=0):
         if X.ndim == 1:
             return TauEstimator().fit(X).scale
-        if axis == 0:
+        elif axis == 0:
             return [TauEstimator().fit(col).scale for col in X.T]
+        elif axis == 1:
+            return [TauEstimator().fit(col).scale for col in X]
+        else:
+            raise ValueError(f"axis {axis} not supported")
+
+    def _get_initial_best_subsets(self, Z: np.ndarray, X: np.ndarray, n: int, p: int):
+        # Step 1: construct 6 preliminary estimates Sk of covariance or correlation
+        Y = np.tanh(Z)
+        S1 = np.corrcoef(Y, rowvar=False)
+        R = rankdata(Z, axis=0)
+        S2 = np.corrcoef(R, rowvar=False)
+        S3 = np.corrcoef(norm.ppf((R - 1 / 3) / (n + 1 / 3)), rowvar=False)
+        znorm = np.sqrt(np.sum(Z * Z, axis=1))
+        w = 1 / znorm
+        S4 = np.dot((Z * w[:, np.newaxis]).T, (Z * w[:, np.newaxis])) / n
+        idx = np.argsort(znorm)[: math.ceil(n / 2)]
+        S5 = np.cov(Z[idx, :], rowvar=False)
+        S6 = OGKEstimator(
+            location_estimator=np.median, scale_estimator=self._Qn_scale, reweighting=False
+        ).calculate_covariance(Z)
+        estimates_S = [S1, S2, S3, S4, S5, S6]
+
+        # Step 2: construct 6 initial location and scatter estimates
+        estimates_sigma = []
+        estimates_mu = []
+        for S in estimates_S:
+            _, E = np.linalg.eigh(S)
+            E = E[:, np.arange(p - 1, -1, -1)]
+            B = Z @ E
+            L = np.diag(np.power(self._Qn_scale(B), 2))
+            cov = E @ L @ E.T
+            estimates_sigma.append(cov)
+            root_cov = sqrtm(cov)
+            inv_root_cov = np.linalg.inv(root_cov)
+            mu = root_cov @ np.median(Z @ inv_root_cov, axis=0)
+            estimates_mu.append(mu)
+
+        # Step 3: calculate statistical distances
+        best_subsets = []
+        for mu, cov in zip(estimates_mu, estimates_sigma):
+            idx_h0 = np.argsort(mahalanobis_distance(Z, mu, cov))[: math.ceil(n / 2)]
+            H = self._get_subset(idx_h0, X)  # h0
+            H = self._perform_c_step(H, X)  # h
+            best_subsets.append(H)
+
+        return best_subsets
+
+    # TODO: de functies hieronder moeten nog naar ergens anders.
 
     def _get_h(self, X: np.ndarray) -> int:
         if self.h_size is None:

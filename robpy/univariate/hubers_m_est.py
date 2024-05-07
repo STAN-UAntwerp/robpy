@@ -6,7 +6,7 @@ from robpy.univariate.base import RobustScaleEstimator
 from robpy.utils.rho import BaseRho, Huber
 
 
-class UnivariateMEstimator(RobustScaleEstimator):
+class UnivariateHuberMEstimator(RobustScaleEstimator):
     def __init__(
         self,
         rho: BaseRho = Huber(b=1.5),

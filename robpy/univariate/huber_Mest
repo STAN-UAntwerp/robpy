@@ -1,0 +1,83 @@
+import numpy as np
+
+from scipy.stats import median_abs_deviation, norm
+
+from robpy.univariate.base import RobustScaleEstimator
+from robpy.utils.rho import BaseRho, Huber
+
+
+class UnivariateMEstimator(RobustScaleEstimator):
+    def __init__(
+        self,
+        rho: BaseRho = Huber(b=1.5),
+        delta: float = norm.cdf(1.5) * (1 + 1.5**2) + 1.5 * norm.pdf(1.5) - 0.5 - 1.5**2,
+        tol: float = 1e-6,
+    ):
+        """
+        Implementation of univariate M-estimator: location and scale
+
+        [Robust statistics, Ricardo A. Maronna, R. Douglas Martin & Victor J. Yohai (2006)]
+
+        Args:
+            rho (BaseRho, optional):
+                score function to use on the residuals.
+                Defaults to Huber's rho with b = 1.5.
+            delta (float, optional):
+                consistency factor corresponding to the rho function
+                Defaults to 0.477153 (the delta corresponding to Huber's rho with b = 1.5)
+            tol (float, optional):
+                tolerance, determines the stopping criteria for convergence
+                Defaults to 1e-7
+        """
+        self.rho = rho
+        self.tol = tol
+        self.delta = delta
+
+    def _calculate(self, X: np.ndarray):
+        """
+        Args:
+            X (np.ndarray):
+                univariate data
+        """
+        print(self.delta)
+        n = len(X)
+
+        # initial estimates:
+        med = np.median(X)
+        mad = median_abs_deviation(X, scale="normal")
+
+        # first location:
+        mu_old = med
+        mu_new = np.inf
+        print("locations")
+        while True:
+            print(mu_old)
+            residuals = (X - mu_old) / mad
+            wi = self.rho.psi(residuals) / residuals
+            mu_new = np.sum(wi * X) / np.sum(wi)
+            if np.abs(mu_new - mu_old) < self.tol * mad:
+                print(mu_new)
+                break
+            else:
+                mu_old = mu_new
+
+        # second scale:
+        s_old = mad
+        s_new = np.inf
+        Xcentered = X - med
+        print("scales")
+        while True:
+            print(s_old)
+            residuals = Xcentered / s_old
+            wi = self.rho.rho(residuals) / (residuals**2)
+            s_new = np.sqrt(1 / (n * self.delta) * np.sum(wi * residuals**2))
+            if np.abs(s_new / s_old - 1) < self.tol:
+                print(s_new)
+                break
+            else:
+                s_old = s_new
+
+        self.location_ = mu_new
+        self.scale_ = s_new
+
+        return self

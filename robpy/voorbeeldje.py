@@ -1,5 +1,4 @@
 import numpy as np
-import math as math
 
 from robpy.univariate.hubers_m_est import UnivariateHuberMEstimator
 from scipy.stats import median_abs_deviation
@@ -33,5 +32,5 @@ print(median_abs_deviation(X, scale="normal"))
 # print([UnivariateHuberMEstimator().fit(col).location for col in data.T])  # third variable: wrong
 # print([UnivariateHuberMEstimator().fit(col).scale for col in data.T])
 
-### cannot seem to use np.where to calculate the wi, errors:
-### https://stackoverflow.com/questions/49760092/python-numpy-where-returning-unexpected-warning
+# cannot seem to use np.where to calculate the wi, errors:
+# https://stackoverflow.com/questions/49760092/python-numpy-where-returning-unexpected-warning

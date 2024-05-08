@@ -12,6 +12,7 @@ class UnivariateHuberMEstimator(RobustScaleEstimator):
         rho: BaseRho = Huber(b=1.5),
         delta: float = norm.cdf(1.5) * (1 + 1.5**2) + 1.5 * norm.pdf(1.5) - 0.5 - 1.5**2,
         tol: float = 1e-6,
+        min_abs_scale: float = 1e-12,
     ):
         """
         Implementation of univariate M-estimator: location and scale
@@ -20,18 +21,22 @@ class UnivariateHuberMEstimator(RobustScaleEstimator):
 
         Args:
             rho (BaseRho, optional):
-                score function to use on the residuals.
+                Rho function to use on the residuals.
                 Defaults to Huber's rho with b = 1.5.
             delta (float, optional):
                 consistency factor corresponding to the rho function
                 Defaults to 0.477153 (the delta corresponding to Huber's rho with b = 1.5)
             tol (float, optional):
                 tolerance, determines the stopping criteria for convergence
-                Defaults to 1e-7
+                Defaults to 1e-6
+            min_abs_scale (float, optional): Only if mad is larger than min_abs_scale
+                        the M estimator will be calculated
+                        Defaults to 1e-12.
         """
         self.rho = rho
         self.tol = tol
         self.delta = delta
+        self.min_abs_scale = min_abs_scale
 
     def _calculate(self, X: np.ndarray):
         """
@@ -39,40 +44,37 @@ class UnivariateHuberMEstimator(RobustScaleEstimator):
             X (np.ndarray):
                 univariate data
         """
-        print(self.delta)
         n = len(X)
 
         # initial estimates:
         med = np.median(X)
         mad = median_abs_deviation(X, scale="normal")
+        if mad < self.min_abs_scale:
+            raise ValueError("The sample has a scale that is (approximately) zero.")
 
         # first location:
         mu_old = med
-        mu_new = np.inf
-        print("locations")
         while True:
-            print(mu_old)
             residuals = (X - mu_old) / mad
-            wi = self.rho.psi(residuals) / residuals
+            mask = np.abs(residuals) > 1e-5
+            wi = np.ones_like(residuals)
+            wi[mask] = self.rho.psi(residuals[mask]) / residuals[mask]
             mu_new = np.sum(wi * X) / np.sum(wi)
             if np.abs(mu_new - mu_old) < self.tol * mad:
-                print(mu_new)
                 break
             else:
                 mu_old = mu_new
 
         # second scale:
         s_old = mad
-        s_new = np.inf
         Xcentered = X - med
-        print("scales")
         while True:
-            print(s_old)
             residuals = Xcentered / s_old
-            wi = self.rho.rho(residuals) / (residuals**2)
-            s_new = np.sqrt(1 / (n * self.delta) * np.sum(wi * residuals**2))
+            mask = np.abs(residuals) > 1e-5
+            wi = np.ones_like(residuals)
+            wi[mask] = self.rho.rho(residuals[mask]) / (residuals[mask] ** 2)
+            s_new = np.sqrt(1 / (n * self.delta) * np.sum(wi * Xcentered**2))
             if np.abs(s_new / s_old - 1) < self.tol:
-                print(s_new)
                 break
             else:
                 s_old = s_new

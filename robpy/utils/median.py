@@ -37,11 +37,11 @@ def weighted_median(X: np.ndarray, weights: np.ndarray) -> float:
     while True:
         k = np.ceil(n / 2).astype("int")
         if n > 1:
-            trial = np.partition(X, k)[
+            trial = np.partition(X, k - 1)[
                 :k
             ].max()  # k^th order statistic, I think this can be programmed better...
         else:
-            trial = Xcand
+            return Xcand[0]
         wleft = np.sum(weights[X < trial])
         wmid = np.sum(weights[X == trial])
         if (2 * (wrest + wleft)) > wtotal:

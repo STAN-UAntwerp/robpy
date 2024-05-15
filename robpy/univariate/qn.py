@@ -75,7 +75,7 @@ class QnEstimator(RobustScaleEstimator):
                     for jj in range(int(left[i]), int(right[i] + 1)):
                         work.append(y[i] - y[n - jj - 1 + 1])
             k = int(knew - nL)
-            Qn = np.partition(np.array(work), k)[:k].max()
+            Qn = np.partition(np.array(work), k - 1)[:k].max()
 
         if self.finite_correction:
             dn = _get_small_sample_dn(n)

@@ -8,6 +8,7 @@ from sklearn.base import (
     OneToOneFeatureMixin,
     TransformerMixin,
 )
+from sklearn.exceptions import NotFittedError
 
 
 class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
@@ -58,7 +59,7 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.min_abs_scale = min_abs_scale
         self.clean_na_first = clean_na_first
         self.min_n_rows = min_n_rows
-        self.logger = logging.getLogger("checkDataset")
+        self.logger = logging.getLogger("DataCleaner")
 
     def fit(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -66,17 +67,73 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         """
 
         X = df.copy()
-        n = X.shape[0]
 
-        X = self._retain_numeric_columns(X)
+        self._retain_numeric_columns(X)
 
-        X = self._check_no_row_numbers(X, n)
+        self._remove_discrete_columns(X)
 
-        X = self._remove_discrete_columns(X)
-
-        X = self._remove_columns_with_bad_scale(X)
+        self._remove_columns_with_bad_scale(X)
 
         return self
+
+    def transform(self, X: pd.DataFrame):
+        """
+        X (pd.DataFrame): input dataset.
+        """
+
+        n, p = X.shape
+
+        self._check_minimum_rows(n)
+        self.logger.info(f"The input data has {n} rows and {p} columns.")
+
+        X.drop(
+            np.concatenate(
+                (
+                    self.non_numeric_cols,
+                    self.cols_discrete,
+                    self.cols_bad_scale,
+                )
+            ),
+            axis=1,
+            inplace=True,
+        )
+
+        self._check_no_row_numbers(X, n)
+
+        self._clean_missing_values(X)
+
+        X.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+        self.logger.info(f"The final data has {X.shape[0]} rows and {X.shape[1]} columns.")
+
+        return X
+
+    @property
+    def dropped_columns(self):
+        if not all(
+            hasattr(self, attr)
+            for attr in [
+                "non_numeric_cols",
+                "cols_rownumbers",
+                "cols_discrete",
+                "cols_bad_scale",
+                "cols_missings",
+            ]
+        ):
+            raise NotFittedError()
+        return {
+            "non_numeric_cols": self.non_numeric_cols,
+            "cols_rownumbers": self.cols_rownumbers,
+            "cols_discrete": self.cols_discrete,
+            "cols_bad_scale": self.cols_bad_scale,
+            "cols_missings": self.cols_missings,
+        }
+
+    @property
+    def dropped_rows(self):
+        if not hasattr(self, "rows_missings"):
+            raise NotFittedError()
+        return {"rows_missings": self.rows_missings}
 
     def _check_minimum_rows(self, n: int) -> None:
         """Check if there are enough rows in the input dataset."""
@@ -93,14 +150,14 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         ].tolist()
         if self.non_numeric_cols:
             X.drop(columns=self.non_numeric_cols, inplace=True)
-        return X
+        return self
 
     def _check_no_row_numbers(self, X: pd.DataFrame, n: int) -> pd.DataFrame:
         """Check that no column consists of the row numbers."""
         self.cols_rownumbers = [col for col in X.columns if np.all(X[col] == np.arange(0, n))]
         if self.cols_rownumbers:
             X.drop(columns=self.cols_rownumbers, inplace=True)
-        return X
+        return self
 
     def _clean_missing_values(self, X: pd.DataFrame) -> pd.DataFrame:
         """Clean missing values."""
@@ -109,24 +166,24 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         X.replace([np.inf, -np.inf], np.nan, inplace=True)
         if self.clean_na_first == "columns":
-            X = self._clean_cols(X)
-            X = self._clean_rows(X)
+            self._clean_cols(X)
+            self._clean_rows(X)
         elif self.clean_na_first == "rows":
-            X = self._clean_rows(X)
-            X = self._clean_cols(X)
+            self._clean_rows(X)
+            self._clean_cols(X)
         else:
             raise ValueError(
                 'The argument clean_na_first should be "automatic", "rows" or "columns", '
                 f'but received "{self.clean_na_first}".'
             )
-        return X
+        return self
 
     def _remove_discrete_columns(self, X: pd.DataFrame) -> pd.DataFrame:
         """Remove columns with a small number of unique values."""
         self.cols_discrete = X.columns[X.nunique() <= self.min_unique_values].tolist()
         if self.cols_discrete:
             X.drop(columns=self.cols_discrete, inplace=True)
-        return X
+        return self
 
     def _remove_columns_with_bad_scale(self, X: pd.DataFrame) -> pd.DataFrame:
         """Remove columns with scale smaller than min_abs_scale."""
@@ -138,74 +195,18 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         ].tolist()
         if self.cols_bad_scale:
             X.drop(columns=self.cols_bad_scale, inplace=True)
-        return X
+        return self
 
     def _clean_cols(self, X: pd.DataFrame):
         """Remove columns with too many missings"""
-        X_clean = X.loc[:, X.isna().mean() < self.max_missing_frac_cols]
-        if X_clean.shape != X.shape:
-            self.logger.info(
-                " Dropped the following columns for too many missings: "
-                f"{', '.join(set(X.columns).difference(X_clean.columns))}"
-            )
-        return X_clean
+        self.cols_missings = X.columns[X.isna().mean() >= self.max_missing_frac_cols].tolist()
+        if self.cols_missings:
+            X.drop(columns=self.cols_missings, inplace=True)
+        return self
 
     def _clean_rows(self, X: pd.DataFrame):
         """Remove rows with too many missings"""
-        X_clean = X.loc[X.isna().mean(axis=1) < self.max_missing_frac_rows, :]
-        if X_clean.shape != X.shape:
-            self.logger.info(
-                " Dropped the following rows for too many missings: "
-                f"{', '.join(map(str,set(X.index).difference(X_clean.index)))}"
-            )
-        return X_clean
-
-    def transform(self, X: pd.DataFrame):
-        """
-        X (pd.DataFrame): input dataset.
-        """
-
-        n, p = X.shape
-
-        self._check_minimum_rows(n)
-        self.logger.info(f"The input data has {n} rows and {p} columns.")
-
-        X.drop(
-            np.concatenate(
-                (
-                    self.non_numeric_cols,
-                    self.cols_rownumbers,
-                    self.cols_discrete,
-                    self.cols_bad_scale,
-                )
-            ),
-            axis=1,
-            inplace=True,
-        )
-
-        if self.non_numeric_cols:
-            self.logger.info(
-                " Dropped the following non-numeric columns: " f"{', '.join(self.non_numeric_cols)}"
-            )
-        if self.cols_rownumbers:
-            self.logger.info(
-                " Dropped the following column that is identical to the row numbers: "
-                f"{', '.join(self.cols_rownumbers)}"
-            )
-        if self.cols_discrete:
-            self.logger.info(
-                " Dropped the following discrete columns: " f"{', '.join(self.cols_discrete)}"
-            )
-        if self.cols_bad_scale:
-            self.logger.info(
-                " Dropped the following columns with an (almost) zero median absolute deviation: "
-                f"{', '.join(self.cols_bad_scale)}"
-            )
-
-        X = self._clean_missing_values(X)
-
-        X.replace([np.inf, -np.inf], np.nan, inplace=True)
-
-        self.logger.info(f"The final data has {X.shape[0]} rows and {X.shape[1]} columns.")
-
-        return X
+        self.rows_missings = X.index[X.isna().mean(axis=1) >= self.max_missing_frac_rows].tolist()
+        if self.rows_missings:
+            X.drop(index=self.rows_missings, inplace=True)
+        return self

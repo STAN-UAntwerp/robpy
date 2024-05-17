@@ -66,13 +66,11 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X (pd.DataFrame): input dataset.
         """
 
-        X = df.copy()
+        self._get_non_numeric_columns_to_drop(df)
 
-        self._retain_numeric_columns(X)
+        self._get_discrete_columns_to_drop(df)
 
-        self._remove_discrete_columns(X)
-
-        self._remove_columns_with_bad_scale(X)
+        self._get_bad_scale_columns_to_drop(df)
 
         return self
 
@@ -143,13 +141,11 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 f"but received only {n}."
             )
 
-    def _retain_numeric_columns(self, X: pd.DataFrame) -> pd.DataFrame:
-        """Retain only numeric columns."""
+    def _get_non_numeric_columns_to_drop(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Store non-numeric columns to drop."""
         self.non_numeric_cols = X.columns[
             X.apply(pd.to_numeric, errors="coerce").isna().all()
         ].tolist()
-        if self.non_numeric_cols:
-            X.drop(columns=self.non_numeric_cols, inplace=True)
         return self
 
     def _check_no_row_numbers(self, X: pd.DataFrame, n: int) -> pd.DataFrame:
@@ -178,23 +174,22 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             )
         return self
 
-    def _remove_discrete_columns(self, X: pd.DataFrame) -> pd.DataFrame:
-        """Remove columns with a small number of unique values."""
+    def _get_discrete_columns_to_drop(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Store columns with a small number of unique values (discrete columns) to drop."""
         self.cols_discrete = X.columns[X.nunique() <= self.min_unique_values].tolist()
-        if self.cols_discrete:
-            X.drop(columns=self.cols_discrete, inplace=True)
         return self
 
-    def _remove_columns_with_bad_scale(self, X: pd.DataFrame) -> pd.DataFrame:
-        """Remove columns with scale smaller than min_abs_scale."""
+    def _get_bad_scale_columns_to_drop(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Store columns with a scale smaller than min_abs_scale to drop."""
+        X = X.drop(columns=np.concatenate((self.non_numeric_cols, self.cols_discrete)))
         self.cols_bad_scale = X.columns[
             median_abs_deviation(
-                X.replace([np.inf, -np.inf, True, False], np.nan), axis=0, nan_policy="omit"
+                X.replace([np.inf, -np.inf, True, False], np.nan),
+                axis=0,
+                nan_policy="omit",
             )
             <= self.min_abs_scale
         ].tolist()
-        if self.cols_bad_scale:
-            X.drop(columns=self.cols_bad_scale, inplace=True)
         return self
 
     def _clean_cols(self, X: pd.DataFrame):

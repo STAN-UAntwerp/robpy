@@ -1,4 +1,5 @@
 import numpy as np
+import logging
 from sklearn.base import (
     BaseEstimator,
     OneToOneFeatureMixin,
@@ -40,6 +41,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         self.standardize = standardize
         self.quantile = quantile
         self.nsteps = nsteps
+        self.logger = logging.getLogger("RobustPowerTransformer")
 
     def fit(self, x: np.array):
         """Calculates lambda, the transformation parameter depending on the method.
@@ -47,91 +49,204 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         Args:
             x (np.array): data.
         """
-        lambdarange = np.array([-4.0, 6.0])
 
         self.get_method(x)
+        x_sorted = np.sort(x)
 
-        x = np.sort(x)
         if self.method in ["boxcox", "auto"]:
-            converged = False
-            while not converged:
-                if self.standardize:
-                    x = x / np.median(x)
-                lambda_raw = self.calculate_lambda_0(x, "boxcox_rect", lambdarange)
-                lambda_rew = self.reweighted_max_likelihood_robust(
-                    x,
-                    lambda_raw,
-                    "boxcox",
-                    lambdarange,
-                    self.quantile,
-                    self.nsteps,
-                )
-                converged = np.min(np.abs(lambda_rew - lambdarange)) > np.diff(lambdarange) * 0.05
-                if not converged:
-                    lambdarange = 1 + (lambdarange - 1) * (
-                        1 + (abs(lambda_rew - lambdarange) == min(abs(lambda_rew - lambdarange)))
-                    )
+            lambda_boxcox, mu_rew_boxcox, sd_rew_boxcox, scale_boxcox = self.fit_boxcox(x_sorted)
             if self.method == "auto":
-                lambda_boxcox = lambda_rew
                 crit_val_boxcox = self.robnormality(x, "boxcox", lambda_boxcox)
-            else:
-                self.lambda_rew = lambda_rew
-                return lambda_rew
+
         if self.method in ["yeojohnson", "auto"]:
-            converged = False
-            while not converged:
-                if self.standardize:
-                    x = (x - np.median(x)) / median_abs_deviation(x, scale="normal")
-                lambda_raw = self.calculate_lambda_0(x, "yeojohnson_rect", lambdarange)
-                lambda_rew = self.reweighted_max_likelihood_robust(
-                    x,
-                    lambda_raw,
-                    "yeojohnson",
-                    lambdarange,
-                    self.quantile,
-                    self.nsteps,
-                )
-                converged = np.min(np.abs(lambda_rew - lambdarange)) > np.diff(lambdarange) * 0.05
-                if not converged:
-                    lambdarange = 1 + (lambdarange - 1) * (
-                        1 + (abs(lambda_rew - lambdarange) == min(abs(lambda_rew - lambdarange)))
-                    )
+            (
+                lambda_yeojohnson,
+                mu_rew_yeojohnson,
+                sd_rew_yeojohnson,
+                loc_yeojohnson,
+                scale_yeojohnson,
+            ) = self.fit_yeojohnson(x_sorted)
             if self.method == "auto":
-                lambda_yeojohnson = lambda_rew
                 crit_val_yeojohnson = self.robnormality(x, "yeojohnson", lambda_yeojohnson)
-            else:
-                self.lambda_rew = lambda_rew
-                return lambda_rew
+
         if self.method == "auto":
             if crit_val_boxcox < crit_val_yeojohnson:
                 self.method = "boxcox"
-                self.lambda_rew = lambda_rew
-                return lambda_boxcox
             else:
                 self.method = "yeojohnson"
-                self.lambda_rew = lambda_rew
-                return lambda_yeojohnson
 
-    def transform(self, x: np.array):
+        if self.method == "boxcox":
+            if self.standardize:
+                self.scale_pre = scale_boxcox
+                self.location_post = mu_rew_boxcox
+                self.scale_post = sd_rew_boxcox
+            self.lambda_rew = lambda_boxcox
+        else:  # yeojohnson
+            if self.standardize:
+                self.location_pre = loc_yeojohnson
+                self.scale_pre = scale_yeojohnson
+                self.location_post = mu_rew_yeojohnson
+                self.scale_post = sd_rew_yeojohnson
+            self.lambda_rew = lambda_yeojohnson
+
+        return self
+
+    def transform(self, x: np.array) -> np.array:
         """Transforms the data using the calculated lambda estimate and the corresponding method.
 
         Args:
             x (np.array): data.
         """
+
+        if self.method == "boxcox":
+            if np.min(x) <= 0:
+                raise ValueError(
+                    "The data is not strictly positive. Box-Cox transformation "
+                    "cannot be applied."
+                )
+            if self.standardize:
+                x = x / self.scale_pre
+            x = self.transf_boxcox(x, self.lambda_rew)[0]
+            if self.standardize:
+                x = (x - self.location_post) / self.scale_post
+        else:  # yeojohnson
+            if self.standardize:
+                x = (x - self.location_pre) / self.scale_pre
+            x = self.transf_yeojohnson(x, self.lambda_rew)[0]
+            if self.standardize:
+                x = (x - self.location_post) / self.scale_post
+
+        return x
+
+    def inverse_transform(self, x: np.ndarray) -> np.array:
+        """Transforms the data back using inverse Yeo-Johnson/Box-cox, the previously fitted lambda
+          estimate and the corresponding method are used.
+
+        Args:
+            x (np.array): data.
+        """
+
         if self.method == "boxcox":
             if self.standardize:
-                x = x / np.median(x)
-            x = self.transf_boxcox(x, self.lambda_rew)
+                x = x * self.scale_post + self.location_post
+            x = self.handle_bounds(x)
+            x = self.inv_transf_boxcox(x, self.lambda_rew)
             if self.standardize:
-                # moet met muhat en sigmahat: zijn mean en sd van x[w] => order needed
-                0
+                x = x * self.scale_pre
 
-        else:
+        else:  # yeojohnson
             if self.standardize:
-                (x - np.median(x)) / median_abs_deviation(x, scale="normal")
-            x = self.transf_boxcox(x, self.lambda_rew)
+                x = x * self.scale_post + self.location_post
+            x = self.handle_bounds(x)
+            x = self.inv_transf_yeojohnson(x, self.lambda_rew)
             if self.standardize:
-                0
+                x = x * self.scale_pre + self.location_pre
+
+        return x
+
+    def fit_boxcox(self, x: np.array):
+        """fits the Box-Cox power transformation
+
+        Args:
+            x (np.array): data"""
+        lambdarange = np.array([-4.0, 6.0])
+        converged = False
+        while not converged:
+            if self.standardize:
+                scale_boxcox = np.median(x)
+                x = x / scale_boxcox
+            else:
+                scale_boxcox = None
+            lambda_raw = self.calculate_lambda_0(x, "boxcox_rect", lambdarange)
+            lambda_rew, mu_rew_boxcox, sd_rew_boxcox = self.reweighted_max_likelihood_robust(
+                x,
+                lambda_raw,
+                "boxcox",
+                lambdarange,
+                self.quantile,
+                self.nsteps,
+            )
+            converged = np.min(np.abs(lambda_rew - lambdarange)) > np.diff(lambdarange) * 0.05
+            if not converged:
+                lambdarange = 1 + (lambdarange - 1) * (
+                    1 + (abs(lambda_rew - lambdarange) == min(abs(lambda_rew - lambdarange)))
+                )
+
+        return lambda_rew, mu_rew_boxcox, sd_rew_boxcox, scale_boxcox
+
+    def fit_yeojohnson(self, x: np.array):
+        """fits the Yeo-Johnson power transformation
+
+        Args:
+            x (np.array): data"""
+        lambdarange = np.array([-4.0, 6.0])
+        converged = False
+        while not converged:
+            if self.standardize:
+                loc_yeojohnson = np.median(x)
+                scale_yeojohnson = median_abs_deviation(x, scale="normal")
+                x = (x - loc_yeojohnson) / scale_yeojohnson
+            else:
+                loc_yeojohnson, scale_yeojohnson = None, None
+            lambda_raw = self.calculate_lambda_0(x, "yeojohnson_rect", lambdarange)
+            (
+                lambda_rew,
+                mu_rew_yeojohnson,
+                sd_rew_yeojohnson,
+            ) = self.reweighted_max_likelihood_robust(
+                x,
+                lambda_raw,
+                "yeojohnson",
+                lambdarange,
+                self.quantile,
+                self.nsteps,
+            )
+            converged = np.min(np.abs(lambda_rew - lambdarange)) > np.diff(lambdarange) * 0.05
+            if not converged:
+                lambdarange = 1 + (lambdarange - 1) * (
+                    1 + (abs(lambda_rew - lambdarange) == min(abs(lambda_rew - lambdarange)))
+                )
+
+        return lambda_rew, mu_rew_yeojohnson, sd_rew_yeojohnson, loc_yeojohnson, scale_yeojohnson
+
+    def calculate_bounds(self):
+        """Calculates the bounds of the range of the power transformation"""
+
+        lower_bound, upper_bound = None, None
+
+        if self.method == "boxcox" and self.lambda_rew > 0.0:
+            lower_bound = -1.0 / np.abs(self.lambda_rew)
+        elif self.method == "boxcox" and self.lambda_rew < 0.0:
+            upper_bound = 1.0 / np.abs(self.lambda_rew)
+        elif self.method == "yeojohnson" and self.lambda_rew > 2.0:
+            lower_bound = -1.0 / np.abs(self.lambda_rew - 2.0)
+        elif self.method == "yeojohnson" and self.lambda_rew < 0.0:
+            upper_bound = 1.0 / np.abs(self.lambda_rew)
+
+        return lower_bound, upper_bound
+
+    def handle_bounds(self, x: np.array):
+        lower_bound, upper_bound = self.calculate_bounds()
+
+        if lower_bound is not None and np.min(x) < lower_bound:
+            new_bound = 0.95 * lower_bound
+            self.logger.info(
+                f"Some (standardized) values in x are below the range of the {self.method} "
+                f"transformation. These values were replaced by {new_bound} so they "
+                "can be transformed back."
+            )
+            x = np.where(x < lower_bound, new_bound, x)
+
+        if upper_bound is not None and np.max(x) > upper_bound:
+            new_bound = 0.95 * upper_bound
+            self.logger.info(
+                f"Some (standardized) values in x are above the range of the {self.method} "
+                f"transformation. These values were replaced by {new_bound} so they "
+                "can be transformed back."
+            )
+            x = np.where(x > upper_bound, new_bound, x)
+
+        return x
 
     def transf_boxcox_rectified(self, x: np.array, my_lambda: float, standardize_too: bool = False):
         """Rectified BoxCox transformation"""
@@ -321,7 +436,6 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
             xt = np.exp(x)
         else:
             xt = (x * my_lambda + 1) ** (1.0 / my_lambda)
-        # TODO: in R kan dit ook nog extra de xt schalen...
         return xt
 
     def inv_transf_yeojohnson(self, x: np.array, my_lambda: float) -> np.array:
@@ -344,7 +458,6 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
                 1 / (2 - my_lambda)
             )
 
-        # TODO: in R kan dit ook nog extra de xt schalen...
         return xt
 
     def robnormality(
@@ -422,7 +535,11 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
             elif transf == "yeojohnson":
                 xt = self.transf_yeojohnson(x, lambda_rew, standardize_too=False)[0]
             zt = (xt - np.mean(xt)) / np.std(xt)
-        return lambda_rew
+
+        mu_rew = np.mean(xt[w])
+        sd_rew = np.std(xt[w])
+
+        return lambda_rew, mu_rew, sd_rew
 
     def estimate_max_likelihood(
         self,

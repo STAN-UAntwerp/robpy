@@ -34,11 +34,13 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         self,
         method: Literal["boxcox", "yeojohnson", "auto"] = "auto",
         standardize: bool = True,
+        lambda_range: tuple[float, float] = [-4.0, 6.0],
         quantile: float = 0.99,
         nsteps: int = 2,
     ):
         self.method = method
         self.standardize = standardize
+        self.lambda_range = lambda_range
         self.quantile = quantile
         self.nsteps = nsteps
         self.logger = logging.getLogger("RobustPowerTransformer")
@@ -149,7 +151,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
         Args:
             x (np.array): data"""
-        lambdarange = np.array([-4.0, 6.0])
+        lambdarange = self.lambda_range
         converged = False
         while not converged:
             if self.standardize:
@@ -179,7 +181,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
         Args:
             x (np.array): data"""
-        lambdarange = np.array([-4.0, 6.0])
+        lambdarange = self.lambda_range
         converged = False
         while not converged:
             if self.standardize:

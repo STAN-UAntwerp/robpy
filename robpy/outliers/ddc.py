@@ -70,14 +70,12 @@ class DDCEstimator(OutlierMixin):
         )
         self.standardized_residuals_ = self.raw_residuals_ / self.residual_scales_
         self.cellwise_outliers_ = np.abs(self.standardized_residuals_) > self.cutoff
-
         # step 7: rowwise outliers
         self.raw_t_values_ = np.nanmean(chi2.cdf(self.standardized_residuals_**2, df=1), axis=1)
         est = UnivariateMCDEstimator().fit(self.raw_t_values_)
         self.standardized_t_values_ = (self.raw_t_values_ - est.location) / est.scale
         self.row_outliers_ = np.abs(self.standardized_t_values_) > self.cutoff
         self.is_fitted_ = True
-
         # step 8: rescale
         self.rescaled_predictions_ = self.predictions_ * self.scale_ + self.location_
         return self
@@ -95,9 +93,15 @@ class DDCEstimator(OutlierMixin):
         if X.shape[1] != self.cellwise_outliers_.shape[1]:
             raise ValueError("Impute can only be called with the same data as fit.")
         if impute_outliers:
-            return np.where(self.cellwise_outliers_ | np.isnan(X), self.rescaled_predictions_, X)
+            return np.where(
+                self.cellwise_outliers_ | np.isnan(X.replace([-np.inf, np.inf], np.nan)),
+                self.rescaled_predictions_,
+                X,
+            )
         else:
-            return np.where(np.isnan(X), self.rescaled_predictions_, X)
+            return np.where(
+                np.isnan(X.replace([-np.inf, np.inf], np.nan)), self.rescaled_predictions_, X
+            )
 
     def cellmap(
         self,
@@ -203,7 +207,9 @@ class DDCEstimator(OutlierMixin):
         return correlation
 
     def _robust_slope(self, x: np.ndarray, y: np.ndarray) -> float:
-        init_slope = np.median(y / x)
+        if np.all(x == 0):
+            return 0
+        init_slope = np.median(y[x != 0] / x[x != 0])
         residuals = y - init_slope * x
         r_cutoff = self.cutoff * UnivariateMCDEstimator().fit(residuals).scale
         mask = np.abs(residuals) <= r_cutoff
@@ -227,10 +233,23 @@ class DDCEstimator(OutlierMixin):
     def _get_predicted_values(self, X: pd.DataFrame) -> np.ndarray:
         predictions = np.zeros(X.shape)
         for i in range(X.shape[1]):
-            weights = self.robust_correlation_[:, i] / self.robust_correlation_[:, i].sum()
+            weights = np.repeat(
+                [
+                    [
+                        np.abs(r) * (np.abs(r) >= 0.5) * (idx != i)
+                        for idx, r in enumerate(self.robust_correlation_[:, i])
+                    ]
+                ],
+                X.shape[0],
+                axis=0,
+            ) * ~np.isnan(X.values)
+
+            weights_sum = weights.sum(axis=1).reshape(-1, 1)
+            weights = np.divide(
+                weights, weights_sum, out=np.zeros_like(weights), where=weights_sum != 0
+            )
             for j in range(X.shape[1]):
                 if np.isnan(self.slopes_[j, i]):
                     continue
-                predictions[:, i] += weights[j] * self.slopes_[j, i] * X.iloc[:, j].fillna(0)
-                # TODO: confirm that fillna(0) is correct
+                predictions[:, i] += weights[:, j] * self.slopes_[j, i] * X.iloc[:, j].fillna(0)
         return predictions

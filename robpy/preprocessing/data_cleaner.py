@@ -61,16 +61,16 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.min_n_rows = min_n_rows
         self.logger = logging.getLogger("DataCleaner")
 
-    def fit(self, df: pd.DataFrame) -> pd.DataFrame:
+    def fit(self, X: pd.DataFrame) -> pd.DataFrame:
         """
         X (pd.DataFrame): input dataset.
         """
 
-        self._get_non_numeric_columns_to_drop(df)
+        self._get_non_numeric_columns_to_drop(X)
 
-        self._get_discrete_columns_to_drop(df)
+        self._get_discrete_columns_to_drop(X)
 
-        self._get_bad_scale_columns_to_drop(df)
+        self._get_bad_scale_columns_to_drop(X)
 
         return self
 

@@ -13,8 +13,8 @@ class UnivariateMCDEstimator(RobustScaleEstimator):
 
         Args:
             h_size: size of the h subset.
-                If an integer > 1 is passed, it is interpreted as an absolute value.
-                If a float < 1 is passed, it is interpreted as a proportation
+                If an integer between n/2 and n is passed, it is interpreted as an absolute value.
+                If a float  between 0.5 and 1 is passed, it is interpreted as a proportation
                     of n (the training set size).
                 If None, it is set to floor(n/2) + 1.
                 Defaults to None.
@@ -26,7 +26,7 @@ class UnivariateMCDEstimator(RobustScaleEstimator):
 
     def _calculate(self, X: np.ndarray):
         self._set_h_size(X)
-        if self.h_size == 1:
+        if self.h_size == X.shape[0]:
             self.raw_location_ = self.location_ = X.mean()
             self.raw_scale_ = self.scale_ = X.std()
             self.raw_variance_ = self.variance_ = np.square(self.raw_scale_)
@@ -69,12 +69,12 @@ class UnivariateMCDEstimator(RobustScaleEstimator):
         n = len(X)
         if self.h_size is None:
             self.h_size = n // 2 + 1
-        elif isinstance(self.h_size, int) and (1 <= self.h_size <= n):
+        elif isinstance(self.h_size, int) and (n / 2 <= self.h_size <= n):
             pass
-        elif isinstance(self.h_size, float) and (0 < self.h_size < 1):
+        elif (isinstance(self.h_size, float) and (0.5 <= self.h_size <= 1)) or self.h_size == 1:
             self.h_size = int(self.h_size * n)
         else:
             raise ValueError(
-                f"h_size must be an integer > 1 and <= n or a float between 0 and 1 "
+                f"h_size must be an integer between n/2 and n or a float between 0.5 and 1 "
                 f"but received {self.h_size}"
             )

@@ -1,6 +1,6 @@
 import numpy as np
 
-from robpy.preprocessing import wrapping_transformation
+from robpy.preprocessing.utils import wrapping_transformation
 from robpy.covariance.base import RobustCovarianceEstimator
 
 
@@ -60,4 +60,5 @@ class WrappingCovarianceEstimator(RobustCovarianceEstimator):
         X_transformed = wrapping_transformation(
             X, b=self.b, c=self.c, q1=self.q1, q2=self.q2, rescale=self.rescale
         )
+        self.correlation_ = np.corrcoef(X_transformed, rowvar=False)
         return np.cov(X_transformed, rowvar=False)

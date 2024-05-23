@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from abc import abstractmethod
 from sklearn.decomposition._base import _BasePCA
-from scipy.stats import chi2, norm, median_abs_deviation
+from scipy.stats import chi2, norm
+from robpy.univariate import UnivariateMCDEstimator
 
 
 class RobustPCAEstimator(_BasePCA):
@@ -85,8 +86,5 @@ class RobustPCAEstimator(_BasePCA):
 
 
 def get_od_cutoff(orthogonal_distances: np.ndarray) -> float:
-    # TODO: replace median and mad by univariate MCD
-    return float(
-        np.median(orthogonal_distances ** (2 / 3))
-        + (median_abs_deviation(orthogonal_distances ** (2 / 3), scale="normal") * norm.ppf(0.975))
-    ) ** (3 / 2)
+    mcd = UnivariateMCDEstimator().fit(orthogonal_distances ** (2 / 3))
+    return float(mcd.location + mcd.scale * norm.ppf(0.975)) ** (3 / 2)

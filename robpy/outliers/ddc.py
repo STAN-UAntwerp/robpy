@@ -74,7 +74,7 @@ class DDCEstimator(OutlierMixin):
         self.raw_t_values_ = np.nanmean(chi2.cdf(self.standardized_residuals_**2, df=1), axis=1)
         est = UnivariateMCDEstimator().fit(self.raw_t_values_)
         self.standardized_t_values_ = (self.raw_t_values_ - est.location) / est.scale
-        self.row_outliers_ = np.abs(self.standardized_t_values_) > self.cutoff
+        self.row_outliers_ = self.standardized_t_values_ > self.cutoff
         self.is_fitted_ = True
         # step 8: rescale
         self.rescaled_predictions_ = self.predictions_ * self.scale_ + self.location_
@@ -112,6 +112,7 @@ class DDCEstimator(OutlierMixin):
         figsize: tuple[int, int] = (7, 10),
         row_zoom: tuple[int, int] | pd.Index | None = None,
         col_zoom: tuple[int, int] | pd.Index | None = None,
+        vmax_clip: int = 10,
     ) -> Axes:
         """Visualize the standardized residuals of the DDC model as a heatmap.
 
@@ -161,7 +162,7 @@ class DDCEstimator(OutlierMixin):
         if annotate:
             annotate = X_annot
         _, ax = plt.subplots(1, 1, figsize=figsize)
-        vmax = np.nanmax(np.abs(plot_data))
+        vmax = min(np.nanmax(np.abs(plot_data)), vmax_clip)
         ax = sns.heatmap(
             plot_data,
             cmap="coolwarm",
@@ -195,10 +196,17 @@ class DDCEstimator(OutlierMixin):
             for j in range(i + 1, X.shape[1]):
                 xy = X.iloc[:, [i, j]].dropna().values
                 x, y = xy.T
-                xy_corr = (
-                    UnivariateMCDEstimator().fit(x + y).scale ** 2
-                    - UnivariateMCDEstimator().fit(x - y).scale ** 2
-                ) / 4
+                xy_corr = np.clip(
+                    (
+                        (
+                            UnivariateMCDEstimator().fit(x + y).scale ** 2
+                            - UnivariateMCDEstimator().fit(x - y).scale ** 2
+                        )
+                        / 4
+                    ),
+                    -0.99,
+                    0.99,
+                )
                 distances = mahalanobis_distance(
                     xy, np.array([0, 0]), np.array([[1, xy_corr], [xy_corr, 1]])
                 )

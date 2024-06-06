@@ -2,12 +2,20 @@
 name = "robpy"
 version = "0.1.0"
 description = ""
-authors = ["Thomas Decorte <thomas.decorte@uantwerpen.be>", "Thomas Servotte <servottethomas@gmail.com>", ]
+authors = ["Thomas Servotte <servottethomas@gmail.com>", "Sarah Leyder <sarah.leyder@uantwerpen.be>"]
 readme = "README.md"
 
 [tool.black]
 line-length = 100
-exclude = ".ipynb"
+exclude =  '''
+(
+  /(
+    | \.git         
+    | \.venv
+  )/
+  | .ipynb
+)
+'''
 
 [tool.flake8]
 extend-ignore = "E203"

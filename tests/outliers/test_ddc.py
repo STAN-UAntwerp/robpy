@@ -16,6 +16,7 @@ def test_ddc_correctly_flags_dummy_data():
     expected_outliers = np.full(X.shape, False)
     expected_outliers[4, 0] = True
     expected_outliers[7, 1] = True
+    expected_outliers[1, 3] = True
     ddc = DDCEstimator()
     # when
     ddc = ddc.fit(X)

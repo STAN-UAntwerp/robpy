@@ -53,7 +53,7 @@ class DDCEstimator(OutlierMixin):
             [
                 self._robust_slope(
                     self.raw_predictions_[~np.isnan(Z.iloc[:, i]), i],
-                    Z.iloc[:, i].dropna().to_numpy(),
+                    Z.to_numpy()[~np.isnan(Z.iloc[:, i]), i],
                 )
                 for i in range(X.shape[1])
             ]
@@ -187,7 +187,7 @@ class DDCEstimator(OutlierMixin):
         # TODO: replace with single step MEstimator with TukeyBiSquare weights
         self.location_, self.scale_ = [], []
         for i in range(X.shape[1]):
-            est = CellwiseOneStepMEstimator().fit(X.iloc[:, i].dropna().to_numpy())
+            est = CellwiseOneStepMEstimator().fit(X.iloc[:, i].to_numpy()[~np.isnan(X.iloc[:, i])])
             self.location_.append(est.location)
             self.scale_.append(est.scale)
         return (X - self.location_) / self.scale_
@@ -201,7 +201,8 @@ class DDCEstimator(OutlierMixin):
                     f"({((i + 1) / X.shape[1]):.1%})"
                 )
             for j in range(i + 1, X.shape[1]):
-                xy = X.iloc[:, [i, j]].dropna().values
+                xy = X.iloc[:, [i, j]].values
+                xy = xy[~(np.isnan(xy).any(axis=1)), :]
                 if xy.size == 0:
                     correlation[i, j] = correlation[j, i] = 0
                     continue
@@ -240,7 +241,8 @@ class DDCEstimator(OutlierMixin):
             for j in range(X.shape[1]):
                 if i == j:
                     continue
-                xy = X.iloc[:, [i, j]].dropna().values.T
+                xy = X.iloc[:, [i, j]].values
+                xy = xy[(~np.isnan(xy).any(axis=1)), :].T
                 x, y = xy
                 xy_corr = self.robust_correlation_[i, j]
                 if np.abs(xy_corr) < self.min_correlation:

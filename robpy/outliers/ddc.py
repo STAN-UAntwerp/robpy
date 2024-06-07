@@ -7,7 +7,7 @@ from matplotlib.axes import Axes
 from sklearn.base import OutlierMixin
 from scipy.stats import chi2
 
-from robpy.univariate import UnivariateMCDEstimator
+from robpy.univariate import CellwiseOneStepMEstimator
 from robpy.utils.distance import mahalanobis_distance
 
 
@@ -30,7 +30,7 @@ class DDCEstimator(OutlierMixin):
         self.cutoff = np.sqrt(chi2.ppf(chi2_quantile, df=1))
         self.min_correlation = min_correlation
 
-    def fit(self, X: pd.DataFrame, y=None):
+    def fit(self, X: pd.DataFrame, y=None, verbose: bool = False):
         self._check_data_conditions(X)
         X = X.replace([np.inf, -np.inf], np.nan)
         # step 1: standardization
@@ -42,7 +42,7 @@ class DDCEstimator(OutlierMixin):
             index=X.index,
         )
         # step 3: correlation matrix and slopes
-        self.robust_correlation_ = self._robust_correlation(U)
+        self.robust_correlation_ = self._robust_correlation(U, verbose=verbose)
         self.slopes_ = self._get_slopes(U)
 
         # step 4: predicted values
@@ -53,7 +53,7 @@ class DDCEstimator(OutlierMixin):
             [
                 self._robust_slope(
                     self.raw_predictions_[~np.isnan(Z.iloc[:, i]), i],
-                    Z.iloc[:, i].dropna().to_numpy(),
+                    Z.to_numpy()[~np.isnan(Z.iloc[:, i]), i],
                 )
                 for i in range(X.shape[1])
             ]
@@ -64,7 +64,9 @@ class DDCEstimator(OutlierMixin):
         self.raw_residuals_ = Z.values - self.predictions_
         self.residual_scales_ = np.array(
             [
-                UnivariateMCDEstimator().fit(self.raw_residuals_[:, i]).scale
+                CellwiseOneStepMEstimator()
+                .fit(self.raw_residuals_[:, i][~np.isnan(self.raw_residuals_[:, i])])
+                .scale
                 for i in range(X.shape[1])
             ]
         )
@@ -72,7 +74,7 @@ class DDCEstimator(OutlierMixin):
         self.cellwise_outliers_ = np.abs(self.standardized_residuals_) > self.cutoff
         # step 7: rowwise outliers
         self.raw_t_values_ = np.nanmean(chi2.cdf(self.standardized_residuals_**2, df=1), axis=1)
-        est = UnivariateMCDEstimator().fit(self.raw_t_values_)
+        est = CellwiseOneStepMEstimator().fit(self.raw_t_values_)
         self.standardized_t_values_ = (self.raw_t_values_ - est.location) / est.scale
         self.row_outliers_ = self.standardized_t_values_ > self.cutoff
         self.is_fitted_ = True
@@ -182,25 +184,33 @@ class DDCEstimator(OutlierMixin):
             raise ValueError("Columns with less than 3 unique values are not supported.")
 
     def _standardize(self, X: pd.DataFrame):
-        # TODO: replace with single step MEstimator with TukeyBiSquare weights
         self.location_, self.scale_ = [], []
         for i in range(X.shape[1]):
-            est = UnivariateMCDEstimator().fit(X.iloc[:, i].to_numpy())
+            est = CellwiseOneStepMEstimator().fit(X.iloc[:, i].to_numpy()[~np.isnan(X.iloc[:, i])])
             self.location_.append(est.location)
             self.scale_.append(est.scale)
         return (X - self.location_) / self.scale_
 
-    def _robust_correlation(self, X: pd.DataFrame) -> np.ndarray:
+    def _robust_correlation(self, X: pd.DataFrame, verbose: bool = False) -> np.ndarray:
         correlation = np.ones((X.shape[1], X.shape[1]))
         for i in range(X.shape[1]):
+            if verbose and i % (X.shape[1] // 10) == 0:
+                print(
+                    f"Correlation: Processing column {i + 1} of {X.shape[1]} "
+                    f"({((i + 1) / X.shape[1]):.1%})"
+                )
             for j in range(i + 1, X.shape[1]):
-                xy = X.iloc[:, [i, j]].dropna().values
+                xy = X.iloc[:, [i, j]].values
+                xy = xy[~(np.isnan(xy).any(axis=1)), :]
+                if xy.size == 0:
+                    correlation[i, j] = correlation[j, i] = 0
+                    continue
                 x, y = xy.T
                 xy_corr = np.clip(
                     (
                         (
-                            UnivariateMCDEstimator().fit(x + y).scale ** 2
-                            - UnivariateMCDEstimator().fit(x - y).scale ** 2
+                            CellwiseOneStepMEstimator().fit(x + y).scale ** 2
+                            - CellwiseOneStepMEstimator().fit(x - y).scale ** 2
                         )
                         / 4
                     ),
@@ -219,7 +229,7 @@ class DDCEstimator(OutlierMixin):
             return 0
         init_slope = np.median(y[x != 0] / x[x != 0])
         residuals = y - init_slope * x
-        r_cutoff = self.cutoff * UnivariateMCDEstimator().fit(residuals).scale
+        r_cutoff = self.cutoff * CellwiseOneStepMEstimator().fit(residuals).scale
         mask = np.abs(residuals) <= r_cutoff
 
         return np.linalg.lstsq(x[mask].reshape(-1, 1), y[mask], rcond=None)[0][0]
@@ -230,7 +240,8 @@ class DDCEstimator(OutlierMixin):
             for j in range(X.shape[1]):
                 if i == j:
                     continue
-                xy = X.iloc[:, [i, j]].dropna().values.T
+                xy = X.iloc[:, [i, j]].values
+                xy = xy[(~np.isnan(xy).any(axis=1)), :].T
                 x, y = xy
                 xy_corr = self.robust_correlation_[i, j]
                 if np.abs(xy_corr) < self.min_correlation:

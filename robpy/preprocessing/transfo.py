@@ -9,7 +9,7 @@ from typing import Literal
 from robpy.utils.rho import TukeyBisquare
 from scipy.stats import median_abs_deviation, norm, chi2
 from scipy.optimize import minimize_scalar
-from robpy.univariate.hubers_m_est import UnivariateHuberMEstimator1step
+from robpy.univariate import HuberOneStepMEstimator
 
 
 class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
@@ -34,18 +34,18 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         self,
         method: Literal["boxcox", "yeojohnson", "auto"] = "auto",
         standardize: bool = True,
-        lambda_range: tuple[float, float] = [-4.0, 6.0],
+        lambda_range: tuple[float, float] = (-4.0, 6.0),
         quantile: float = 0.99,
         nsteps: int = 2,
     ):
         self.method = method
         self.standardize = standardize
-        self.lambda_range = lambda_range
+        self.lambda_range = list(lambda_range)
         self.quantile = quantile
         self.nsteps = nsteps
         self.logger = logging.getLogger("RobustPowerTransformer")
 
-    def fit(self, x: np.array):
+    def fit(self, x: np.ndarray):
         """Calculates lambda, the transformation parameter depending on the method.
 
         Args:
@@ -93,7 +93,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
         return self
 
-    def transform(self, x: np.array) -> np.array:
+    def transform(self, x: np.ndarray) -> np.ndarray:
         """Transforms the data using the calculated lambda estimate and the corresponding method.
 
         Args:
@@ -120,7 +120,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
         return x
 
-    def inverse_transform(self, x: np.ndarray) -> np.array:
+    def inverse_transform(self, x: np.ndarray) -> np.ndarray:
         """Transforms the data back using inverse Yeo-Johnson/Box-cox, the previously fitted lambda
           estimate and the corresponding method are used.
 
@@ -146,7 +146,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
         return x
 
-    def fit_boxcox(self, x: np.array):
+    def fit_boxcox(self, x: np.ndarray):
         """fits the Box-Cox power transformation
 
         Args:
@@ -176,7 +176,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
         return lambda_rew, mu_rew_boxcox, sd_rew_boxcox, scale_boxcox
 
-    def fit_yeojohnson(self, x: np.array):
+    def fit_yeojohnson(self, x: np.ndarray):
         """fits the Yeo-Johnson power transformation
 
         Args:
@@ -227,7 +227,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
         return lower_bound, upper_bound
 
-    def handle_bounds(self, x: np.array):
+    def handle_bounds(self, x: np.ndarray):
         lower_bound, upper_bound = self.calculate_bounds()
 
         if lower_bound is not None and np.min(x) < lower_bound:
@@ -250,7 +250,9 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
         return x
 
-    def transf_boxcox_rectified(self, x: np.array, my_lambda: float, standardize_too: bool = False):
+    def transf_boxcox_rectified(
+        self, x: np.ndarray, my_lambda: float, standardize_too: bool = False
+    ):
         """Rectified BoxCox transformation"""
 
         if np.min(x) <= 0:
@@ -278,7 +280,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
                 )
 
         if standardize_too:
-            loc_scale = UnivariateHuberMEstimator1step().fit(xt)
+            loc_scale = HuberOneStepMEstimator().fit(xt)
             zt = (xt - loc_scale.location) / loc_scale.scale
         else:
             zt = None
@@ -286,7 +288,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         return xt, zt
 
     def get_rectified_boxcox_changepoint(
-        self, x: np.array, my_lambda: float, factor: float = 1.5, eps: float = 1e-5
+        self, x: np.ndarray, my_lambda: float, factor: float = 1.5, eps: float = 1e-5
     ) -> float:
         """Get C_u or C_l for the rectified BoxCox transform"""
         n = len(x)
@@ -310,7 +312,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
         return changepoint
 
-    def transf_boxcox(self, x: np.array, my_lambda: float, standardize_too: bool = False):
+    def transf_boxcox(self, x: np.ndarray, my_lambda: float, standardize_too: bool = False):
         """Classical BoxCox transformation"""
         if np.min(x) <= 0:
             raise ValueError("Data values should be strictly positive for a BoxCox transformation.")
@@ -320,14 +322,14 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
             xt = (x**my_lambda - 1) / my_lambda
 
         if standardize_too:
-            loc_scale = UnivariateHuberMEstimator1step().fit(xt)
+            loc_scale = HuberOneStepMEstimator().fit(xt)
             zt = (xt - loc_scale.location) / loc_scale.scale
         else:
             zt = None
 
         return xt, zt
 
-    def transf_yeojohnson(self, x: np.array, my_lambda: float, standardize_too: bool = False):
+    def transf_yeojohnson(self, x: np.ndarray, my_lambda: float, standardize_too: bool = False):
         """Classical Yeo-Johnson transformation"""
 
         positive_mask = x >= 0.0
@@ -344,7 +346,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
             xt[~positive_mask] = -((1 - x[~positive_mask]) ** (2 - my_lambda) - 1) / (2 - my_lambda)
 
         if standardize_too:
-            loc_scale = UnivariateHuberMEstimator1step().fit(xt)
+            loc_scale = HuberOneStepMEstimator().fit(xt)
             zt = (xt - loc_scale.location) / loc_scale.scale
         else:
             zt = None
@@ -352,7 +354,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         return xt, zt
 
     def transf_yeojohnson_rectified(
-        self, x: np.array, my_lambda: float, standardize_too: bool = False
+        self, x: np.ndarray, my_lambda: float, standardize_too: bool = False
     ):
         """Rectified Yeo-Johnson transformation"""
 
@@ -400,7 +402,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
                     ) ** (my_lambda - 1)
 
         if standardize_too:
-            loc_scale = UnivariateHuberMEstimator1step().fit(xt)
+            loc_scale = HuberOneStepMEstimator().fit(xt)
             zt = (xt - loc_scale.location) / loc_scale.scale
         else:
             zt = None
@@ -408,7 +410,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         return xt, zt
 
     def get_rectified_yeojohnson_changepoint(
-        self, x: np.array, my_lambda: float, factor: float = 1.5, eps: float = 1e-5
+        self, x: np.ndarray, my_lambda: float, factor: float = 1.5, eps: float = 1e-5
     ) -> float:
         """Get C_u or C_l for the rectified BoxCox transform"""
         n = len(x)
@@ -432,7 +434,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
         return changepoint
 
-    def inv_transf_boxcox(self, x: np.array, my_lambda: float) -> np.array:
+    def inv_transf_boxcox(self, x: np.ndarray, my_lambda: float) -> np.ndarray:
         """Classical BoxCox transformation inversed"""
         if my_lambda == 0:
             xt = np.exp(x)
@@ -440,7 +442,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
             xt = (x * my_lambda + 1) ** (1.0 / my_lambda)
         return xt
 
-    def inv_transf_yeojohnson(self, x: np.array, my_lambda: float) -> np.array:
+    def inv_transf_yeojohnson(self, x: np.ndarray, my_lambda: float) -> np.ndarray:
         """Classical Yeo-Johnson transformation inversed"""
 
         positive_mask = x >= 0.0
@@ -464,7 +466,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
     def robnormality(
         self,
-        x: np.array,
+        x: np.ndarray,
         transf: Literal["boxcox_rect", "yeojohnson_rect", "boxcox", "yeojohnson"],
         my_lambda: float,
     ) -> float:
@@ -489,7 +491,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         x = x[~np.isnan(x)]
         n = len(x)
 
-        loc_scale = UnivariateHuberMEstimator1step().fit(x)
+        loc_scale = HuberOneStepMEstimator().fit(x)
         x = (x - loc_scale.location) / np.where(loc_scale.scale == 0, 1, loc_scale.scale)
 
         theo_quantile = norm.ppf((np.arange(1, n + 1) - 1 / 3) / (n + 1 / 3))
@@ -500,9 +502,9 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
     def calculate_lambda_0(
         self,
-        x: np.array,
+        x: np.ndarray,
         transf: Literal["boxcox_rect", "yeojohnson_rect"] = "boxcox_rect",
-        lambdarange: tuple[float, float] = [-4.0, 6.0],
+        lambdarange: list[float] = [-4.0, 6.0],
     ):
         """Computes the initial estimate for lambda by optimizing the objective function."""
         lambda_0 = minimize_scalar(
@@ -515,10 +517,10 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
     def reweighted_max_likelihood_robust(
         self,
-        x: np.array,
+        x: np.ndarray,
         lambda_raw: float,
         transf: Literal["boxcox", "yeojohnson"],
-        lambdarange: tuple[float, float] = [-4.0, 6.0],
+        lambdarange: list[float] = [-4.0, 6.0],
         quantile: float = 0.99,
         nsteps: int = 2,
     ):
@@ -545,9 +547,9 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
     def estimate_max_likelihood(
         self,
-        x: np.array,
+        x: np.ndarray,
         transf: Literal["boxcox", "yeojohnson"],
-        lambdarange: tuple[float, float] = [-4.0, 6.0],
+        lambdarange: list[float] = [-4.0, 6.0],
     ):
         """Computes an estimate for lambda by using ML."""
         n = len(x)
@@ -577,7 +579,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
         return lambda_est
 
-    def get_method(self, x: np.array):
+    def get_method(self, x: np.ndarray):
         if self.method == "boxcox":
             if np.min(x) <= 0:
                 raise ValueError("The data is not strictly positive. Box-Cox cannot be applied.")

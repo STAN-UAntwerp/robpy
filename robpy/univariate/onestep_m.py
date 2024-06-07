@@ -66,7 +66,6 @@ class OneStepMEstimator(RobustScaleEstimator):
             Xcentered = X - med
             residuals = Xcentered / mad
             s_new = mad * np.sqrt(1 / self.delta * np.mean(self.scale_rho.psi(residuals) ** 2))
-            # TODO: confirm this is correct
 
         self.location_ = mu_new
         self.scale_ = s_new

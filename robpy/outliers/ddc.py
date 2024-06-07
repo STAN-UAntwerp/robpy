@@ -184,7 +184,6 @@ class DDCEstimator(OutlierMixin):
             raise ValueError("Columns with less than 3 unique values are not supported.")
 
     def _standardize(self, X: pd.DataFrame):
-        # TODO: replace with single step MEstimator with TukeyBiSquare weights
         self.location_, self.scale_ = [], []
         for i in range(X.shape[1]):
             est = CellwiseOneStepMEstimator().fit(X.iloc[:, i].to_numpy()[~np.isnan(X.iloc[:, i])])

@@ -4,6 +4,7 @@ from scipy.stats import median_abs_deviation
 
 from robpy.univariate.base import RobustScaleEstimator
 from robpy.utils.rho import BaseRho, Huber, TukeyBisquare
+from robpy.univariate.mcd import UnivariateMCDEstimator
 
 
 class OneStepMEstimator(RobustScaleEstimator):
@@ -94,3 +95,48 @@ class CellwiseOneStepMEstimator(OneStepMEstimator):
 
         """
         super().__init__(loc_rho=TukeyBisquare(c=3), scale_rho=Huber(b=2.5), delta=0.845)
+
+
+class OneStepWrappingEstimator(RobustScaleEstimator):
+    def __init__(self, omit_nans: bool = False):
+        """
+        [analoguous to estLocScale {cellWise}: type ="wrap"
+        https://github.com/cran/cellWise/blob/master/src/LocScaleEstimators.cpp]
+        """
+        self.omit_nans = omit_nans
+
+    def _calculate(self, X: np.array):
+        """
+        Args:
+            X (np.ndarray):
+                univariate data
+        """
+        if self.omit_nans:
+            X = X[~np.isnan(X)]
+
+        # initial estimates: univariate MCD
+        initial_estimates = UnivariateMCDEstimator().fit(X)
+
+        # one step M estimator for location using hyperbolic tangent weight function:
+        X_standardized = (X - initial_estimates.location) / initial_estimates.scale
+        weights = np.array([self._tanh_weights(val) for val in X_standardized])
+        self.location_ = np.sum(weights * X) / np.sum(weights)
+
+        self.scale_ = initial_estimates.scale
+
+    def _tanh_weights(self, val: float) -> float:
+        b = 1.5
+        c = 4
+        if np.abs(val) < b:
+            return 1.0
+        elif np.abs(val) > c:
+            return 0.0
+        else:
+            A = 0.7532528
+            B = 0.8430849
+            k = 4.1517212
+            return (
+                np.sqrt(A * (k - 1))
+                * np.tanh(0.5 * np.sqrt((k - 1) * B**2 / A) * (c - np.abs(val)))
+                / (np.abs(val))
+            )

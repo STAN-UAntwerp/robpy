@@ -29,6 +29,8 @@ class WrappingCovarianceEstimator(RobustCovarianceEstimator):
         q1: float = 1.540793,
         q2: float = 0.8622731,
         rescale: bool = True,
+        locations: np.array = None,
+        scales: np.array = None,
         store_precision: bool = True,
         assume_centered: bool = False,
     ):
@@ -47,6 +49,8 @@ class WrappingCovarianceEstimator(RobustCovarianceEstimator):
         self.q1 = q1
         self.q2 = q2
         self.rescale = rescale
+        self.locations = locations
+        self.scales = scales
 
     def calculate_covariance(self, X: np.ndarray) -> np.ndarray:
         """Calculate the covariance matrix of the data X after applying the wrapping transformation
@@ -58,7 +62,14 @@ class WrappingCovarianceEstimator(RobustCovarianceEstimator):
             robust covariance matrix of X
         """
         X_transformed = wrapping_transformation(
-            X, b=self.b, c=self.c, q1=self.q1, q2=self.q2, rescale=self.rescale
+            X,
+            b=self.b,
+            c=self.c,
+            q1=self.q1,
+            q2=self.q2,
+            rescale=self.rescale,
+            locations=self.locations,
+            scales=self.scales,
         )
         self.correlation_ = np.corrcoef(X_transformed, rowvar=False)
         return np.cov(X_transformed, rowvar=False)

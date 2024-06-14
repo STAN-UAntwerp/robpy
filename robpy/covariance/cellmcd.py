@@ -75,7 +75,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
 
         # Step 1: Check that there aren't too many marginal outliers and too many nan's.
         #         Check that there are enough observations compared to variables.
-        self._check_data(np.copy(X_scaled))  # TODO: zet open
+        self._check_data(np.copy(X_scaled))
 
         # Step 2: calculate the initial estimates
         initial_location, initial_cov = self._DDCW(X_scaled)
@@ -118,6 +118,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
                 W = W_old
                 location = location_old
                 cov = cov_old
+                cov_inv = cov_inv_old
                 break
             step = step + 1
             objective_values[step] = objective_value
@@ -139,7 +140,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         X_imputed = X.copy()
         X_imputed[W == 0] = predictions[W == 0]
         residuals = (X - predictions) / conditional_stds
-        scaler_residuals = RobustScaler(scale_estimator=OneStepWrappingEstimator())
+        scaler_residuals = RobustScaler(scale_estimator=OneStepWrappingEstimator(omit_nans=True))
         scaler_residuals.fit(residuals)
         residuals = residuals / scaler_residuals.scales_
 
@@ -192,7 +193,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
             Name of the second variable for the axis label, only relevant for plottype "bivariate".
             Defaults to "second variable".
         row_names (list of strings, optional):
-            Row_names of the observations if you want the outliers annoted.
+            Row_names of the observations if you want the outliers annoted with their name.
         figsize (tuple[int,int], optional):
             Size of the figure.
             Defaults to (8,8).
@@ -342,7 +343,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
     def _make_predictions(
         self, X: np.ndarray, sigma: np.ndarray, sigma_inv: np.ndarray, mu: np.array, W: np.ndarray
     ):
-        """Calculate the predictions of the flagged cells (flagged by W) given the cellMCD"""
+        """Calculate the predictions of the cells given the other clean cells in the same row"""
 
         n, p = X.shape
         predictions = np.zeros([n, p])
@@ -366,10 +367,12 @@ class CellMCDEstimator(RobustCovarianceEstimator):
 
                     # predict the missing values
                     for index in w_rows:
-                        conditional_variances[np.ix_(index, missing)] = conditional_variance_missing
-                        predictions[np.ix_(index, missing)] = (
+                        conditional_variances[np.ix_([index], missing)] = (
+                            conditional_variance_missing
+                        )
+                        predictions[np.ix_([index], missing)] = (
                             mu[missing]
-                            + (X[np.ix_(index, observed)] - mu[observed])
+                            + (X[np.ix_([index], observed)] - mu[observed])
                             @ sigma_observed_inv
                             @ sigma[np.ix_(observed, missing)]
                         )
@@ -377,8 +380,8 @@ class CellMCDEstimator(RobustCovarianceEstimator):
                     # predict the observed values
                     if len(observed) == 1:  # only 1 observed value
                         for index in w_rows:
-                            predictions[np.ix_(index, observed)] = mu[observed]
-                            conditional_variances[np.ix_(index, observed)] = sigma[
+                            predictions[np.ix_([index], observed)] = mu[observed]
+                            conditional_variances[np.ix_([index], observed)] = sigma[
                                 observed, observed
                             ]
                     else:  # multiple observed values
@@ -387,23 +390,24 @@ class CellMCDEstimator(RobustCovarianceEstimator):
                             sigma_others_inv = self._inverse_submatrix(
                                 sigma, sigma_inv, other_observations
                             )
-                            conditional_variance_others = sigma[obs, obs] - sigma[
-                                np.ix_(obs, other_observations)
-                            ] @ sigma_others_inv @ sigma(np.ix_(other_observations, obs))
+                            conditional_variance_others = (
+                                sigma[obs, obs]
+                                - sigma[np.ix_([obs], other_observations)]
+                                @ sigma_others_inv
+                                @ sigma[np.ix_(other_observations, [obs])]
+                            )
 
                             for index in w_rows:
-                                predictions[np.ix_(index, obs)] = (
+                                predictions[index, obs] = (
                                     mu[obs]
                                     + (
-                                        X[np.ix_(index, other_observations)]
+                                        X[np.ix_([index], other_observations)]
                                         - mu[other_observations]
                                     )
                                     @ sigma_others_inv
-                                    @ sigma[np.ix_(other_observations, obs)]
+                                    @ sigma[np.ix_(other_observations, [obs])]
                                 )
-                                conditional_variances[np.ix_(index, obs)] = (
-                                    conditional_variance_others
-                                )
+                                conditional_variances[index, obs] = conditional_variance_others
 
                 else:  # no missings in the pattern
                     conditional_variance_nomissings = 1.0 / np.diag(sigma_inv)
@@ -441,7 +445,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         W = self._update_W(X, W, mu, sigma, sigma_inv, q, h)
 
         # next: update mu & sigma
-        X_imputed = X
+        X_imputed = np.copy(X)
         bias = np.zeros([p, p])
         for i in range(n):
             missing = np.where(W[i, :] == 0)[0]
@@ -544,9 +548,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
 
                 else:  # current W pattern has zeros everywhere (except on j)
                     delta[finite_rows] = (
-                        np.pow(x - mu[j], 2) / sigma[np.ix_(j, j)]
-                        + np.log(sigma[np.ix_(j, j)])
-                        + np.log(2 * np.pi)
+                        (x - mu[j]) ** 2 / sigma[j, j] + np.log(sigma[j, j]) + np.log(2 * np.pi)
                     )
 
         return delta
@@ -583,7 +585,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         indices_neg = np.setdiff1d(np.arange(p), indices)
         result = np.zeros([n_submatrix, n_submatrix])
 
-        if n_submatrix < p and n_submatrix > p / 2.0:  # in this scenario it useful to use a trick
+        if n_submatrix < p and n_submatrix > p / 2.0:  # in this scenario it useful to use the trick
             result = (
                 A_inv[np.ix_(indices, indices)]
                 - A_inv[np.ix_(indices, indices_neg)]
@@ -641,7 +643,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         )
         Zimp_proj_wrapped_cov = WrappingCovarianceEstimator(
             locations=Zimp_proj_scaler.locations_, scales=Zimp_proj_scaler.scales_, rescale=True
-        ).fit(Zimp)
+        ).fit(Zimp_proj)
         cov = (
             eigenvectors @ Zimp_proj_wrapped_cov.covariance_ @ eigenvectors.T
         )  # back to original axis system
@@ -669,7 +671,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         )
         Zimp_proj_wrapped_cov = WrappingCovarianceEstimator(
             locations=Zimp_proj_scaler.locations_, scales=Zimp_proj_scaler.scales_, rescale=True
-        ).fit(Zimp)
+        ).fit(Zimp_proj)
         cov = (
             eigenvectors @ Zimp_proj_wrapped_cov.covariance_ @ eigenvectors.T
         )  # back to original axis system
@@ -700,7 +702,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         Arguments:
             X (np.ndarray): robustly standardized data set."""
 
-        cutoff = np.sqrt(chi2.ppf(0.99, 1))
+        cutoff = np.sqrt(chi2.ppf(self.quantile, 1))
         n_marginal_outliers = np.sum(np.abs(X) > cutoff, axis=0) / X.shape[0]
         if np.max(n_marginal_outliers) > 1 - self.alpha:
             raise ValueError(

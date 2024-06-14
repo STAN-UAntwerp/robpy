@@ -18,24 +18,34 @@ X = np.genfromtxt(
 )
 cellmcd = CellMCDEstimator()
 cellmcd.calculate_covariance(X)
-var1 = 0
+variable = 0
+variable_name = "price"
 cellmcd.cell_MCD_plot(
-    variable=var1, variable_name="price", row_names=car_models, plottype="indexplot"
+    variable=variable, variable_name=variable_name, row_names=car_models, plottype="indexplot"
 )
 cellmcd.cell_MCD_plot(
-    variable=var1, variable_name="price", row_names=car_models, plottype="residuals_vs_variable"
+    variable=variable,
+    variable_name=variable_name,
+    row_names=car_models,
+    plottype="residuals_vs_variable",
 )
 cellmcd.cell_MCD_plot(
-    variable=var1, variable_name="price", row_names=car_models, plottype="residuals_vs_predictions"
+    variable=variable,
+    variable_name=variable_name,
+    row_names=car_models,
+    plottype="residuals_vs_predictions",
 )
 cellmcd.cell_MCD_plot(
-    variable=var1, variable_name="price", row_names=car_models, plottype="variable_vs_predictions"
+    variable=variable,
+    variable_name=variable_name,
+    row_names=car_models,
+    plottype="variable_vs_predictions",
 )
 cellmcd.cell_MCD_plot(
     variable=4,
     variable_name="acceleration",
-    second_variable=9,
-    second_variable_name="width",
+    second_variable=0,
+    second_variable_name="price",
     row_names=car_models,
     plottype="bivariate",
 )

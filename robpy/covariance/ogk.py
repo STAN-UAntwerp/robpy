@@ -86,5 +86,5 @@ class OGKEstimator(RobustCovarianceEstimator):
             cov_X = np.cov(X[mask], rowvar=False)
             mu_X = np.mean(X[mask], axis=0)
         self.location_ = mu_X.flatten()
-            
+
         return cov_X

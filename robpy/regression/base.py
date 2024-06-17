@@ -6,10 +6,10 @@ import pandas as pd
 
 from scipy.stats import median_abs_deviation, chi2
 from sklearn.base import RegressorMixin, BaseEstimator
-from sklearn.covariance import MinCovDet
 from sklearn.exceptions import NotFittedError
 
 from robpy.utils.distance import mahalanobis_distance
+from robpy.covariance import FastMCDEstimator
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class RobustRegressor(RegressorMixin, BaseEstimator):
         leverage_threshold_percentile: float = 0.975,
         figsize: tuple[int, int] = (10, 4),
         return_data: bool = False,
-    ) -> None | tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> None | tuple[np.ndarray, np.ndarray, np.ndarray, float, float]:
         """Create a diagnostic plot where robust residuals are plotted against the robust
         mahalabobis distances of the training data.
 
@@ -74,7 +74,7 @@ class RobustRegressor(RegressorMixin, BaseEstimator):
         ).flatten()
 
         if robust_distance:
-            mcd = MinCovDet().fit(X)
+            mcd = FastMCDEstimator().fit(X)
             covariance = mcd.covariance_
             location = mcd.location_
         else:
@@ -92,11 +92,17 @@ class RobustRegressor(RegressorMixin, BaseEstimator):
         ax.axhline(-vertical_outlier_threshold, ls="--", c="grey")
 
         df = X.shape[-1]
-        leverage_threshold = np.sqrt(chi2.ppf(leverage_threshold_percentile, df))
+        leverage_threshold = float(np.sqrt(chi2.ppf(leverage_threshold_percentile, df)))
         ax.axvline(leverage_threshold, ls="--", c="grey")
 
         if return_data:
-            return (residuals, standardized_residuals, distances)
+            return (
+                residuals, 
+                standardized_residuals, 
+                distances, 
+                vertical_outlier_threshold, 
+                leverage_threshold
+            )
 
 
 def _convert_input_to_array(X, y=None) -> tuple[np.ndarray, np.ndarray | None]:

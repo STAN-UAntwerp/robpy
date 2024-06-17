@@ -1,6 +1,7 @@
 from __future__ import annotations
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from scipy.stats import chi2
 from scipy.linalg import pinvh
@@ -13,7 +14,9 @@ class RobustCovarianceEstimator(EmpiricalCovariance):
     def __init__(self, *, store_precision=True, assume_centered=False):
         super().__init__(store_precision=store_precision, assume_centered=assume_centered)
 
-    def fit(self, X) -> RobustCovarianceEstimator:
+    def fit(self, X: np.ndarray | pd.DataFrame) -> RobustCovarianceEstimator:
+        if isinstance(X, pd.DataFrame):
+            X = X.values
         X = self._validate_data(X)  # this sets n_features_in_
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])

@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 
 
-def mahalanobis_distance(data: np.ndarray | pd.DataFrame, location: np.ndarray, covariance: np.ndarray):
+def mahalanobis_distance(
+    data: np.ndarray | pd.DataFrame, location: np.ndarray, covariance: np.ndarray
+):
     """
     Calculate the Mahalanobis distance for multiple data vectors.
 
@@ -16,5 +18,5 @@ def mahalanobis_distance(data: np.ndarray | pd.DataFrame, location: np.ndarray, 
         data = data.values
     cov_inv = np.linalg.inv(covariance)
 
-    centered_data = data - location
+    centered_data = data - location.flatten()
     return np.sqrt(np.sum(centered_data.dot(cov_inv) * centered_data, axis=1))

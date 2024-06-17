@@ -89,7 +89,7 @@ class DDCEstimator(OutlierMixin):
             raise ValueError("Predict can only be called with the same data as fit.")
         if rowwise:
             return self.row_outliers_
-        
+
         return self.cellwise_outliers_
 
     def impute(self, X, impute_outliers: bool = True):
@@ -98,16 +98,16 @@ class DDCEstimator(OutlierMixin):
         if X.shape[1] != self.cellwise_outliers_.shape[1]:
             raise ValueError("Impute can only be called with the same data as fit.")
         if impute_outliers:
-            results =  np.where(
+            results = np.where(
                 self.cellwise_outliers_ | np.isnan(X.replace([-np.inf, np.inf], np.nan)),
                 self.rescaled_predictions_,
                 X,
             )
         else:
-            results =  np.where(
+            results = np.where(
                 np.isnan(X.replace([-np.inf, np.inf], np.nan)), self.rescaled_predictions_, X
             )
-        
+
         if isinstance(X, pd.DataFrame):
             return pd.DataFrame(results, index=X.index, columns=X.columns)
         else:

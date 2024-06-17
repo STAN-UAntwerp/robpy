@@ -97,11 +97,11 @@ class RobustRegressor(RegressorMixin, BaseEstimator):
 
         if return_data:
             return (
-                residuals, 
-                standardized_residuals, 
-                distances, 
-                vertical_outlier_threshold, 
-                leverage_threshold
+                residuals,
+                standardized_residuals,
+                distances,
+                vertical_outlier_threshold,
+                leverage_threshold,
             )
 
 

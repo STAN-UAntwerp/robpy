@@ -153,7 +153,9 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if self.clean_na_first == "automatic":
             self.clean_na_first = "columns" if X.shape[1] >= 5 * X.shape[0] else "rows"
 
-        X = X.replace([np.inf, -np.inf], np.nan)
+        X = X.replace([np.inf, -np.inf], np.nan).drop(
+            columns=self.non_numeric_cols + self.cols_discrete + self.cols_bad_scale
+        )
         if self.clean_na_first == "columns":
             self._set_missing_cols(X)
             self._set_missing_rows(X)

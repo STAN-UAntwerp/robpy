@@ -58,7 +58,6 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         self.verbosity = verbosity
 
     def calculate_covariance(self, X: np.ndarray) -> np.ndarray:
-
         n, p = X.shape
         if self.min_eigenvalue < 1e-6:
             raise ValueError("The lower bound on the eigenvalues should be at least 1e-6.")
@@ -333,7 +332,6 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         h_thresholds: list[float, float],
         v_thresholds: list[float, float] | None,
     ):
-
         for h in h_thresholds:
             ax.axhline(h, color="grey", linestyle="--")
         if v_thresholds is not None:
@@ -367,9 +365,9 @@ class CellMCDEstimator(RobustCovarianceEstimator):
 
                     # predict the missing values
                     for index in w_rows:
-                        conditional_variances[np.ix_([index], missing)] = (
-                            conditional_variance_missing
-                        )
+                        conditional_variances[
+                            np.ix_([index], missing)
+                        ] = conditional_variance_missing
                         predictions[np.ix_([index], missing)] = (
                             mu[missing]
                             + (X[np.ix_([index], observed)] - mu[observed])
@@ -438,7 +436,6 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         q: np.array,
         h: int,
     ):
-
         n, p = X.shape
 
         # first update W
@@ -638,9 +635,9 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         Zimp_proj_scaler = RobustScaler(
             scale_estimator=OneStepWrappingEstimator(omit_nans=True)
         ).fit(Zimp_proj)
-        Zimp_proj_scaler.scales_[Zimp_proj_scaler.scales_ < self.min_eigenvalue] = (
-            self.min_eigenvalue
-        )
+        Zimp_proj_scaler.scales_[
+            Zimp_proj_scaler.scales_ < self.min_eigenvalue
+        ] = self.min_eigenvalue
         Zimp_proj_wrapped_cov = WrappingCovarianceEstimator(
             locations=Zimp_proj_scaler.locations_, scales=Zimp_proj_scaler.scales_, rescale=True
         ).fit(Zimp_proj)
@@ -666,9 +663,9 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         Zimp_proj_scaler = RobustScaler(
             scale_estimator=OneStepWrappingEstimator(omit_nans=True)
         ).fit(Zimp_proj)
-        Zimp_proj_scaler.scales_[Zimp_proj_scaler.scales_ < self.min_eigenvalue] = (
-            self.min_eigenvalue
-        )
+        Zimp_proj_scaler.scales_[
+            Zimp_proj_scaler.scales_ < self.min_eigenvalue
+        ] = self.min_eigenvalue
         Zimp_proj_wrapped_cov = WrappingCovarianceEstimator(
             locations=Zimp_proj_scaler.locations_, scales=Zimp_proj_scaler.scales_, rescale=True
         ).fit(Zimp_proj)

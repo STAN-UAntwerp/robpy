@@ -50,11 +50,13 @@ class OGKEstimator(RobustCovarianceEstimator):
         Covariance is returned, location is overwritten.
         """
         p = X.shape[1]
-        Z = X
+        Z = np.copy(X)
         DE = []
         for _ in range(self.n_iterations):
-            D = np.diag(self.scale_estimator(Z, axis=0))  # (p x p)
-            Y = Z @ np.linalg.inv(D).T  # (n x p)
+            s = np.array(self.scale_estimator(Z, axis=0))
+            D = np.diag(s)
+            Dinv = np.diag(1.0 / s)
+            Y = Z @ Dinv  # (n x p)
             U = np.ones(shape=(p, p))
             # Loop over pairs of variables, lower triangle suffises as U is symmetric
             for i in range(p):
@@ -64,6 +66,7 @@ class OGKEstimator(RobustCovarianceEstimator):
                     cor = (scale_sum**2 - scale_diff**2) / (scale_sum**2 + scale_diff**2)
                     U[i, j] = U[j, i] = cor
             _, E = np.linalg.eigh(U)  # (p x p)
+            E = E[:, ::-1]
             Z = Y @ E  # (n x p)
             DE.append(D @ E)
         cov_X = np.diag(np.power(self.scale_estimator(Z, axis=0), 2))  # (p x p)
@@ -73,6 +76,7 @@ class OGKEstimator(RobustCovarianceEstimator):
             mu_X = mat @ mu_X.reshape(-1, 1)
             cov_X = mat @ cov_X @ mat.T
 
+        mu_X = mu_X.flatten()
         if self.reweighting:
             mahalanobis = mahalanobis_distance(X, location=mu_X, covariance=cov_X)
             cutoff = np.sqrt(chi2.ppf(self.reweighting_beta, p) / chi2.ppf(0.5, p)) * np.median(
@@ -80,6 +84,7 @@ class OGKEstimator(RobustCovarianceEstimator):
             )  # mahalanobis is the sqrt distance, so we need to take the sqrt of the chi2 quantiles
             mask = mahalanobis < cutoff
             cov_X = np.cov(X[mask], rowvar=False)
-            mu_X = np.mean(X[mask])
+            mu_X = np.mean(X[mask], axis=0)
         self.location_ = mu_X.flatten()
+            
         return cov_X

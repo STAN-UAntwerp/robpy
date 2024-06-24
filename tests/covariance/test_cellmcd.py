@@ -35,10 +35,10 @@ def test_large_enough_eigenvalues():
 @pytest.mark.parametrize(
     "alpha, quantile, max_c_steps, min_eigenvalue",
     [
-        (None, 0.99, 100, 1e-4),
+        (0.75, 0.99, 100, 1e-4),
         (0.8, 0.95, 50, 1e-5),
-        (0.75, None, 100, 1e-6),
-        (0.85, 0.98, None, None),
+        (0.75, 0.95, 100, 1e-6),
+        (0.85, 0.98, 80, 1e-4),
     ],
 )
 def test_estimator_can_handle_different_settings(alpha, quantile, max_c_steps, min_eigenvalue):

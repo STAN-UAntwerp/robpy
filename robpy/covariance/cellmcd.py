@@ -210,7 +210,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         ax.scatter(x=x, y=y)
         ax.set(xlabel=xlabel, ylabel=ylabel, title=title)
 
-        if row_names:
+        if row_names is not None:
             if plottype != "bivariate":
                 annote_outliers(ax, row_names, x, y, h_thresholds, v_thresholds)
             else:
@@ -343,7 +343,6 @@ class CellMCDEstimator(RobustCovarianceEstimator):
             objective_function(X_scaled, initial_W, initial_location, initial_cov, initial_cov_inv)
             + penalty
         )
-        print(objective_values[step])
         convergence_criteria = 1
         W_old = initial_W
         location_old = initial_location
@@ -362,7 +361,6 @@ class CellMCDEstimator(RobustCovarianceEstimator):
                 return location_old, cov_old, cov_inv_old, W_old
             step = step + 1
             objective_values[step] = objective_value
-            print(objective_value)
             W_old = W
             location_old = location
             cov_old = cov

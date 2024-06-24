@@ -23,7 +23,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.with_centering = with_centering
         self.with_scaling = with_scaling
 
-    def fit(self, X: np.ndarray | pd.DataFrame):
+    def fit(self, X: np.ndarray | pd.DataFrame, omit_nans: bool = False):
         if isinstance(X, pd.DataFrame):
             X = X.values
         if len(X.shape) == 1:
@@ -32,7 +32,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self.scales_ = np.ones(X.shape[1])
 
         for feature_idx in range(X.shape[1]):
-            fitted_estimator = self.scale_estimator.fit(X[:, feature_idx])
+            fitted_estimator = self.scale_estimator.fit(X[:, feature_idx], omit_nans)
             if self.with_centering:
                 self.locations_[feature_idx] = fitted_estimator.location
             if self.with_scaling:

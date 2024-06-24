@@ -98,12 +98,11 @@ class CellwiseOneStepMEstimator(OneStepMEstimator):
 
 
 class OneStepWrappingEstimator(RobustScaleEstimator):
-    def __init__(self, omit_nans: bool = False):
+    def __init__(self):
         """
         [analoguous to estLocScale {cellWise}: type ="wrap"
         https://github.com/cran/cellWise/blob/master/src/LocScaleEstimators.cpp]
         """
-        self.omit_nans = omit_nans
 
     def _calculate(self, X: np.array):
         """
@@ -111,8 +110,6 @@ class OneStepWrappingEstimator(RobustScaleEstimator):
             X (np.ndarray):
                 univariate data
         """
-        if self.omit_nans:
-            X = X[~np.isnan(X)]
 
         # initial estimates: univariate MCD
         initial_estimates = UnivariateMCDEstimator().fit(X)

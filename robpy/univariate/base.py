@@ -12,11 +12,13 @@ class LocationOrScaleEstimator(Protocol):
 
 
 class RobustScaleEstimator(ABC):
-    def fit(self, X: np.ndarray) -> RobustScaleEstimator:
+    def fit(self, X: np.ndarray, omit_nans: bool = False) -> RobustScaleEstimator:
         if len(X.shape) != 1:
             raise ValueError(
                 f"X must be univariate, but received a matrix with dimensions {X.shape}"
             )
+        if omit_nans:
+            X = X[~np.isnan(X)]
         self._calculate(X)
         return self
 

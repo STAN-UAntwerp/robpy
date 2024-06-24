@@ -1,5 +1,6 @@
 import numpy as np
 
+from typing import Callable
 from scipy.stats import median_abs_deviation
 
 
@@ -10,8 +11,8 @@ def wrapping_transformation(
     q1: float = 1.540793,
     q2: float = 0.8622731,
     rescale: bool = False,
-    locations: np.array = None,
-    scales: np.array = None,
+    location_estimator: Callable[[np.ndarray, int], np.ndarray] = np.median,
+    scale_estimator: Callable[[np.ndarray, int], np.ndarray] = median_abs_deviation,
 ) -> np.ndarray:
     """
     Implementation of wrapping using this transformation function:
@@ -35,11 +36,8 @@ def wrapping_transformation(
     Returns:
         transformed data
     """
-
-    if locations is None:
-        locations = np.median(X, axis=0)
-    if scales is None:
-        scales = median_abs_deviation(X, axis=0)
+    locations = location_estimator(X, axis=0)
+    scales = scale_estimator(X, axis=0)
     scales_no_zero = np.where(scales == 0, 1, scales)
 
     z = (X - locations) / scales_no_zero

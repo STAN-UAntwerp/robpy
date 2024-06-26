@@ -186,8 +186,12 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def _set_missing_cols(self, X: pd.DataFrame):
         """Remove columns with too many missings"""
+        if hasattr(self, "rows_missings"):
+            X = X.drop(index=self.rows_missings)
         self.cols_missings = X.columns[X.isna().mean() >= self.max_missing_frac_cols].tolist()
 
     def _set_missing_rows(self, X: pd.DataFrame):
         """Remove rows with too many missings"""
+        if hasattr(self, "cols_missings"):
+            X = X.drop(columns=self.cols_missings)
         self.rows_missings = X.index[X.isna().mean(axis=1) >= self.max_missing_frac_rows].tolist()

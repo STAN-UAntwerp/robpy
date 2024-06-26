@@ -123,6 +123,7 @@ class DDCEstimator(OutlierMixin):
         row_zoom: tuple[int, int] | pd.Index | None = None,
         col_zoom: tuple[int, int] | pd.Index | None = None,
         vmax_clip: int = 10,
+        cmap: str = "Spectral",
     ) -> Axes:
         """Visualize the standardized residuals of the DDC model as a heatmap.
 
@@ -175,7 +176,7 @@ class DDCEstimator(OutlierMixin):
         vmax = min(np.nanmax(np.abs(plot_data)), vmax_clip)
         ax = sns.heatmap(
             plot_data,
-            cmap="coolwarm",
+            cmap=cmap,
             annot=annotate,
             cbar_kws={"label": "Standardized residuals"},
             fmt=fmt,

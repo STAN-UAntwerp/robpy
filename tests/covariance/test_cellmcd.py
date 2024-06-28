@@ -12,7 +12,6 @@ def test_fit_sets_object_attributes():
     estimator.fit(X)
     eigenvalues = np.linalg.eigvals(estimator.covariance_)
     # then
-    print(estimator.location_)
     assert hasattr(estimator, "covariance_")
     assert hasattr(estimator, "location_")
     assert hasattr(estimator, "predictions")

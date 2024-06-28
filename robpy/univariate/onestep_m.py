@@ -35,6 +35,7 @@ class OneStepMEstimator(RobustScaleEstimator):
             See also r code: https://rdrr.io/cran/cellWise/man/estLocScale.html
 
         """
+        super().__init__()
         self.loc_rho = loc_rho
         self.scale_rho = scale_rho
         self.delta = delta
@@ -103,6 +104,7 @@ class OneStepWrappingEstimator(RobustScaleEstimator):
         [analoguous to estLocScale {cellWise}: type ="wrap"
         https://github.com/cran/cellWise/blob/master/src/LocScaleEstimators.cpp]
         """
+        super().__init__()
 
     def _calculate(self, X: np.array):
         """

@@ -26,6 +26,7 @@ class TauEstimator(RobustScaleEstimator):
                 boolean indicating if consistency for normality should be applied.
                 Defaults to True.
         """
+        super().__init__()
         self.c1 = c1
         self.c2 = c2
         self.consistency_correction = consistency_correction

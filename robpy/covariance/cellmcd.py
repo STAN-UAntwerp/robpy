@@ -4,11 +4,18 @@ import matplotlib.pyplot as plt
 
 from scipy.stats import chi2, median_abs_deviation
 from typing import Literal
-from robpy.utils.alter_covariance import truncated_covariance
+from robpy.covariance.utils.alter_covariance import truncated_covariance
 from robpy.covariance.base import RobustCovarianceEstimator
 from robpy.utils.logging import get_logger
-from robpy.utils.general import inverse_submatrix, objective_function
-from robpy.utils.visualization import annote_outliers, annote_outliers_ellipse
+from robpy.covariance.utils.cellmcd_utils import objective_function
+from robpy.utils.general import inverse_submatrix
+from robpy.covariance.utils.cellmcd_visualization_utils import (
+    annote_outliers,
+    annote_outliers_ellipse,
+    draw_ellipse,
+    draw_threshold_lines,
+    get_thresholds,
+)
 from robpy.preprocessing.scaling import RobustScaler
 from robpy.univariate.onestep_m import OneStepWrappingEstimator
 from robpy.covariance.initial_ddcw import InitialDDCWEstimator
@@ -60,13 +67,13 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         self.logger = get_logger("CellMCDEstimator", level=verbosity)
         self.verbosity = verbosity
 
-    def fit(self, X: np.ndarray) -> np.ndarray:
+    def calculate_covariance(self, X: np.ndarray) -> np.ndarray:
         # Step 0: robustly standardize the data
         mads = median_abs_deviation(X, nan_policy="omit", axis=0)
         if np.min(mads) < 1e-8:
             raise ValueError("At least one variable has an almost zero median absolute deviation.")
         scaler = RobustScaler(scale_estimator=OneStepWrappingEstimator())
-        scaler.fit(X, omit_nans=True)
+        scaler.fit(X, ignore_nan=True)
         X_scaled = scaler.transform(X)
 
         # Step 1: Check that there aren't too many marginal outliers and too many nan's.
@@ -99,7 +106,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         X_imputed[W == 0] = predictions[W == 0]
         residuals = (X - predictions) / conditional_stds
         scaler_residuals = RobustScaler(scale_estimator=OneStepWrappingEstimator())
-        scaler_residuals.fit(residuals, omit_nans=True)
+        scaler_residuals.fit(residuals, ignore_nan=True)
         residuals = residuals / scaler_residuals.scales_
 
         self.W = W
@@ -170,13 +177,13 @@ class CellMCDEstimator(RobustCovarianceEstimator):
 
         elif plottype == "residuals_vs_variable":
             x, y = self.X[:, variable], self.residuals[:, variable]
-            h_thresholds, v_thresholds = (-cutoff, cutoff), self._get_thresholds(cutoff, x)
+            h_thresholds, v_thresholds = (-cutoff, cutoff), get_thresholds(cutoff, x)
             xlabel, ylabel = variable_name, f"standardized residuals of {variable_name}"
             title = f"Standardized residuals versus the {variable_name}"
 
         elif plottype == "residuals_vs_predictions":
             x, y = self.predictions[:, variable], self.residuals[:, variable]
-            h_thresholds, v_thresholds = (-cutoff, cutoff), self._get_thresholds(cutoff, x)
+            h_thresholds, v_thresholds = (-cutoff, cutoff), get_thresholds(cutoff, x)
             xlabel, ylabel = (
                 f"predictions of {variable_name}",
                 f"standardized residuals of {variable_name}",
@@ -185,9 +192,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
 
         elif plottype == "variable_vs_predictions":
             x, y = self.predictions[:, variable], self.X[:, variable]
-            h_thresholds, v_thresholds = self._get_thresholds(cutoff, y), self._get_thresholds(
-                cutoff, x
-            )
+            h_thresholds, v_thresholds = get_thresholds(cutoff, y), get_thresholds(cutoff, x)
             xlabel, ylabel = f"predictions of {variable_name}", f"observed {variable_name}"
             ax.axline((x[0], x[0]), slope=1, color="grey", linestyle="-.")
             title = f"{variable_name} versus its predictions"
@@ -196,14 +201,13 @@ class CellMCDEstimator(RobustCovarianceEstimator):
             if second_variable is None:
                 raise ValueError("second_variable must be provided for bivariate plot.")
             x, y = self.X[:, variable], self.X[:, second_variable]
-            h_thresholds, v_thresholds = self._get_thresholds(cutoff, y), self._get_thresholds(
-                cutoff, x
-            )
+            h_thresholds, v_thresholds = get_thresholds(cutoff, y), get_thresholds(cutoff, x)
             xlabel, ylabel = variable_name, second_variable_name
-            self._draw_ellipse(
+            draw_ellipse(
                 self.covariance_[np.ix_([variable, second_variable], [variable, second_variable])],
                 self.location_[[variable, second_variable]],
                 ax,
+                self.quantile,
             )
             title = f"{variable_name} versus {second_variable_name}"
 
@@ -226,37 +230,9 @@ class CellMCDEstimator(RobustCovarianceEstimator):
                     self.quantile,
                 )
 
-        self._draw_threshold_lines(ax, h_thresholds, v_thresholds)
+        draw_threshold_lines(ax, h_thresholds, v_thresholds)
 
         return fig
-
-    def _draw_ellipse(self, cov: np.ndarray, center: np.array, ax):
-        """Get the ellipse for bivariate data given the covariance matrix (for the shape) and the
-        location (for the center)."""
-
-        eigenvalues, eigenvectors = np.linalg.eigh(cov)
-        shape = eigenvectors @ np.diag(np.sqrt(eigenvalues)) @ eigenvectors.T  # orthogonalize
-        angles = np.linspace(0, 2 * np.pi, 200 + 1)
-        xy = np.column_stack((np.cos(angles), np.sin(angles)))
-        radius = np.sqrt(chi2.ppf(self.quantile, 2))
-        ellipse = radius * xy @ shape + center
-        ax.plot(ellipse[:, 0], ellipse[:, 1], linewidth=3, color="darkgray")
-
-    def _get_thresholds(self, cutoff: float, x: np.array) -> tuple[float, float]:
-        scaler = OneStepWrappingEstimator().fit(x, omit_nans=True)
-        return (scaler.location - cutoff * scaler.scale, scaler.location + cutoff * scaler.scale)
-
-    def _draw_threshold_lines(
-        self,
-        ax,
-        h_thresholds: list[float, float],
-        v_thresholds: list[float, float] | None,
-    ):
-        for h in h_thresholds:
-            ax.axhline(h, color="grey", linestyle="--")
-        if v_thresholds is not None:
-            for v in v_thresholds:
-                ax.axvline(v, color="grey", linestyle="--")
 
     def _make_predictions(
         self, X: np.ndarray, sigma: np.ndarray, sigma_inv: np.ndarray, mu: np.ndarray, W: np.ndarray

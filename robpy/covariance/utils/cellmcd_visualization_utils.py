@@ -1,11 +1,13 @@
 import numpy as np
 
+from matplotlib.axes import Axes
 from scipy.stats import chi2
 from robpy.utils.distance import mahalanobis_distance
+from robpy.univariate.onestep_m import OneStepWrappingEstimator
 
 
 def annote_outliers(
-    ax,
+    ax: Axes,
     row_names,
     x: np.array,
     y: np.array,
@@ -33,7 +35,7 @@ def annote_outliers(
 
 
 def annote_outliers_ellipse(
-    ax,
+    ax: Axes,
     row_names,
     location: np.array,
     covariance: np.ndarray,
@@ -62,3 +64,33 @@ def annote_outliers_ellipse(
     ) > np.sqrt(chi2.ppf(quantile, 2))
     for xi, yi, name in zip(x[mask], y[mask], [row_names[i] for i in np.where(mask)[0]]):
         ax.text(xi, yi, name, fontsize=9, ha="center", va="bottom")
+
+
+def draw_ellipse(cov: np.ndarray, center: np.array, ax: Axes, quantile: float):
+    """Get the ellipse for bivariate data given the covariance matrix (for the shape) and the
+    location (for the center)."""
+
+    eigenvalues, eigenvectors = np.linalg.eigh(cov)
+    shape = eigenvectors @ np.diag(np.sqrt(eigenvalues)) @ eigenvectors.T  # orthogonalize
+    angles = np.linspace(0, 2 * np.pi, 200 + 1)
+    xy = np.column_stack((np.cos(angles), np.sin(angles)))
+    radius = np.sqrt(chi2.ppf(quantile, 2))
+    ellipse = radius * xy @ shape + center
+    ax.plot(ellipse[:, 0], ellipse[:, 1], linewidth=3, color="darkgray")
+
+
+def get_thresholds(cutoff: float, x: np.array) -> tuple[float, float]:
+    scaler = OneStepWrappingEstimator().fit(x, ignore_nan=True)
+    return (scaler.location - cutoff * scaler.scale, scaler.location + cutoff * scaler.scale)
+
+
+def draw_threshold_lines(
+    ax: Axes,
+    h_thresholds: list[float, float],
+    v_thresholds: list[float, float] | None,
+):
+    for h in h_thresholds:
+        ax.axhline(h, color="grey", linestyle="--")
+    if v_thresholds is not None:
+        for v in v_thresholds:
+            ax.axvline(v, color="grey", linestyle="--")

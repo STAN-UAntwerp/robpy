@@ -3,7 +3,7 @@ import pandas as pd
 
 from robpy.covariance.base import RobustCovarianceEstimator
 from robpy.utils.distance import mahalanobis_distance
-from robpy.utils.alter_covariance import truncated_covariance, covariance_to_correlation
+from robpy.covariance.utils.alter_covariance import truncated_covariance, covariance_to_correlation
 from robpy.preprocessing.scaling import RobustScaler
 from robpy.univariate.onestep_m import OneStepWrappingEstimator
 from robpy.outliers.ddc import DDCEstimator
@@ -76,7 +76,7 @@ class InitialDDCWEstimator(RobustCovarianceEstimator):
 
         # wrapped location and covariance
         Zimp_proj_scaler = RobustScaler(scale_estimator=OneStepWrappingEstimator()).fit(
-            Zimp_proj, omit_nans=True
+            Zimp_proj, ignore_nan=True
         )
         Zimp_proj_scaler.scales_[
             Zimp_proj_scaler.scales_ < self.min_eigenvalue
@@ -108,7 +108,7 @@ class InitialDDCWEstimator(RobustCovarianceEstimator):
 
         # wrapped location and covariance
         Zimp_proj_scaler = RobustScaler(scale_estimator=OneStepWrappingEstimator()).fit(
-            Zimp_proj, omit_nans=True
+            Zimp_proj, ignore_nan=True
         )
         Zimp_proj_scaler.scales_[
             Zimp_proj_scaler.scales_ < self.min_eigenvalue

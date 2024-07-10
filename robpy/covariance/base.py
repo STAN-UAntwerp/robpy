@@ -1,6 +1,7 @@
 from __future__ import annotations
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from scipy.stats import chi2
 from scipy.linalg import pinvh
@@ -17,7 +18,9 @@ class RobustCovarianceEstimator(EmpiricalCovariance):
         )
         self.nans_allowed = nans_allowed
 
-    def fit(self, X) -> RobustCovarianceEstimator:
+    def fit(self, X: np.ndarray | pd.DataFrame) -> RobustCovarianceEstimator:
+        if isinstance(X, pd.DataFrame):
+            X = X.values
         if self.nans_allowed:
             self.n_features_in_ = X.shape[1]
         else:

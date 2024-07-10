@@ -17,7 +17,10 @@ class RobustCovarianceEstimator(EmpiricalCovariance):
     def fit(self, X: np.ndarray | pd.DataFrame) -> RobustCovarianceEstimator:
         if isinstance(X, pd.DataFrame):
             X = X.values
-        X = self._validate_data(X)  # this sets n_features_in_
+        if self.nans_allowed:
+            self.n_features_in_ = X.shape[1]
+        else:
+            X = self._validate_data(X)  # this sets n_features_in_ also
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:

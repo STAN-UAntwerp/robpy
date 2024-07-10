@@ -21,6 +21,7 @@ class UnivariateMCDEstimator(RobustScaleEstimator):
             consistency_correction: whether the estimates should be consistent at the normal model.
                 Defaults to True.
         """
+        super().__init__()
         self.h_size = h_size
         self.consistency_correction = consistency_correction
 

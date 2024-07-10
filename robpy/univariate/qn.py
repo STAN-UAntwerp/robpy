@@ -29,6 +29,7 @@ class QnEstimator(RobustScaleEstimator):
                 boolean indicating if finite sample correction should be applied.
                 Defaults to True.
         """
+        super().__init__()
         self.location_func = location_func
         self.consistency_correction = consistency_correction
         self.finite_correction = finite_correction

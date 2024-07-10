@@ -1,5 +1,6 @@
 import numpy as np
 
+from typing import Callable
 from scipy.stats import median_abs_deviation
 
 
@@ -10,6 +11,8 @@ def wrapping_transformation(
     q1: float = 1.540793,
     q2: float = 0.8622731,
     rescale: bool = False,
+    location_estimator: Callable[[np.ndarray, int], np.ndarray] = np.median,
+    scale_estimator: Callable[[np.ndarray, int], np.ndarray] = median_abs_deviation,
 ) -> np.ndarray:
     """
     Implementation of wrapping using this transformation function:
@@ -27,16 +30,17 @@ def wrapping_transformation(
         q1, q2: transformation parameters (see formula)
         rescale: whether to rescale the wrapped data so the robust location and scale
                  of the transformed data are the same as the original data
+        locations: location estimates of the columns of X (optional)
+        scales: scale estimates of the columns of X (optional)
 
     Returns:
         transformed data
     """
+    locations = location_estimator(X, axis=0)
+    scales = scale_estimator(X, axis=0)
+    scales_no_zero = np.where(scales == 0, 1, scales)
 
-    median = np.median(X, axis=0)
-    mad = median_abs_deviation(X, axis=0)
-    mad_no_zero = np.where(mad == 0, 1, mad)
-
-    z = (X - median) / mad_no_zero
+    z = (X - locations) / scales_no_zero
 
     z_wrapped = np.where(
         np.abs(z) < b,
@@ -48,9 +52,9 @@ def wrapping_transformation(
         z_wrapped_std = np.std(z_wrapped, axis=0)
         z_wrapped_std_no_zero = np.where(z_wrapped_std == 0, 1, z_wrapped_std)
         return (
-            z_wrapped * (mad / z_wrapped_std_no_zero)
-            + median
-            - (z_wrapped_mean * (mad / z_wrapped_std_no_zero))
+            z_wrapped * (scales / z_wrapped_std_no_zero)
+            + locations
+            - (z_wrapped_mean * (scales / z_wrapped_std_no_zero))
         )
     else:
-        return z_wrapped * mad + median
+        return z_wrapped * scales + locations

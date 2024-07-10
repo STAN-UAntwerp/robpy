@@ -9,16 +9,25 @@ from scipy.stats import chi2
 
 from robpy.univariate import CellwiseOneStepMEstimator
 from robpy.utils.distance import mahalanobis_distance
+from robpy.univariate.base import RobustScaleEstimator
 
 
 class DDCEstimator(OutlierMixin):
-    def __init__(self, chi2_quantile: float = 0.99, min_correlation: float = 0.5):
+    def __init__(
+        self,
+        chi2_quantile: float = 0.99,
+        min_correlation: float = 0.5,
+        scale_estimator: RobustScaleEstimator = CellwiseOneStepMEstimator(),
+    ):
         """Implementation of the Detecting Deviating Cells (DDC) algorithm.
         Args:
             chi2_quantile (float): Quantile of the chi-squared distribution to use as threshold
                 for univariate outlier detection in step 2.
                 Default is 0.99.
             min_correlation (float): Minimum correlation between variables to consider them
+            scale_estimator (RobustScaleEstimator, optional) : robust scale estimator to scale the
+                initial data with.
+                Defaults to CellwiseOneStepMEstimator().
         Reference:
             Rousseeuw, P. J., & Bossche, W. V. D. (2018). Detecting Deviating Data Cells.
             Technometrics, 60(2), 135–145. https://doi.org/10.1080/00401706.2017.1340909
@@ -29,6 +38,7 @@ class DDCEstimator(OutlierMixin):
         self.chi2_quantile = chi2_quantile
         self.cutoff = np.sqrt(chi2.ppf(chi2_quantile, df=1))
         self.min_correlation = min_correlation
+        self.scale_estimator = scale_estimator
 
     def fit(self, X: pd.DataFrame, y=None, verbose: bool = False):
         self._check_data_conditions(X)
@@ -195,7 +205,7 @@ class DDCEstimator(OutlierMixin):
     def _standardize(self, X: pd.DataFrame):
         self.location_, self.scale_ = [], []
         for i in range(X.shape[1]):
-            est = CellwiseOneStepMEstimator().fit(X.iloc[:, i].to_numpy()[~np.isnan(X.iloc[:, i])])
+            est = self.scale_estimator.fit(X.iloc[:, i].to_numpy()[~np.isnan(X.iloc[:, i])])
             self.location_.append(est.location)
             self.scale_.append(est.scale)
         return (X - self.location_) / self.scale_

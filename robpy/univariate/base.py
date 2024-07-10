@@ -12,11 +12,26 @@ class LocationOrScaleEstimator(Protocol):
 
 
 class RobustScaleEstimator(ABC):
-    def fit(self, X: np.ndarray) -> RobustScaleEstimator:
+    def __init__(self, *, can_handle_nan: bool = False):
+        """Base class for robust univariate scale estimators
+
+        Args:
+            can_handle_nan (bool, optional):
+                Attribute specifying if the robust scaler can handles nans.
+                Defaults to False.
+
+        """
+        self.can_handle_nan = can_handle_nan
+
+    def fit(self, X: np.ndarray, ignore_nan: bool = False) -> RobustScaleEstimator:
         if len(X.shape) != 1:
             raise ValueError(
                 f"X must be univariate, but received a matrix with dimensions {X.shape}"
             )
+        if not self.can_handle_nan and not ignore_nan and np.isnan(X).any():
+            raise ValueError("The data X contains NaN and estimator cannot handle missing values.")
+        elif ignore_nan and np.isnan(X).any():
+            X = X[~np.isnan(X)]
         self._calculate(X)
         return self
 

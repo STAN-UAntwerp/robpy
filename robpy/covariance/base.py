@@ -11,8 +11,12 @@ from robpy.utils.distance import mahalanobis_distance
 
 
 class RobustCovarianceEstimator(EmpiricalCovariance):
-    def __init__(self, *, store_precision=True, assume_centered=False):
-        super().__init__(store_precision=store_precision, assume_centered=assume_centered)
+    def __init__(self, *, store_precision=True, assume_centered=False, nans_allowed=False):
+        super().__init__(
+            store_precision=store_precision,
+            assume_centered=assume_centered,
+        )
+        self.nans_allowed = nans_allowed
 
     def fit(self, X: np.ndarray | pd.DataFrame) -> RobustCovarianceEstimator:
         if isinstance(X, pd.DataFrame):

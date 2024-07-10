@@ -21,6 +21,7 @@ class RobustCovarianceEstimator(EmpiricalCovariance):
             self.n_features_in_ = X.shape[1]
         else:
             X = self._validate_data(X)  # this sets n_features_in_ also
+
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:

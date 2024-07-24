@@ -3,7 +3,7 @@ name = "robpy"
 version = "0.1.0"
 description = ""
 authors = ["Thomas Servotte <servottethomas@gmail.com>", "Sarah Leyder <sarah.leyder@uantwerpen.be>"]
-readme = "README.md"
+readme = "README.rst"
 
 [tool.black]
 line-length = 100

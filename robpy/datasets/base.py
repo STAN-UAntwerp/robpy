@@ -10,6 +10,19 @@ DESCR_FOLDER = pathlib.Path(__file__).parent / "descr"
 def _load_data_and_descr(
     data_file_name: str, descr_file_name: str, as_frame: bool, feature_names: list[str]
 ) -> tuple[pd.DataFrame | np.ndarray, str]:
+    """Helper function to load data and description files.
+
+    Args:
+        data_file_name (str): filename of the .csv file (must end in .csv)
+        descr_file_name (str): filename of the .rst file (must end in .rst)
+        as_frame (bool): whether data should be stored as a pandas DataFrame.
+            If False, it will be stored as a numpy array.
+        feature_names (list[str]): Columns to be selected, all other columns are ignored
+
+    Returns:
+        tuple[pd.DataFrame | np.ndarray, str]: The data matrix/dataframe and the description string
+    """
+
     df = pd.read_csv(DATA_FOLDER / data_file_name)
 
     with open(DESCR_FOLDER / descr_file_name, "r") as f:

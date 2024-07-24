@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>robpy.covariance.cellmcd &mdash; Robpy 0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=8dde47fa"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Robpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">Robpy</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Robpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">robpy.covariance.cellmcd</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for robpy.covariance.cellmcd</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">chi2</span><span class="p">,</span> <span class="n">median_abs_deviation</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">robpy.covariance.utils.alter_covariance</span> <span class="kn">import</span> <span class="n">truncated_covariance</span>
+<span class="kn">from</span> <span class="nn">robpy.covariance.base</span> <span class="kn">import</span> <span class="n">RobustCovarianceEstimator</span>
+<span class="kn">from</span> <span class="nn">robpy.utils.logging</span> <span class="kn">import</span> <span class="n">get_logger</span>
+<span class="kn">from</span> <span class="nn">robpy.covariance.utils.cellmcd_utils</span> <span class="kn">import</span> <span class="n">objective_function</span>
+<span class="kn">from</span> <span class="nn">robpy.utils.general</span> <span class="kn">import</span> <span class="n">inverse_submatrix</span>
+<span class="kn">from</span> <span class="nn">robpy.covariance.utils.cellmcd_visualization_utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">annote_outliers</span><span class="p">,</span>
+    <span class="n">annote_outliers_ellipse</span><span class="p">,</span>
+    <span class="n">draw_ellipse</span><span class="p">,</span>
+    <span class="n">draw_threshold_lines</span><span class="p">,</span>
+    <span class="n">get_thresholds</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">robpy.preprocessing.scaling</span> <span class="kn">import</span> <span class="n">RobustScaler</span>
+<span class="kn">from</span> <span class="nn">robpy.univariate.onestep_m</span> <span class="kn">import</span> <span class="n">OneStepWrappingEstimator</span>
+<span class="kn">from</span> <span class="nn">robpy.covariance.initial_ddcw</span> <span class="kn">import</span> <span class="n">InitialDDCWEstimator</span>
+<span class="kn">from</span> <span class="nn">sklearn.exceptions</span> <span class="kn">import</span> <span class="n">NotFittedError</span>
+
+
+<div class="viewcode-block" id="CellMCDEstimator">
+<a class="viewcode-back" href="../../../api/robpy.covariance.html#robpy.covariance.cellmcd.CellMCDEstimator">[docs]</a>
+<span class="k">class</span> <span class="nc">CellMCDEstimator</span><span class="p">(</span><span class="n">RobustCovarianceEstimator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span>
+        <span class="n">quantile</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.99</span><span class="p">,</span>
+        <span class="n">crit</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+        <span class="n">max_c_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">min_eigenvalue</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+        <span class="n">verbosity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Cell MCD estimator based on the algorithm proposed in Raymaekers and Rousseeuw (2023).</span>
+
+
+<span class="sd">        Args:</span>
+<span class="sd">            alpha (float, optional):</span>
+<span class="sd">                Percentage indicating how much cells must remain unflagged in each column.</span>
+<span class="sd">                Defaults to 0.75.</span>
+<span class="sd">            quantile (float, optional):</span>
+<span class="sd">                Cutoff value to flag cells.</span>
+<span class="sd">                Defaults to 0.99.</span>
+<span class="sd">            crit (float, optional):</span>
+<span class="sd">                Stop iterating when successive covariance matrices of the standardized data</span>
+<span class="sd">                differ by less than crit.</span>
+<span class="sd">                Defaults to 1e-4</span>
+<span class="sd">            max_c_steps (int, optional):</span>
+<span class="sd">                Maximum number of C-steps used in the algorithm.</span>
+<span class="sd">                Defaults to 100.</span>
+<span class="sd">            min_eigenvalue: (float, optional):</span>
+<span class="sd">                Lower bound on the minimum eigenvalue of the covariance estimator</span>
+<span class="sd">                on the standardized data. Should be at least 1e-6.</span>
+<span class="sd">                Defaults to 1e-4.</span>
+
+<span class="sd">        References:</span>
+<span class="sd">            - Raymaekers and Rousseeuw, The Cellwise Minimum Covariance Determinant Estimator, 2023,</span>
+<span class="sd">              Journal of the American Statistical Association.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">min_eigenvalue</span> <span class="o">&lt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The lower bound on the eigenvalues should be at least 1e-6.&quot;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">store_precision</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">assume_centered</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">nans_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quantile</span> <span class="o">=</span> <span class="n">quantile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">crit</span> <span class="o">=</span> <span class="n">crit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_c_steps</span> <span class="o">=</span> <span class="n">max_c_steps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_eigenvalue</span> <span class="o">=</span> <span class="n">min_eigenvalue</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="s2">&quot;CellMCDEstimator&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">verbosity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">=</span> <span class="n">verbosity</span>
+
+<div class="viewcode-block" id="CellMCDEstimator.calculate_covariance">
+<a class="viewcode-back" href="../../../api/robpy.covariance.html#robpy.covariance.cellmcd.CellMCDEstimator.calculate_covariance">[docs]</a>
+    <span class="k">def</span> <span class="nf">calculate_covariance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="c1"># Step 0: robustly standardize the data</span>
+        <span class="n">mads</span> <span class="o">=</span> <span class="n">median_abs_deviation</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">nan_policy</span><span class="o">=</span><span class="s2">&quot;omit&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">mads</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-8</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;At least one variable has an almost zero median absolute deviation.&quot;</span><span class="p">)</span>
+        <span class="n">scaler</span> <span class="o">=</span> <span class="n">RobustScaler</span><span class="p">(</span><span class="n">scale_estimator</span><span class="o">=</span><span class="n">OneStepWrappingEstimator</span><span class="p">())</span>
+        <span class="n">scaler</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">ignore_nan</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">X_scaled</span> <span class="o">=</span> <span class="n">scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="c1"># Step 1: Check that there aren&#39;t too many marginal outliers and too many nan&#39;s.</span>
+        <span class="c1">#         Check that there are enough observations compared to variables.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_data</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">)</span>
+
+        <span class="c1"># Step 2: calculate the initial estimates</span>
+        <span class="n">ddcw</span> <span class="o">=</span> <span class="n">InitialDDCWEstimator</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">min_eigenvalue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_eigenvalue</span><span class="p">)</span>
+        <span class="n">ddcw</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">)</span>
+        <span class="n">initial_location</span> <span class="o">=</span> <span class="n">ddcw</span><span class="o">.</span><span class="n">location_</span>
+        <span class="n">initial_cov</span> <span class="o">=</span> <span class="n">ddcw</span><span class="o">.</span><span class="n">covariance_</span>
+        <span class="n">initial_cov_inv</span> <span class="o">=</span> <span class="n">ddcw</span><span class="o">.</span><span class="n">precision_</span>
+        <span class="n">X_scaled</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="c1"># Step 3: MCD iterations (we work with X_scaled)</span>
+        <span class="n">location</span><span class="p">,</span> <span class="n">cov</span><span class="p">,</span> <span class="n">cov_inv</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_C_steps_until_convergence</span><span class="p">(</span>
+            <span class="n">X_scaled</span><span class="p">,</span> <span class="n">initial_location</span><span class="p">,</span> <span class="n">initial_cov</span><span class="p">,</span> <span class="n">initial_cov_inv</span>
+        <span class="p">)</span>
+        <span class="c1"># Step 4: make prediction</span>
+        <span class="n">predictions</span><span class="p">,</span> <span class="n">conditional_variances</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_predictions</span><span class="p">(</span>
+            <span class="n">X_scaled</span><span class="p">,</span> <span class="n">cov</span><span class="p">,</span> <span class="n">cov_inv</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">W</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Step 5: transform back</span>
+        <span class="n">cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">scaler</span><span class="o">.</span><span class="n">scales_</span><span class="p">)</span> <span class="o">@</span> <span class="n">cov</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">scaler</span><span class="o">.</span><span class="n">scales_</span><span class="p">)</span>
+        <span class="n">location</span> <span class="o">=</span> <span class="n">scaler</span><span class="o">.</span><span class="n">locations_</span> <span class="o">+</span> <span class="n">location</span> <span class="o">*</span> <span class="n">scaler</span><span class="o">.</span><span class="n">scales_</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">scaler</span><span class="o">.</span><span class="n">locations_</span> <span class="o">+</span> <span class="n">predictions</span> <span class="o">*</span> <span class="n">scaler</span><span class="o">.</span><span class="n">scales_</span>
+        <span class="n">conditional_stds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">conditional_variances</span><span class="p">)</span> <span class="o">*</span> <span class="n">scaler</span><span class="o">.</span><span class="n">scales_</span>
+        <span class="n">X_imputed</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">X_imputed</span><span class="p">[</span><span class="n">W</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[</span><span class="n">W</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">residuals</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">predictions</span><span class="p">)</span> <span class="o">/</span> <span class="n">conditional_stds</span>
+        <span class="n">scaler_residuals</span> <span class="o">=</span> <span class="n">RobustScaler</span><span class="p">(</span><span class="n">scale_estimator</span><span class="o">=</span><span class="n">OneStepWrappingEstimator</span><span class="p">())</span>
+        <span class="n">scaler_residuals</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">residuals</span><span class="p">,</span> <span class="n">ignore_nan</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">residuals</span> <span class="o">=</span> <span class="n">residuals</span> <span class="o">/</span> <span class="n">scaler_residuals</span><span class="o">.</span><span class="n">scales_</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">W</span> <span class="o">=</span> <span class="n">W</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">location_</span> <span class="o">=</span> <span class="n">location</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span> <span class="o">=</span> <span class="n">predictions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conditional_stds</span> <span class="o">=</span> <span class="n">conditional_stds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_imputed</span> <span class="o">=</span> <span class="n">X_imputed</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">residuals</span> <span class="o">=</span> <span class="n">residuals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covariance_</span> <span class="o">=</span> <span class="n">cov</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span>
+
+        <span class="k">return</span> <span class="n">cov</span></div>
+
+
+<div class="viewcode-block" id="CellMCDEstimator.cell_MCD_plot">
+<a class="viewcode-back" href="../../../api/robpy.covariance.html#robpy.covariance.cellmcd.CellMCDEstimator.cell_MCD_plot">[docs]</a>
+    <span class="k">def</span> <span class="nf">cell_MCD_plot</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">variable</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">variable_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;variable&quot;</span><span class="p">,</span>
+        <span class="n">row_names</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">second_variable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">second_variable_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;second variable&quot;</span><span class="p">,</span>
+        <span class="n">plottype</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span>
+            <span class="s2">&quot;indexplot&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;residuals_vs_variable&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;residuals_vs_predictions&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;variable_vs_predictions&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;bivariate&quot;</span><span class="p">,</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;indexplot&quot;</span><span class="p">,</span>
+        <span class="n">figsize</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function to plot the results of a cellMCD analysis: 5 types of diagnostic plots.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            plottype (Literal string, optional):</span>
+<span class="sd">                - &quot;indexplot&quot;: plots the residuals of a variable</span>
+<span class="sd">                - &quot;residuals_vs_variable&quot;: plots a variable versus its residuals</span>
+<span class="sd">                - &quot;residuals_vs_predictions&quot;: plots the predictions of a variable versus its residuals</span>
+<span class="sd">                - &quot;variable_vs_predictions&quot;: plots a variable against its predictions</span>
+<span class="sd">                - &quot;bivariate&quot;: plots two variables against each other</span>
+
+<span class="sd">                Defaults to &quot;indexplot&quot;.</span>
+<span class="sd">            variable (int):</span>
+<span class="sd">                Index of the variable under consideration.</span>
+<span class="sd">            variable_name (str, optional):</span>
+<span class="sd">                Name of the variable of interest for the axis label.</span>
+<span class="sd">                Defaults to &quot;variable&quot;.</span>
+<span class="sd">            second_variable (int):</span>
+<span class="sd">                Index of the second variable under consideration, only needed for plottype &quot;bivariate&quot;.</span>
+<span class="sd">            second_variable_name (str, optional):</span>
+<span class="sd">                Name of the second variable for the axis label, only relevant for plottype &quot;bivariate&quot;.</span>
+<span class="sd">                Defaults to &quot;second variable&quot;.</span>
+<span class="sd">            row_names (list of strings, optional):</span>
+<span class="sd">                Row_names of the observations if you want the outliers annoted with their name.</span>
+<span class="sd">            figsize (tuple[int,int], optional):</span>
+<span class="sd">                Size of the figure.</span>
+<span class="sd">                Defaults to (8,8).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;covariance_&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">()</span>
+
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
+        <span class="n">cutoff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">chi2</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quantile</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">plottype</span> <span class="o">==</span> <span class="s2">&quot;indexplot&quot;</span><span class="p">:</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">[:,</span> <span class="n">variable</span><span class="p">]</span>
+            <span class="n">h_thresholds</span><span class="p">,</span> <span class="n">v_thresholds</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">),</span> <span class="kc">None</span>
+            <span class="n">xlabel</span><span class="p">,</span> <span class="n">ylabel</span> <span class="o">=</span> <span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;standardized residuals of </span><span class="si">{</span><span class="n">variable_name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;Indexplot: standardized residuals&quot;</span>
+
+        <span class="k">elif</span> <span class="n">plottype</span> <span class="o">==</span> <span class="s2">&quot;residuals_vs_variable&quot;</span><span class="p">:</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[:,</span> <span class="n">variable</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">[:,</span> <span class="n">variable</span><span class="p">]</span>
+            <span class="n">h_thresholds</span><span class="p">,</span> <span class="n">v_thresholds</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">),</span> <span class="n">get_thresholds</span><span class="p">(</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+            <span class="n">xlabel</span><span class="p">,</span> <span class="n">ylabel</span> <span class="o">=</span> <span class="n">variable_name</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;standardized residuals of </span><span class="si">{</span><span class="n">variable_name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Standardized residuals versus the </span><span class="si">{</span><span class="n">variable_name</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">elif</span> <span class="n">plottype</span> <span class="o">==</span> <span class="s2">&quot;residuals_vs_predictions&quot;</span><span class="p">:</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span><span class="p">[:,</span> <span class="n">variable</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">[:,</span> <span class="n">variable</span><span class="p">]</span>
+            <span class="n">h_thresholds</span><span class="p">,</span> <span class="n">v_thresholds</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">),</span> <span class="n">get_thresholds</span><span class="p">(</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+            <span class="n">xlabel</span><span class="p">,</span> <span class="n">ylabel</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;predictions of </span><span class="si">{</span><span class="n">variable_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;standardized residuals of </span><span class="si">{</span><span class="n">variable_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Standardized residuals versus the predictions of the </span><span class="si">{</span><span class="n">variable_name</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">elif</span> <span class="n">plottype</span> <span class="o">==</span> <span class="s2">&quot;variable_vs_predictions&quot;</span><span class="p">:</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span><span class="p">[:,</span> <span class="n">variable</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[:,</span> <span class="n">variable</span><span class="p">]</span>
+            <span class="n">h_thresholds</span><span class="p">,</span> <span class="n">v_thresholds</span> <span class="o">=</span> <span class="n">get_thresholds</span><span class="p">(</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">get_thresholds</span><span class="p">(</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+            <span class="n">xlabel</span><span class="p">,</span> <span class="n">ylabel</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;predictions of </span><span class="si">{</span><span class="n">variable_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;observed </span><span class="si">{</span><span class="n">variable_name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">axline</span><span class="p">((</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">slope</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;grey&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;-.&quot;</span><span class="p">)</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variable_name</span><span class="si">}</span><span class="s2"> versus its predictions&quot;</span>
+
+        <span class="k">elif</span> <span class="n">plottype</span> <span class="o">==</span> <span class="s2">&quot;bivariate&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">second_variable</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;second_variable must be provided for bivariate plot.&quot;</span><span class="p">)</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[:,</span> <span class="n">variable</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[:,</span> <span class="n">second_variable</span><span class="p">]</span>
+            <span class="n">h_thresholds</span><span class="p">,</span> <span class="n">v_thresholds</span> <span class="o">=</span> <span class="n">get_thresholds</span><span class="p">(</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">get_thresholds</span><span class="p">(</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+            <span class="n">xlabel</span><span class="p">,</span> <span class="n">ylabel</span> <span class="o">=</span> <span class="n">variable_name</span><span class="p">,</span> <span class="n">second_variable_name</span>
+            <span class="n">draw_ellipse</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">covariance_</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">([</span><span class="n">variable</span><span class="p">,</span> <span class="n">second_variable</span><span class="p">],</span> <span class="p">[</span><span class="n">variable</span><span class="p">,</span> <span class="n">second_variable</span><span class="p">])],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">location_</span><span class="p">[[</span><span class="n">variable</span><span class="p">,</span> <span class="n">second_variable</span><span class="p">]],</span>
+                <span class="n">ax</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">quantile</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variable_name</span><span class="si">}</span><span class="s2"> versus </span><span class="si">{</span><span class="n">second_variable_name</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="n">xlabel</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="n">ylabel</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">row_names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">plottype</span> <span class="o">!=</span> <span class="s2">&quot;bivariate&quot;</span><span class="p">:</span>
+                <span class="n">annote_outliers</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">row_names</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">h_thresholds</span><span class="p">,</span> <span class="n">v_thresholds</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">annote_outliers_ellipse</span><span class="p">(</span>
+                    <span class="n">ax</span><span class="p">,</span>
+                    <span class="n">row_names</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">location_</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">covariance_</span><span class="p">,</span>
+                    <span class="n">variable</span><span class="p">,</span>
+                    <span class="n">second_variable</span><span class="p">,</span>
+                    <span class="n">x</span><span class="p">,</span>
+                    <span class="n">y</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">quantile</span><span class="p">,</span>
+                <span class="p">)</span>
+
+        <span class="n">draw_threshold_lines</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">h_thresholds</span><span class="p">,</span> <span class="n">v_thresholds</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fig</span></div>
+
+
+<div class="viewcode-block" id="CellMCDEstimator._make_predictions">
+<a class="viewcode-back" href="../../../api/robpy.covariance.html#robpy.covariance.cellmcd.CellMCDEstimator._make_predictions">[docs]</a>
+    <span class="k">def</span> <span class="nf">_make_predictions</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sigma_inv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the predictions of the cells given the other clean cells in the same row&quot;&quot;&quot;</span>
+
+        <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">])</span>
+        <span class="n">conditional_variances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">])</span>
+        <span class="n">unique_rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">unique_rows</span><span class="p">:</span>  <span class="c1"># iterate over all w patterns</span>
+            <span class="n">row_idx_w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">W</span> <span class="o">==</span> <span class="n">w</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># rows with the corresponding w pattern</span>
+            <span class="n">missing_col_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">w</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">observed_col_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">w</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_col_idx</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">p</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_col_idx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># there are both observed and missing values</span>
+
+                <span class="c1"># predict the missing values</span>
+                <span class="n">predictions</span><span class="p">,</span> <span class="n">conditional_variances</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predict_missing_values</span><span class="p">(</span>
+                    <span class="n">X</span><span class="p">,</span>
+                    <span class="n">predictions</span><span class="p">,</span>
+                    <span class="n">conditional_variances</span><span class="p">,</span>
+                    <span class="n">row_idx_w</span><span class="p">,</span>
+                    <span class="n">missing_col_idx</span><span class="p">,</span>
+                    <span class="n">observed_col_idx</span><span class="p">,</span>
+                    <span class="n">mu</span><span class="p">,</span>
+                    <span class="n">sigma</span><span class="p">,</span>
+                    <span class="n">sigma_inv</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="c1"># predict the observed values</span>
+                <span class="n">predictions</span><span class="p">,</span> <span class="n">conditional_variances</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predict_observed_values</span><span class="p">(</span>
+                    <span class="n">X</span><span class="p">,</span>
+                    <span class="n">predictions</span><span class="p">,</span>
+                    <span class="n">conditional_variances</span><span class="p">,</span>
+                    <span class="n">row_idx_w</span><span class="p">,</span>
+                    <span class="n">observed_col_idx</span><span class="p">,</span>
+                    <span class="n">mu</span><span class="p">,</span>
+                    <span class="n">sigma</span><span class="p">,</span>
+                    <span class="n">sigma_inv</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_col_idx</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># no missings in the w-pattern</span>
+                <span class="n">predictions</span><span class="p">,</span> <span class="n">conditional_variances</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predict_no_missing</span><span class="p">(</span>
+                    <span class="n">X</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">conditional_variances</span><span class="p">,</span> <span class="n">row_idx_w</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">sigma_inv</span>
+                <span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># all missings in the w-pattern</span>
+                <span class="n">predictions</span><span class="p">,</span> <span class="n">conditional_variances</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predict_all_missing</span><span class="p">(</span>
+                    <span class="n">predictions</span><span class="p">,</span> <span class="n">conditional_variances</span><span class="p">,</span> <span class="n">row_idx_w</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma_inv</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">conditional_variances</span></div>
+
+
+<div class="viewcode-block" id="CellMCDEstimator._C_steps_until_convergence">
+<a class="viewcode-back" href="../../../api/robpy.covariance.html#robpy.covariance.cellmcd.CellMCDEstimator._C_steps_until_convergence">[docs]</a>
+    <span class="k">def</span> <span class="nf">_C_steps_until_convergence</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X_scaled</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">initial_location</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">initial_cov</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">initial_cov_inv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform C-steps (update W, location and covariance) until convergence.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">        - X_scaled (np.ndarray): scaled data</span>
+<span class="sd">        - initial_location (np.array): initial location estimate</span>
+<span class="sd">        - initial_cov (np.ndarray): initial covariance estimate</span>
+<span class="sd">        - initial_cov_inv (np.ndarray): inverse of the initial covariance estimate</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">X_scaled</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="n">h</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">initial_W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">])</span>
+        <span class="n">initial_W</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">objective_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_c_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">chi2</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="mf">0.99</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">initial_cov_inv</span><span class="p">))</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="p">)</span>  <span class="c1"># equation (21)</span>
+        <span class="n">penalty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">initial_W</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+        <span class="n">objective_values</span><span class="p">[</span><span class="n">step</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">objective_function</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">,</span> <span class="n">initial_W</span><span class="p">,</span> <span class="n">initial_location</span><span class="p">,</span> <span class="n">initial_cov</span><span class="p">,</span> <span class="n">initial_cov_inv</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">penalty</span>
+        <span class="p">)</span>
+        <span class="n">convergence_criteria</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">W_old</span> <span class="o">=</span> <span class="n">initial_W</span>
+        <span class="n">location_old</span> <span class="o">=</span> <span class="n">initial_location</span>
+        <span class="n">cov_old</span> <span class="o">=</span> <span class="n">initial_cov</span>
+        <span class="n">cov_inv_old</span> <span class="o">=</span> <span class="n">initial_cov_inv</span>
+        <span class="k">while</span> <span class="n">convergence_criteria</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">crit</span> <span class="ow">and</span> <span class="n">step</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_c_steps</span><span class="p">:</span>
+            <span class="n">W</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">cov</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_C_step</span><span class="p">(</span>
+                <span class="n">X_scaled</span><span class="p">,</span> <span class="n">W_old</span><span class="p">,</span> <span class="n">location_old</span><span class="p">,</span> <span class="n">cov_old</span><span class="p">,</span> <span class="n">cov_inv_old</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">h</span>
+            <span class="p">)</span>
+            <span class="n">convergence_criteria</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">cov</span> <span class="o">-</span> <span class="n">cov_old</span><span class="p">))</span>
+            <span class="n">cov</span> <span class="o">=</span> <span class="n">truncated_covariance</span><span class="p">(</span><span class="n">cov</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_eigenvalue</span><span class="p">)</span>
+            <span class="n">cov_inv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span>
+            <span class="n">penalty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">W</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+            <span class="n">objective_value</span> <span class="o">=</span> <span class="n">objective_function</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">cov</span><span class="p">,</span> <span class="n">cov_inv</span><span class="p">)</span> <span class="o">+</span> <span class="n">penalty</span>
+            <span class="k">if</span> <span class="n">objective_value</span> <span class="o">&gt;</span> <span class="n">objective_values</span><span class="p">[</span><span class="n">step</span><span class="p">]:</span>
+                <span class="k">return</span> <span class="n">location_old</span><span class="p">,</span> <span class="n">cov_old</span><span class="p">,</span> <span class="n">cov_inv_old</span><span class="p">,</span> <span class="n">W_old</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="n">step</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">objective_values</span><span class="p">[</span><span class="n">step</span><span class="p">]</span> <span class="o">=</span> <span class="n">objective_value</span>
+            <span class="n">W_old</span> <span class="o">=</span> <span class="n">W</span>
+            <span class="n">location_old</span> <span class="o">=</span> <span class="n">location</span>
+            <span class="n">cov_old</span> <span class="o">=</span> <span class="n">cov</span>
+            <span class="n">cov_inv_old</span> <span class="o">=</span> <span class="n">cov_inv</span>
+
+        <span class="k">return</span> <span class="n">location</span><span class="p">,</span> <span class="n">cov</span><span class="p">,</span> <span class="n">cov_inv</span><span class="p">,</span> <span class="n">W</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_C_step</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mu</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">sigma_inv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">h</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="c1"># first update W</span>
+        <span class="n">W</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_W</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">sigma_inv</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+
+        <span class="c1"># next: update mu &amp; sigma</span>
+        <span class="n">X_imputed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">bias</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="n">missing_col_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">W</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">observed_col_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">W</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_col_idx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_col_idx</span><span class="p">)</span> <span class="o">==</span> <span class="n">p</span><span class="p">:</span>  <span class="c1"># if all are missing</span>
+                    <span class="n">X_imputed</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">mu</span>
+                    <span class="n">bias</span> <span class="o">=</span> <span class="n">bias</span> <span class="o">+</span> <span class="n">sigma</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">sigma_inv_mis_inv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span>
+                        <span class="n">sigma_inv</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">missing_col_idx</span><span class="p">,</span> <span class="n">missing_col_idx</span><span class="p">)]</span>
+                    <span class="p">)</span>
+                    <span class="n">X_imputed</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">([</span><span class="n">i</span><span class="p">],</span> <span class="n">missing_col_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">mu</span><span class="p">[</span><span class="n">missing_col_idx</span><span class="p">]</span>
+                        <span class="o">-</span> <span class="p">(</span>
+                            <span class="n">sigma_inv_mis_inv</span>
+<div class="viewcode-block" id="CellMCDEstimator._update_W">
+<a class="viewcode-back" href="../../../api/robpy.covariance.html#robpy.covariance.cellmcd.CellMCDEstimator._update_W">[docs]</a>
+                            <span class="o">@</span> <span class="n">sigma_inv</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">missing_col_idx</span><span class="p">,</span> <span class="n">observed_col_idx</span><span class="p">)]</span>
+                            <span class="o">@</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">([</span><span class="n">i</span><span class="p">],</span> <span class="n">observed_col_idx</span><span class="p">)]</span> <span class="o">-</span> <span class="n">mu</span><span class="p">[</span><span class="n">observed_col_idx</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+                    <span class="p">)</span>
+                    <span class="n">bias</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">missing_col_idx</span><span class="p">,</span> <span class="n">missing_col_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">bias</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">missing_col_idx</span><span class="p">,</span> <span class="n">missing_col_idx</span><span class="p">)]</span> <span class="o">+</span> <span class="n">sigma_inv_mis_inv</span>
+                    <span class="p">)</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X_imputed</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">bias</span> <span class="o">=</span> <span class="n">bias</span> <span class="o">/</span> <span class="n">n</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cov</span><span class="p">(</span><span class="n">X_imputed</span><span class="p">,</span> <span class="n">rowvar</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span> <span class="o">+</span> <span class="n">bias</span>
+
+        <span class="k">return</span> <span class="n">W</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span>
+
+    <span class="k">def</span> <span class="nf">_update_W</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mu</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">sigma_inv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">h</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Part (a) of the C-step: updating the matrix W while keeping mu and sigma unchanged.</span>
+<span class="sd">        This is done per column.&quot;&quot;&quot;</span>
+
+        <span class="n">n</span> <span class="o">=</span> <span class="n">W</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;stable&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">ordering</span><span class="p">:</span>
+            <span class="n">delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_delta</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">sigma_inv</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+            <span class="n">good_cells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">delta</span> <span class="o">&lt;=</span> <span class="n">q</span><span class="p">[</span><span class="n">j</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">good_cells</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">h</span><span class="p">:</span>  <span class="c1"># cannot set less than h cells to 1</span>
+                <span class="n">delta_rank</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;stable&quot;</span><span class="p">)</span>
+                <span class="n">good_cells</span> <span class="o">=</span> <span class="n">delta_rank</span><span class="p">[:</span><span class="n">h</span><span class="p">]</span>
+            <span class="n">w_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="n">w_new</span><span class="p">[</span><span class="n">good_cells</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">W</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">w_new</span>
+
+        <span class="k">return</span> <span class="n">W</span></div>
+
+
+<div class="viewcode-block" id="CellMCDEstimator._calculate_delta">
+<a class="viewcode-back" href="../../../api/robpy.covariance.html#robpy.covariance.cellmcd.CellMCDEstimator._calculate_delta">[docs]</a>
+    <span class="k">def</span> <span class="nf">_calculate_delta</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">W</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">sigma_inv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mu</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">j</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculates the  delta&#39;s from equation (20) for the column j (without q_j)&quot;&quot;&quot;</span>
+
+        <span class="n">n</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+        <span class="n">unique_rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">unique_rows</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span>
+            <span class="n">row_idx_w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">W</span> <span class="o">==</span> <span class="n">w</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># rows with current w pattern</span>
+            <span class="n">finite_rows</span> <span class="o">=</span> <span class="n">row_idx_w</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">row_idx_w</span><span class="p">])]</span>  <span class="c1"># row_idx_w with finite/not-nan x_j</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">finite_rows</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># if there are rows that aren&#39;t nans or infs</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">finite_rows</span><span class="p">]</span>  <span class="c1"># the relevant entries</span>
+                <span class="n">w1</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>  <span class="c1"># current W pattern</span>
+                <span class="n">w0</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">w0</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># current W pattern, but W_ij is set to zero</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">w0</span><span class="p">):</span>  <span class="c1"># current W pattern contains nonzeros (without looking at j)</span>
+                    <span class="n">w1</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># current W pattern, but W_ij is set to one</span>
+                    <span class="n">index_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">w0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># ones in current W pattern (without j)</span>
+                    <span class="n">index_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">w1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">mu_0</span> <span class="o">=</span> <span class="n">mu</span><span class="p">[</span><span class="n">index_0</span><span class="p">]</span>
+                    <span class="n">mu_1</span> <span class="o">=</span> <span class="n">mu</span><span class="p">[</span><span class="n">index_1</span><span class="p">]</span>
+                    <span class="n">sigma_1</span> <span class="o">=</span> <span class="n">sigma</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">index_1</span><span class="p">,</span> <span class="n">index_1</span><span class="p">)]</span>
+                    <span class="n">sigma_inv_0</span> <span class="o">=</span> <span class="n">inverse_submatrix</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">sigma_inv</span><span class="p">,</span> <span class="n">index_0</span><span class="p">)</span>
+
+                    <span class="n">jtemp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">index_1</span> <span class="o">==</span> <span class="n">j</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># current j in index 1</span>
+                    <span class="n">jtemp_n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">index_1</span> <span class="o">!=</span> <span class="n">j</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># ones in index 1 (without j)</span>
+                    <span class="n">Xtemp</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">finite_rows</span><span class="p">,</span> <span class="n">index_0</span><span class="p">)]</span> <span class="o">-</span> <span class="n">mu_0</span>
+                    <span class="n">x_hat</span> <span class="o">=</span> <span class="n">mu_1</span><span class="p">[</span><span class="n">jtemp</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">Xtemp</span> <span class="o">@</span> <span class="n">sigma_inv_0</span> <span class="o">@</span> <span class="n">sigma_1</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">jtemp_n</span><span class="p">,</span> <span class="n">jtemp</span><span class="p">)])</span><span class="o">.</span><span class="n">T</span>
+
+                    <span class="n">c</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">sigma_1</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">jtemp</span><span class="p">,</span> <span class="n">jtemp</span><span class="p">)]</span>
+                        <span class="o">-</span> <span class="n">sigma_1</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">jtemp</span><span class="p">,</span> <span class="n">jtemp_n</span><span class="p">)]</span>
+<div class="viewcode-block" id="CellMCDEstimator._predict_missing_values">
+<a class="viewcode-back" href="../../../api/robpy.covariance.html#robpy.covariance.cellmcd.CellMCDEstimator._predict_missing_values">[docs]</a>
+                        <span class="o">@</span> <span class="n">sigma_inv_0</span>
+                        <span class="o">@</span> <span class="n">sigma_1</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">jtemp_n</span><span class="p">,</span> <span class="n">jtemp</span><span class="p">)]</span>
+                    <span class="p">)</span>
+
+                    <span class="n">delta</span><span class="p">[</span><span class="n">finite_rows</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">x_hat</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">c</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+                <span class="k">else</span><span class="p">:</span>  <span class="c1"># current W pattern has zeros everywhere (except on j)</span>
+                    <span class="n">delta</span><span class="p">[</span><span class="n">finite_rows</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">mu</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">sigma</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+                    <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">delta</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_predict_missing_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">predictions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">conditional_variances</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">row_idx_w</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">missing_col_idx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">observed_col_idx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">mu</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">sigma_inv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Predict the missing values when there are both observed and missing values.&quot;&quot;&quot;</span>
+
+        <span class="n">sigma_observed_inv</span> <span class="o">=</span> <span class="n">inverse_submatrix</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">sigma_inv</span><span class="p">,</span> <span class="n">observed_col_idx</span><span class="p">)</span>
+        <span class="n">conditional_variance_missing</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span>
+            <span class="n">sigma</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">missing_col_idx</span><span class="p">,</span> <span class="n">missing_col_idx</span><span class="p">)]</span>
+            <span class="o">-</span> <span class="n">sigma</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">missing_col_idx</span><span class="p">,</span> <span class="n">observed_col_idx</span><span class="p">)]</span>
+<div class="viewcode-block" id="CellMCDEstimator._predict_observed_values">
+<a class="viewcode-back" href="../../../api/robpy.covariance.html#robpy.covariance.cellmcd.CellMCDEstimator._predict_observed_values">[docs]</a>
+            <span class="o">@</span> <span class="n">sigma_observed_inv</span>
+            <span class="o">@</span> <span class="n">sigma</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">observed_col_idx</span><span class="p">,</span> <span class="n">missing_col_idx</span><span class="p">)]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># predict the missing values</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">row_idx_w</span><span class="p">:</span>
+            <span class="n">conditional_variances</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">([</span><span class="n">index</span><span class="p">],</span> <span class="n">missing_col_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="n">conditional_variance_missing</span>
+            <span class="n">predictions</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">([</span><span class="n">index</span><span class="p">],</span> <span class="n">missing_col_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">mu</span><span class="p">[</span><span class="n">missing_col_idx</span><span class="p">]</span>
+                <span class="o">+</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">([</span><span class="n">index</span><span class="p">],</span> <span class="n">observed_col_idx</span><span class="p">)]</span> <span class="o">-</span> <span class="n">mu</span><span class="p">[</span><span class="n">observed_col_idx</span><span class="p">])</span>
+                <span class="o">@</span> <span class="n">sigma_observed_inv</span>
+                <span class="o">@</span> <span class="n">sigma</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">observed_col_idx</span><span class="p">,</span> <span class="n">missing_col_idx</span><span class="p">)]</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">conditional_variances</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_predict_observed_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">predictions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">conditional_variances</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">row_idx_w</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">observed_col_idx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">mu</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">sigma_inv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Predict the observed values when there are both observed and missing values&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">observed_col_idx</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># only 1 observed value</span>
+            <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">row_idx_w</span><span class="p">:</span>
+                <span class="n">predictions</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">([</span><span class="n">index</span><span class="p">],</span> <span class="n">observed_col_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="n">mu</span><span class="p">[</span><span class="n">observed_col_idx</span><span class="p">]</span>
+                <span class="n">conditional_variances</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">([</span><span class="n">index</span><span class="p">],</span> <span class="n">observed_col_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="n">sigma</span><span class="p">[</span>
+                    <span class="n">observed_col_idx</span><span class="p">,</span> <span class="n">observed_col_idx</span>
+                <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># multiple observed values</span>
+            <span class="k">for</span> <span class="n">obs</span> <span class="ow">in</span> <span class="n">observed_col_idx</span><span class="p">:</span>
+                <span class="n">other_observations</span> <span class="o">=</span> <span class="n">observed_col_idx</span><span class="p">[</span><span class="n">observed_col_idx</span> <span class="o">!=</span> <span class="n">obs</span><span class="p">]</span>
+                <span class="n">sigma_others_inv</span> <span class="o">=</span> <span class="n">inverse_submatrix</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">sigma_inv</span><span class="p">,</span> <span class="n">other_observations</span><span class="p">)</span>
+                <span class="n">conditional_variance_others</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">sigma</span><span class="p">[</span><span class="n">obs</span><span class="p">,</span> <span class="n">obs</span><span class="p">]</span>
+                    <span class="o">-</span> <span class="n">sigma</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">([</span><span class="n">obs</span><span class="p">],</span> <span class="n">other_observations</span><span class="p">)]</span>
+<div class="viewcode-block" id="CellMCDEstimator._predict_no_missing">
+<a class="viewcode-back" href="../../../api/robpy.covariance.html#robpy.covariance.cellmcd.CellMCDEstimator._predict_no_missing">[docs]</a>
+                    <span class="o">@</span> <span class="n">sigma_others_inv</span>
+                    <span class="o">@</span> <span class="n">sigma</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">other_observations</span><span class="p">,</span> <span class="p">[</span><span class="n">obs</span><span class="p">])]</span>
+                <span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">row_idx_w</span><span class="p">:</span>
+                    <span class="n">predictions</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">obs</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">mu</span><span class="p">[</span><span class="n">obs</span><span class="p">]</span>
+                        <span class="o">+</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">([</span><span class="n">index</span><span class="p">],</span> <span class="n">other_observations</span><span class="p">)]</span> <span class="o">-</span> <span class="n">mu</span><span class="p">[</span><span class="n">other_observations</span><span class="p">])</span>
+                        <span class="o">@</span> <span class="n">sigma_others_inv</span>
+                        <span class="o">@</span> <span class="n">sigma</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">other_observations</span><span class="p">,</span> <span class="p">[</span><span class="n">obs</span><span class="p">])]</span>
+                    <span class="p">)</span>
+                    <span class="n">conditional_variances</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">obs</span><span class="p">]</span> <span class="o">=</span> <span class="n">conditional_variance_others</span>
+
+        <span class="k">return</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">conditional_variances</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_predict_no_missing</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">predictions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">conditional_variances</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">row_idx_w</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">mu</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">sigma_inv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Make predictions when no values in the w-pattern are missing.&quot;&quot;&quot;</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">conditional_variance_nomissings</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">sigma_inv</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">row_idx_w</span><span class="p">:</span>
+            <span class="n">conditional_variances</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">conditional_variance_nomissings</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="n">j_neg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="n">j_neg</span> <span class="o">=</span> <span class="n">j_neg</span><span class="p">[</span><span class="n">j_neg</span> <span class="o">!=</span> <span class="n">j</span><span class="p">]</span>
+            <span class="n">sigma_jneg_inv</span> <span class="o">=</span> <span class="n">inverse_submatrix</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">sigma_inv</span><span class="p">,</span> <span class="n">j_neg</span><span class="p">)</span>
+            <span class="n">Xtemp</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">row_idx_w</span><span class="p">,</span> <span class="n">j_neg</span><span class="p">)]</span> <span class="o">-</span> <span class="n">mu</span><span class="p">[</span><span class="n">j_neg</span><span class="p">]</span>
+            <span class="n">predictions</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">row_idx_w</span><span class="p">,</span> <span class="p">[</span><span class="n">j</span><span class="p">])]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">mu</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">Xtemp</span> <span class="o">@</span> <span class="n">sigma_jneg_inv</span> <span class="o">@</span> <span class="n">sigma</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">j_neg</span><span class="p">,</span> <span class="p">[</span><span class="n">j</span><span class="p">])]</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">conditional_variances</span></div>
+
+
+<div class="viewcode-block" id="CellMCDEstimator._predict_all_missing">
+<a class="viewcode-back" href="../../../api/robpy.covariance.html#robpy.covariance.cellmcd.CellMCDEstimator._predict_all_missing">[docs]</a>
+    <span class="k">def</span> <span class="nf">_predict_all_missing</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">predictions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">conditional_variances</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">row_idx_w</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">mu</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">sigma_inv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Make predictions when all values in the w-pattern are missing.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">row_idx_w</span><span class="p">:</span>
+            <span class="n">predictions</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">mu</span>
+            <span class="n">conditional_variances</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">sigma_inv</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">conditional_variances</span></div>
+
+
+<div class="viewcode-block" id="CellMCDEstimator._check_data">
+<a class="viewcode-back" href="../../../api/robpy.covariance.html#robpy.covariance.cellmcd.CellMCDEstimator._check_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">_check_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_scaled</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks that there aren&#39;t too many nans or marginal outliers per column. Checks</span>
+<span class="sd">        that there are enough observations.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            X_scaled (np.ndarray): robustly standardized data set.&quot;&quot;&quot;</span>
+
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">)</span>
+
+        <span class="n">cutoff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">chi2</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quantile</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">n_marginal_outliers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">cutoff</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">n_marginal_outliers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">At least one variable has more than </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span><span class="si">}</span><span class="s2">% of &quot;</span>
+                <span class="s2">&quot;marginal  outliers.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">X</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">cutoff</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">n_bad_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">n_bad_values</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">At least one variable has more than </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span><span class="si">}</span><span class="s2">% of nan&#39;s or &quot;</span>
+                <span class="s2">&quot;marginal outliers.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;There are not enough observations compared to the number of &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;variables, n/p = </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> &lt; 5.&quot;</span>
+            <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, STAN-Uantwerp.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

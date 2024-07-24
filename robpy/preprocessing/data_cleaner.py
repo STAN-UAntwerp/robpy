@@ -104,7 +104,15 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return X
 
     @property
-    def dropped_columns(self):
+    def dropped_columns(self) -> dict[str, list]:
+        """Return the columns names that were dropped during the cleaning process.
+
+        Raises:
+            NotFittedError: if the dropped column attributes weren't set yet.
+
+        Returns:
+            dict[str, list]: Mapping from reason for dropping to list of column names.
+        """
         if not all(
             hasattr(self, attr)
             for attr in [
@@ -125,7 +133,15 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         }
 
     @property
-    def dropped_rows(self):
+    def dropped_rows(self) -> dict[str, list]:
+        """
+        Return the rows indices that were dropped during the cleaning process.
+        Raises:
+            NotFittedError: if the dropped row attributes weren't set yet.
+
+        Returns:
+            dict[str, list]: mapping from reason for dropping to list of row indices.
+        """
         if not hasattr(self, "rows_missings"):
             raise NotFittedError()
         return {"rows_missings": self.rows_missings}

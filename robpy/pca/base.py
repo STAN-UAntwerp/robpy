@@ -21,6 +21,7 @@ class RobustPCAEstimator(_BasePCA):
     @abstractmethod
     def fit(self, X: np.ndarray):
         """Fit the robust PCA model to the data
+
         Args:
             X (np.ndarray): Data to fit the model to
         """

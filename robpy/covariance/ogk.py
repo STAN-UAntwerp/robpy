@@ -19,10 +19,7 @@ class OGKEstimator(RobustCovarianceEstimator):
         reweighting_beta: float = 0.9
     ):
         """Implementation of the Orthogonalized Gnanadesikan-Kettenring estimator for location
-        dispersion proposed in
-            Maronna, R. A., & Zamar, R. H. (2002).
-            Robust Estimates of Location and Dispersion for High-Dimensional Datasets.
-            Technometrics, 44(4), 307–317. http://www.jstor.org/stable/1271538
+        dispersion proposed in Maronna, R. A., & Zamar, R. H. (2002)
 
         Args:
             - store_precision: whether to store the precision matrix
@@ -36,6 +33,11 @@ class OGKEstimator(RobustCovarianceEstimator):
                 (i.e. calculating regular location and covariance after filtering outliers based on
                 Mahalanobis distance using OGK estimates)
             - reweighting_beta: quantile of chi2 distribution to use as cutoff for reweighting
+
+        References:
+            - Maronna, R. A., & Zamar, R. H. (2002).
+              Robust Estimates of Location and Dispersion for High-Dimensional Datasets.
+              Technometrics, 44(4), 307–317. http://www.jstor.org/stable/1271538
 
         """
         super().__init__(store_precision=store_precision, assume_centered=assume_centered)

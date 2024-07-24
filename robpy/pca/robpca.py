@@ -17,11 +17,9 @@ class ROBPCAEstimator(RobustPCAEstimator):
         alpha: float = 0.75,
         final_MCD_step: bool = True,
     ):
-        """Implementation of ROBPCA algoirthm as described in
-        Hubert, Rousseeus & Vanden Branden (2005)
-        ROBPCA: A new approach to robust principal component analysis
-        and
-        Hubert, Rousseeuw & Verdonck (2009) Robust PCA for skewed data and its outlier map
+        """Implementation of ROBPCA algorithm as described in
+        Hubert, Rousseeuw & Vanden Branden (2005) and Hubert, Rousseeuw & Verdonck (2009)
+
 
         Args:
             n_components (int | None, optional):
@@ -35,6 +33,12 @@ class ROBPCAEstimator(RobustPCAEstimator):
                 robust estimates. If False, the eigenvectors after projection onto V1 (subspace
                 determined by points with OD < cutoff) are used as the final estimates.
                 Defaults to True.
+
+        References:
+            - Hubert, Rousseeuw & Vanden Branden (2005),
+              ROBPCA: A new approach to robust principal component analysis
+            - Hubert, Rousseeuw & Verdonck (2009) Robust PCA for skewed data and its outlier map
+
         """
         super().__init__(n_components=n_components)
         self.k_min_var_explained = k_min_var_explained

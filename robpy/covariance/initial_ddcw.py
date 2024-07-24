@@ -61,9 +61,9 @@ class InitialDDCWEstimator(RobustCovarianceEstimator):
             W[:, i] = [False for _ in range(n)]
             W[ordering[0 : int(n * 0.25)], i] = True
         Zimp = np.copy(X)
-        Zimp[np.logical_or(W, np.isnan(X))] = DDC.impute(pd.DataFrame(X), impute_outliers=True)[
-            np.logical_or(W, np.isnan(X))
-        ]
+        Zimp[np.logical_or(W, np.isnan(X))] = DDC.impute(
+            pd.DataFrame(X), impute_outliers=True
+        ).to_numpy()[np.logical_or(W, np.isnan(X))]
         Z = (X - DDC.location_) / DDC.scale_
         Zimp = (Zimp - DDC.location_) / DDC.scale_
         Zimp_original = np.copy(Zimp)

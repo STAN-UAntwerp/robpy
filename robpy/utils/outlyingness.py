@@ -27,7 +27,6 @@ def stahel_donoho(X: np.ndarray, n_points: int = 2, n_dir: int = 250) -> np.ndar
     # step 2: projections
     projections = X @ D  # (n_obs, n_dir)
 
-    print(projections.shape)
     # step 3: outlyingness
     # to do: let scale and loc estimators be passed as arguments
     return np.max(

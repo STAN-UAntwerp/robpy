@@ -32,7 +32,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
     def __init__(
         self,
-        method: Literal["boxcox", "yeojohnson", "auto"] = "auto",
+        method: Literal["boxcox", "yeojohnson", "auto"] = "yeojohnson",
         standardize: bool = True,
         lambda_range: tuple[float, float] = (-4.0, 6.0),
         quantile: float = 0.99,

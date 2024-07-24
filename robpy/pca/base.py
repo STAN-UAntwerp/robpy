@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from abc import abstractmethod
 from sklearn.decomposition._base import _BasePCA
@@ -58,7 +59,10 @@ class RobustPCAEstimator(_BasePCA):
         return self.transform(X) @ self.components_.T
 
     def plot_outlier_map(
-        self, X: np.ndarray, figsize: tuple[int, int] = (10, 4), return_distances: bool = False
+        self,
+        X: np.ndarray | pd.DataFrame,
+        figsize: tuple[int, int] = (10, 4),
+        return_distances: bool = False,
     ) -> None | tuple[np.ndarray, np.ndarray, float, float]:
         """Plot Orthogonal distances vs Score distances to identify different types of outliers
 
@@ -68,7 +72,8 @@ class RobustPCAEstimator(_BasePCA):
             return_distances (bool, optional):
                 Whether to return the distances and cutoff values. Defaults to False.
         """
-
+        if isinstance(X, pd.DataFrame):
+            X = X.values
         orthogonal_distances = np.linalg.norm((X - self.location_) - self.project(X), axis=1)
         score_distances = np.sqrt(
             np.sum(np.square(self.transform(X)) / self.explained_variance_, axis=1)

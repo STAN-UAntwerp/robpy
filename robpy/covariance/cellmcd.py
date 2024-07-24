@@ -144,29 +144,25 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         Function to plot the results of a cellMCD analysis: 5 types of diagnostic plots.
 
         Arguments:
-            plottype (Literal string, optional):
+            - plottype (Literal string, optional):
                 - "indexplot": plots the residuals of a variable
                 - "residuals_vs_variable": plots a variable versus its residuals
-                - "residuals_vs_predictions": plots the predictions of a variable versus its residuals
+                - "residuals_vs_predictions": plots the predictions of a variable
+                   versus its residuals
                 - "variable_vs_predictions": plots a variable against its predictions
                 - "bivariate": plots two variables against each other
 
                 Defaults to "indexplot".
-            variable (int):
-                Index of the variable under consideration.
-            variable_name (str, optional):
-                Name of the variable of interest for the axis label.
-                Defaults to "variable".
-            second_variable (int):
-                Index of the second variable under consideration, only needed for plottype "bivariate".
-            second_variable_name (str, optional):
-                Name of the second variable for the axis label, only relevant for plottype "bivariate".
-                Defaults to "second variable".
-            row_names (list of strings, optional):
-                Row_names of the observations if you want the outliers annoted with their name.
-            figsize (tuple[int,int], optional):
-                Size of the figure.
-                Defaults to (8,8).
+            - variable (int): Index of the variable under consideration.
+            - variable_name (str, optional): Name of the variable of interest for the axis label.
+              Defaults to "variable".
+            - second_variable (int): Index of the second variable under consideration,
+              only needed for plottype "bivariate".
+            - second_variable_name (str, optional): Name of the second variable for the axis label,
+              only relevant for plottype "bivariate". Defaults to "second variable".
+            - row_names (list of strings, optional): Row_names of the observations if you want
+              the outliers annoted with their name.
+            - figsize (tuple[int,int], optional): Size of the figure. Defaults to (8,8).
         """
 
         if not hasattr(self, "covariance_"):

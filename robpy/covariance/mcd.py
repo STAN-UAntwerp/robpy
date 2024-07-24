@@ -68,8 +68,8 @@ class FastMCDEstimator(RobustCovarianceEstimator):
               Whether to apply reweighting to the raw covariance estimate
         References:
             - Rousseeuw and Van Driessen, A Fast Algorithm for the Minimum Covariance Determinant
-              Estimator, 1999, American Statistical Association and the American Society for Quality,
-              TECHNOMETRICS
+              Estimator, 1999, American Statistical Association and
+              the American Society for Quality, TECHNOMETRICS
 
         """
         super().__init__(store_precision=store_precision, assume_centered=assume_centered)

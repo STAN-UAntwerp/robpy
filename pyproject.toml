@@ -23,6 +23,7 @@ exclude = [
     ".git",
     "__pycache__",
     ".venv",
+    "conf.py"
 ]
 per-file-ignores = [
     '__init__.py:F401',

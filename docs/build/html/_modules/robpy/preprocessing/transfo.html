@@ -106,14 +106,14 @@
 <span class="sd">        features closer to normality. Uses the Box-Cox or the Yeo-Johnson transformation.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            - method (Literal str, optional): method used for the power transformation.</span>
+<span class="sd">            method (Literal str, optional): method used for the power transformation.</span>
 <span class="sd">                Can be &quot;boxcox&quot; for Box-Cox, &quot;yeojohnson&quot; for Yeo-Johnson, or &quot;auto&quot;</span>
-<span class="sd">                for best objective solution. Box-Cox can only be used for strictly positive features.</span>
-<span class="sd">                Defaults to &quot;auto&quot;.</span>
-<span class="sd">            - standardize (boolean, optional): whether to standardize the features before and after</span>
+<span class="sd">                for best objective solution. Box-Cox can only be used for strictly</span>
+<span class="sd">                positive features. Defaults to &quot;auto&quot;.</span>
+<span class="sd">            standardize (boolean, optional): whether to standardize the features before and after</span>
 <span class="sd">                the power transformation. Defaults to True.</span>
-<span class="sd">            - quantile (float, optional): quantile used to calculate the weights. Defaults to 0.99.</span>
-<span class="sd">            - nsteps (int, optional): number of steps used in the reweighted maximum likelihood.</span>
+<span class="sd">            quantile (float, optional): quantile used to calculate the weights. Defaults to 0.99.</span>
+<span class="sd">            nsteps (int, optional): number of steps used in the reweighted maximum likelihood.</span>
 <span class="sd">                Defaults to 2.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
@@ -208,7 +208,7 @@
 <a class="viewcode-back" href="../../../api/robpy.preprocessing.html#robpy.preprocessing.transfo.RobustPowerTransformer.inverse_transform">[docs]</a>
     <span class="k">def</span> <span class="nf">inverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Transforms the data back using inverse Yeo-Johnson/Box-cox, the previously fitted lambda</span>
-<span class="sd">          estimate and the corresponding method are used.</span>
+<span class="sd">        estimate and the corresponding method are used.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (np.array): data.</span>

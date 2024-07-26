@@ -227,8 +227,6 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="FastLTSRegressor._apply_initial_C_steps">
-<a class="viewcode-back" href="../../../api/robpy.regression.html#robpy.regression.lts.FastLTSRegressor._apply_initial_C_steps">[docs]</a>
     <span class="k">def</span> <span class="nf">_apply_initial_C_steps</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
@@ -267,11 +265,8 @@
             <span class="n">losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_loss_value</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">h_subset_idx</span><span class="p">,</span> <span class="n">lr_model</span><span class="p">))</span>
             <span class="n">lr_models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lr_model</span><span class="p">)</span>
             <span class="n">h_subsets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">h_subset_idx</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">lr_models</span><span class="p">,</span> <span class="n">losses</span><span class="p">,</span> <span class="n">h_subsets</span></div>
+        <span class="k">return</span> <span class="n">lr_models</span><span class="p">,</span> <span class="n">losses</span><span class="p">,</span> <span class="n">h_subsets</span>
 
-
-<div class="viewcode-block" id="FastLTSRegressor._get_initial_model">
-<a class="viewcode-back" href="../../../api/robpy.regression.html#robpy.regression.lts.FastLTSRegressor._get_initial_model">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_get_initial_model</span><span class="p">(</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
@@ -294,11 +289,8 @@
         <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
         <span class="n">subset_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">n_obs</span><span class="p">,</span> <span class="n">n_features</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">lr_model</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">subset_idx</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">subset_idx</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">lr_model</span></div>
+        <span class="k">return</span> <span class="n">lr_model</span>
 
-
-<div class="viewcode-block" id="FastLTSRegressor._get_loss_value">
-<a class="viewcode-back" href="../../../api/robpy.regression.html#robpy.regression.lts.FastLTSRegressor._get_loss_value">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_get_loss_value</span><span class="p">(</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
@@ -320,11 +312,8 @@
         <span class="n">y_true</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">h_subset_idx</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">y_pred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">h_subset_idx</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">residuals</span> <span class="o">=</span> <span class="n">y_true</span> <span class="o">-</span> <span class="n">y_pred</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">residuals</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">h_subset_idx</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">residuals</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">h_subset_idx</span><span class="p">)</span>
 
-
-<div class="viewcode-block" id="FastLTSRegressor._apply_C_steps_untill_convergence">
-<a class="viewcode-back" href="../../../api/robpy.regression.html#robpy.regression.lts.FastLTSRegressor._apply_C_steps_untill_convergence">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_apply_C_steps_untill_convergence</span><span class="p">(</span>
         <span class="n">current_model</span><span class="p">:</span> <span class="n">LinearRegression</span><span class="p">,</span>
@@ -362,11 +351,8 @@
                 <span class="k">break</span>
             <span class="n">previous_loss</span> <span class="o">=</span> <span class="n">current_loss</span>
             <span class="n">iteration</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="k">return</span> <span class="n">current_model</span><span class="p">,</span> <span class="n">current_h_subset</span><span class="p">,</span> <span class="n">current_loss</span><span class="p">,</span> <span class="n">iteration</span></div>
+        <span class="k">return</span> <span class="n">current_model</span><span class="p">,</span> <span class="n">current_h_subset</span><span class="p">,</span> <span class="n">current_loss</span><span class="p">,</span> <span class="n">iteration</span>
 
-
-<div class="viewcode-block" id="FastLTSRegressor._get_h_subset">
-<a class="viewcode-back" href="../../../api/robpy.regression.html#robpy.regression.lts.FastLTSRegressor._get_h_subset">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_get_h_subset</span><span class="p">(</span>
         <span class="n">lr_model</span><span class="p">:</span> <span class="n">LinearRegression</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">int</span>
@@ -383,11 +369,8 @@
 <span class="sd">            np.ndarray: Array of indices for the h subset</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">residuals</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">lr_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">residuals</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">())[:</span><span class="n">h</span><span class="p">]</span></div>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">residuals</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">())[:</span><span class="n">h</span><span class="p">]</span>
 
-
-<div class="viewcode-block" id="FastLTSRegressor._apply_C_step">
-<a class="viewcode-back" href="../../../api/robpy.regression.html#robpy.regression.lts.FastLTSRegressor._apply_C_step">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_apply_C_step</span><span class="p">(</span>
         <span class="n">lr_model</span><span class="p">:</span> <span class="n">LinearRegression</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">int</span>
@@ -401,7 +384,6 @@
         <span class="n">h_subset_idx</span> <span class="o">=</span> <span class="n">FastLTSRegressor</span><span class="o">.</span><span class="n">_get_h_subset</span><span class="p">(</span><span class="n">lr_model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
         <span class="n">lr_model</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">h_subset_idx</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">h_subset_idx</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">h_subset_idx</span><span class="p">,</span> <span class="n">lr_model</span></div>
-</div>
 
 
 
@@ -410,6 +392,7 @@
 <span class="k">def</span> <span class="nf">get_correction_factor</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculate the small sample correction factor for the scale resulting from LTS regression.</span>
+
 <span class="sd">    References:</span>
 <span class="sd">        Pison, G., Van Aelst, S. &amp; Willems, G. Small sample corrections for LTS and MCD.</span>
 <span class="sd">        Metrika 55, 111–123 (2002). https://doi.org/10.1007/s001840200191</span>
@@ -466,6 +449,7 @@
 <span class="k">def</span> <span class="nf">get_correction_factor_reweighting</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculate the small sample correction factor for the scale resulting from LTS regression.</span>
+
 <span class="sd">    References:</span>
 <span class="sd">        Pison, G., Van Aelst, S. &amp; Willems, G. Small sample corrections for LTS and MCD.</span>
 <span class="sd">        Metrika 55, 111–123 (2002). https://doi.org/10.1007/s001840200191</span>

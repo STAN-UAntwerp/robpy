@@ -101,6 +101,7 @@
 <div class="viewcode-block" id="RobustCovarianceEstimator.fit">
 <a class="viewcode-back" href="../../../api/robpy.covariance.html#robpy.covariance.base.RobustCovarianceEstimator.fit">[docs]</a>
     <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RobustCovarianceEstimator</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the covariance estimator.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
             <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">values</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nans_allowed</span><span class="p">:</span>

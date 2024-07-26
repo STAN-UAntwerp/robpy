@@ -102,20 +102,20 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Implementation of the Detecting Deviating Cells (DDC) algorithm.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            - chi2_quantile (float): Quantile of the chi-squared distribution to use as threshold</span>
-<span class="sd">              for univariate outlier detection in step 2.</span>
+<span class="sd">            chi2_quantile (float, optional): Quantile of the chi-squared distribution to use as</span>
+<span class="sd">              threshold for univariate outlier detection in step 2.</span>
 <span class="sd">              Default is 0.99.</span>
-<span class="sd">            - min_correlation (float): Minimum correlation between variables to consider them</span>
-<span class="sd">            - scale_estimator (RobustScaleEstimator, optional) : robust scale estimator to scale the</span>
-<span class="sd">              initial data with.</span>
-<span class="sd">              Defaults to CellwiseOneStepMEstimator().</span>
+<span class="sd">            min_correlation (float, optional): Minimum correlation between variables to consider</span>
+<span class="sd">              them</span>
+<span class="sd">            scale_estimator (RobustScaleEstimator, optional) : robust scale estimator to scale the</span>
+<span class="sd">              initial data with. Defaults to CellwiseOneStepMEstimator().</span>
 
 <span class="sd">        References:</span>
-<span class="sd">            - Rousseeuw, P. J., &amp; Bossche, W. V. D. (2018). Detecting Deviating Data Cells.</span>
-<span class="sd">              Technometrics, 60(2), 135–145. https://doi.org/10.1080/00401706.2017.1340909</span>
+<span class="sd">            Rousseeuw, P. J., &amp; Bossche, W. V. D. (2018). Detecting Deviating Data Cells.</span>
+<span class="sd">            Technometrics, 60(2), 135–145. https://doi.org/10.1080/00401706.2017.1340909</span>
 
-<span class="sd">            - R Implementation:</span>
-<span class="sd">              https://www.rdocumentation.org/packages/cellWise/versions/2.5.3/topics/DDC</span>
+<span class="sd">            R Implementation:</span>
+<span class="sd">            https://www.rdocumentation.org/packages/cellWise/versions/2.5.3/topics/DDC</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">chi2_quantile</span> <span class="o">=</span> <span class="n">chi2_quantile</span>

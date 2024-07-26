@@ -150,22 +150,7 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="robpy.covariance.base.RobustCovarianceEstimator.fit">
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#robpy.covariance.base.RobustCovarianceEstimator" title="robpy.covariance.base.RobustCovarianceEstimator"><span class="pre">RobustCovarianceEstimator</span></a></span></span><a class="reference internal" href="../_modules/robpy/covariance/base.html#RobustCovarianceEstimator.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.base.RobustCovarianceEstimator.fit" title="Link to this definition"></a></dt>
-<dd><p>Fit the maximum likelihood covariance estimator to X.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Training data, where <cite>n_samples</cite> is the number of samples and
-<cite>n_features</cite> is the number of features.</p></li>
-<li><p><strong>y</strong> (<em>Ignored</em>) – Not used, present for API consistency by convention.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>self</strong> – Returns the instance itself.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>object</p>
-</dd>
-</dl>
+<dd><p>Fit the covariance estimator.</p>
 </dd></dl>
 
 </dd></dl>
@@ -214,24 +199,24 @@ Journal of the American Statistical Association.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>plottype</strong> (<em>Literal string</em><em>, </em><em>optional</em>) – <ul>
-<li><p>“indexplot”: plots the residuals of a variable</p></li>
-<li><p>”residuals_vs_variable”: plots a variable versus its residuals</p></li>
-<li><p>”residuals_vs_predictions”: plots the predictions of a variable versus its residuals</p></li>
-<li><p>”variable_vs_predictions”: plots a variable against its predictions</p></li>
-<li><p>”bivariate”: plots two variables against each other</p></li>
-</ul>
+<li><p><strong>plottype</strong> (<em>Literal string</em><em>, </em><em>optional</em>) – <p>“indexplot”: plots the residuals of a variable,
+“residuals_vs_variable”: plots a variable versus its residuals,
+“residuals_vs_predictions”: plots the predictions of a variable versus its
+residuals,
+“variable_vs_predictions”: plots a variable against its predictions,
+“bivariate”: plots two variables against each other,</p>
 <p>Defaults to “indexplot”.</p>
 </p></li>
 <li><p><strong>variable</strong> (<em>int</em>) – Index of the variable under consideration.</p></li>
 <li><p><strong>variable_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the variable of interest for the axis label.
 Defaults to “variable”.</p></li>
-<li><p><strong>second_variable</strong> (<em>int</em>) – Index of the second variable under consideration, only needed for plottype “bivariate”.</p></li>
-<li><p><strong>second_variable_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the second variable for the axis label, only relevant for plottype “bivariate”.
-Defaults to “second variable”.</p></li>
-<li><p><strong>row_names</strong> (<em>list</em><em> of </em><em>strings</em><em>, </em><em>optional</em>) – Row_names of the observations if you want the outliers annoted with their name.</p></li>
-<li><p><strong>figsize</strong> (<em>tuple</em><em>[</em><em>int</em><em>,</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – Size of the figure.
-Defaults to (8,8).</p></li>
+<li><p><strong>second_variable</strong> (<em>int</em>) – Index of the second variable under consideration,
+only needed for plottype “bivariate”.</p></li>
+<li><p><strong>second_variable_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the second variable for the axis label,
+only relevant for plottype “bivariate”. Defaults to “second variable”.</p></li>
+<li><p><strong>row_names</strong> (<em>list</em><em> of </em><em>strings</em><em>, </em><em>optional</em>) – Row_names of the observations if you want
+the outliers annoted with their name.</p></li>
+<li><p><strong>figsize</strong> (<em>tuple</em><em>[</em><em>int</em><em>,</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – Size of the figure. Defaults to (8,8).</p></li>
 </ul>
 </dd>
 </dl>
@@ -249,10 +234,9 @@ in the Supplementary Material to Raymaekers and Rousseeuw 2023.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>alpha</strong> (<em>-</em>) – Percentage indicating how much cells must remain unflagged in each column.
+<li><p><strong>alpha</strong> (<em>float</em><em>, </em><em>optional</em>) – Percentage indicating how much cells must remain unflagged in each column.
 Defaults to 0.75.</p></li>
-<li><p><strong>min_eigenvalue</strong> (<em>-</em>) – (float, optional):
-Lower bound on the minimum eigenvalue of the covariance estimator
+<li><p><strong>min_eigenvalue</strong> (<em>float</em><em>, </em><em>optional</em>) – Lower bound on the minimum eigenvalue of the covariance estimator
 on the standardized data. Should be at least 1e-6.
 Defaults to 1e-4.</p></li>
 </ul>
@@ -305,23 +289,21 @@ Hubert, Rousseeuw and Verdonck (2012)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>h_size</strong> (<em>-</em>) – size of the h subset.
+<li><p><strong>h_size</strong> (<em>int</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – size of the h subset.
 If an integer between n/2 and n is passed, it is interpreted as an absolute value.
 If a float between 0.5 and 1 is passed, it is interpreted as a proportation
 of n (the training set size).
 If None, it is set to (n+p+1) / 2.
 Defaults to None.</p></li>
-<li><p><strong>tolerance</strong> (<em>-</em>) – Minimum difference in determinant between two iterations to stop the C-step</p></li>
-<li><p><strong>correct_covariance</strong> (<em>-</em>) – Whether to apply a consistency correction to the raw covariance estimate</p></li>
-<li><p><strong>reweighting</strong> (<em>-</em>) – Whether to apply reweighting to the raw covariance estimate</p></li>
+<li><p><strong>tolerance</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum difference in determinant between two iterations to stop the C-step</p></li>
+<li><p><strong>correct_covariance</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to apply a consistency correction to the raw covariance estimate</p></li>
+<li><p><strong>reweighting</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to apply reweighting to the raw covariance estimate</p></li>
 </ul>
 </dd>
 </dl>
 <p class="rubric">References</p>
-<ul class="simple">
-<li><p>Hubert, Rousseeuw and Verdonck, A deterministic algorithm for robust location
-and scatter, 2012, Journal of Computational and Graphical Statistics</p></li>
-</ul>
+<p>Hubert, Rousseeuw and Verdonck, A deterministic algorithm for robust location
+and scatter, 2012, Journal of Computational and Graphical Statistics</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="robpy.covariance.mcd.DetMCDEstimator.calculate_covariance">
 <span class="sig-name descname"><span class="pre">calculate_covariance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/robpy/covariance/mcd.html#DetMCDEstimator.calculate_covariance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.mcd.DetMCDEstimator.calculate_covariance" title="Link to this definition"></a></dt>
@@ -337,30 +319,28 @@ and scatter, 2012, Journal of Computational and Graphical Statistics</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>h_size</strong> (<em>-</em>) – size of the h subset.
+<li><p><strong>h_size</strong> (<em>int</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – size of the h subset.
 If an integer between n/2 and n is passed, it is interpreted as an absolute value.
 If a float between 0.5 and 1 is passed, it is interpreted as a proportation
 of n (the training set size).
 If None, it is set to (n+p+1) / 2.
 Defaults to None.</p></li>
-<li><p><strong>n_initial_subsets</strong> (<em>-</em>) – number of initial random subsets of size p+1</p></li>
-<li><p><strong>n_initial_c_steps</strong> (<em>-</em>) – number of initial c steps to perform on all initial subsets</p></li>
-<li><p><strong>n_best_subsets</strong> (<em>-</em>) – number of best subsets to keep and perform c steps on until convergence</p></li>
-<li><p><strong>n_partitions</strong> (<em>-</em>) – Number of partitions to split the data into.
+<li><p><strong>n_initial_subsets</strong> (<em>int</em><em>, </em><em>optional</em>) – number of initial random subsets of size p+1</p></li>
+<li><p><strong>n_initial_c_steps</strong> (<em>int</em><em>, </em><em>optional</em>) – number of initial c steps to perform on all initial subsets</p></li>
+<li><p><strong>n_best_subsets</strong> (<em>int</em><em>, </em><em>optional</em>) – number of best subsets to keep and perform c steps on until convergence</p></li>
+<li><p><strong>n_partitions</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of partitions to split the data into.
 This can speed up the algorithm for large datasets (n &gt; 600 suggested in paper)
 If None, 5 partitions are used if n &gt; 600, otherwise 1 partition is used.</p></li>
-<li><p><strong>tolerance</strong> (<em>-</em>) – Minimum difference in determinant between two iterations to stop the C-step</p></li>
-<li><p><strong>correct_covariance</strong> (<em>-</em>) – Whether to apply a consistency correction to the raw covariance estimate</p></li>
-<li><p><strong>reweighting</strong> (<em>-</em>) – Whether to apply reweighting to the raw covariance estimate</p></li>
+<li><p><strong>tolerance</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum difference in determinant between two iterations to stop the C-step</p></li>
+<li><p><strong>correct_covariance</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to apply a consistency correction to the raw covariance estimate</p></li>
+<li><p><strong>reweighting</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to apply reweighting to the raw covariance estimate</p></li>
 </ul>
 </dd>
 </dl>
 <p class="rubric">References</p>
-<ul class="simple">
-<li><p>Rousseeuw and Van Driessen, A Fast Algorithm for the Minimum Covariance Determinant
-Estimator, 1999, American Statistical Association and the American Society for Quality,
-TECHNOMETRICS</p></li>
-</ul>
+<p>Rousseeuw and Van Driessen, A Fast Algorithm for the Minimum Covariance Determinant
+Estimator, 1999, American Statistical Association and
+the American Society for Quality, TECHNOMETRICS</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="robpy.covariance.mcd.FastMCDEstimator.calculate_covariance">
 <span class="sig-name descname"><span class="pre">calculate_covariance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/robpy/covariance/mcd.html#FastMCDEstimator.calculate_covariance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.mcd.FastMCDEstimator.calculate_covariance" title="Link to this definition"></a></dt>
@@ -411,26 +391,27 @@ dispersion proposed in Maronna, R. A., &amp; Zamar, R. H. (2002)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>store_precision</strong> (<em>-</em>) – whether to store the precision matrix</p></li>
-<li><p><strong>assume_centered</strong> (<em>-</em>) – whether the data is already centered</p></li>
-<li><p><strong>location_estimator</strong> (<em>-</em>) – function to estimate the location of the data, should accept
-an array like input as first value and a named argument axis</p></li>
-<li><p><strong>scale_estimator</strong> (<em>-</em>) – function to estimate the scale of the data, should accept
-an array like input as first value and a named argument axis</p></li>
-<li><p><strong>n_iterations</strong> (<em>-</em>) – number of iteration for orthogonalization step</p></li>
-<li><p><strong>reweighting</strong> (<em>-</em>) – whether to apply reweighting at the end
+<li><p><strong>store_precision</strong> (<em>boolean</em><em>, </em><em>optional</em>) – whether to store the precision matrix</p></li>
+<li><p><strong>assume_centered</strong> (<em>boolean</em><em>, </em><em>optional</em>) – whether the data is already centered</p></li>
+<li><p><strong>location_estimator</strong> (<a class="reference internal" href="robpy.univariate.html#robpy.univariate.base.LocationOrScaleEstimator" title="robpy.univariate.base.LocationOrScaleEstimator"><em>LocationOrScaleEstimator</em></a><em>, </em><em>optional</em>) – function to estimate the
+location of the data, should accept an array like input as first value and a named
+argument axis</p></li>
+<li><p><strong>scale_estimator</strong> (<a class="reference internal" href="robpy.univariate.html#robpy.univariate.base.LocationOrScaleEstimator" title="robpy.univariate.base.LocationOrScaleEstimator"><em>LocationOrScaleEstimator</em></a><em>, </em><em>optional</em>) – function to estimate the scale
+of the data, should accept an array like input as first value and a named argument
+axis</p></li>
+<li><p><strong>n_iterations</strong> (<em>int</em><em>, </em><em>optional</em>) – number of iteration for orthogonalization step</p></li>
+<li><p><strong>reweighting</strong> (<em>boolean</em><em>, </em><em>optional</em>) – whether to apply reweighting at the end
 (i.e. calculating regular location and covariance after filtering outliers based on
 Mahalanobis distance using OGK estimates)</p></li>
-<li><p><strong>reweighting_beta</strong> (<em>-</em>) – quantile of chi2 distribution to use as cutoff for reweighting</p></li>
+<li><p><strong>reweighting_beta</strong> (<em>float</em><em>, </em><em>optional</em>) – quantile of chi2 distribution to use as cutoff for
+reweighting</p></li>
 </ul>
 </dd>
 </dl>
 <p class="rubric">References</p>
-<ul class="simple">
-<li><p>Maronna, R. A., &amp; Zamar, R. H. (2002).
+<p>Maronna, R. A., &amp; Zamar, R. H. (2002).
 Robust Estimates of Location and Dispersion for High-Dimensional Datasets.
-Technometrics, 44(4), 307–317. <a class="reference external" href="http://www.jstor.org/stable/1271538">http://www.jstor.org/stable/1271538</a></p></li>
-</ul>
+Technometrics, 44(4), 307–317. <a class="reference external" href="http://www.jstor.org/stable/1271538">http://www.jstor.org/stable/1271538</a></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="robpy.covariance.ogk.OGKEstimator.calculate_covariance">
 <span class="sig-name descname"><span class="pre">calculate_covariance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/robpy/covariance/ogk.html#OGKEstimator.calculate_covariance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.ogk.OGKEstimator.calculate_covariance" title="Link to this definition"></a></dt>

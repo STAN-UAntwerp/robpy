@@ -22,20 +22,20 @@ class DDCEstimator(OutlierMixin):
         """Implementation of the Detecting Deviating Cells (DDC) algorithm.
 
         Args:
-            - chi2_quantile (float): Quantile of the chi-squared distribution to use as threshold
-              for univariate outlier detection in step 2.
+            chi2_quantile (float, optional): Quantile of the chi-squared distribution to use as
+              threshold for univariate outlier detection in step 2.
               Default is 0.99.
-            - min_correlation (float): Minimum correlation between variables to consider them
-            - scale_estimator (RobustScaleEstimator, optional) : robust scale estimator to scale the
-              initial data with.
-              Defaults to CellwiseOneStepMEstimator().
+            min_correlation (float, optional): Minimum correlation between variables to consider
+              them
+            scale_estimator (RobustScaleEstimator, optional) : robust scale estimator to scale the
+              initial data with. Defaults to CellwiseOneStepMEstimator().
 
         References:
-            - Rousseeuw, P. J., & Bossche, W. V. D. (2018). Detecting Deviating Data Cells.
-              Technometrics, 60(2), 135–145. https://doi.org/10.1080/00401706.2017.1340909
+            Rousseeuw, P. J., & Bossche, W. V. D. (2018). Detecting Deviating Data Cells.
+            Technometrics, 60(2), 135–145. https://doi.org/10.1080/00401706.2017.1340909
 
-            - R Implementation:
-              https://www.rdocumentation.org/packages/cellWise/versions/2.5.3/topics/DDC
+            R Implementation:
+            https://www.rdocumentation.org/packages/cellWise/versions/2.5.3/topics/DDC
 
         """
         self.chi2_quantile = chi2_quantile

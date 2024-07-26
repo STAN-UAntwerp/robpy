@@ -26,14 +26,14 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         features closer to normality. Uses the Box-Cox or the Yeo-Johnson transformation.
 
         Args:
-            - method (Literal str, optional): method used for the power transformation.
+            method (Literal str, optional): method used for the power transformation.
                 Can be "boxcox" for Box-Cox, "yeojohnson" for Yeo-Johnson, or "auto"
                 for best objective solution. Box-Cox can only be used for strictly
                 positive features. Defaults to "auto".
-            - standardize (boolean, optional): whether to standardize the features before and after
+            standardize (boolean, optional): whether to standardize the features before and after
                 the power transformation. Defaults to True.
-            - quantile (float, optional): quantile used to calculate the weights. Defaults to 0.99.
-            - nsteps (int, optional): number of steps used in the reweighted maximum likelihood.
+            quantile (float, optional): quantile used to calculate the weights. Defaults to 0.99.
+            nsteps (int, optional): number of steps used in the reweighted maximum likelihood.
                 Defaults to 2.
         """
         self.method = method
@@ -120,7 +120,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
     def inverse_transform(self, x: np.ndarray) -> np.ndarray:
         """Transforms the data back using inverse Yeo-Johnson/Box-cox, the previously fitted lambda
-          estimate and the corresponding method are used.
+        estimate and the corresponding method are used.
 
         Args:
             x (np.array): data.

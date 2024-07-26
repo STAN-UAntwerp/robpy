@@ -12,6 +12,13 @@ from robpy.utils.rho import BaseRho, TukeyBisquare
 
 
 class MMEstimator(RobustRegressor):
+    """
+    Implementation of MM-regression estimator
+
+    References:
+        https://www.jstor.org/stable/2241331
+    """
+
     def __init__(
         self,
         initial_estimator: RobustRegressor = SEstimator(),

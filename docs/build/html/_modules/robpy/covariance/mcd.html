@@ -126,33 +126,33 @@
 <span class="sd">        Fast MCD estimator based on the algorithm proposed in Rousseeuw and Van Driessen (1999)</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            - h_size (int | None, optional):</span>
+<span class="sd">            h_size (int | None, optional):</span>
 <span class="sd">              size of the h subset.</span>
 <span class="sd">              If an integer between n/2 and n is passed, it is interpreted as an absolute value.</span>
 <span class="sd">              If a float between 0.5 and 1 is passed, it is interpreted as a proportation</span>
 <span class="sd">              of n (the training set size).</span>
 <span class="sd">              If None, it is set to (n+p+1) / 2.</span>
 <span class="sd">              Defaults to None.</span>
-<span class="sd">            - n_initial_subsets (int, optional):</span>
+<span class="sd">            n_initial_subsets (int, optional):</span>
 <span class="sd">              number of initial random subsets of size p+1</span>
-<span class="sd">            - n_initial_c_steps (int, optional):</span>
+<span class="sd">            n_initial_c_steps (int, optional):</span>
 <span class="sd">              number of initial c steps to perform on all initial subsets</span>
-<span class="sd">            - n_best_subsets (int, optional):</span>
+<span class="sd">            n_best_subsets (int, optional):</span>
 <span class="sd">              number of best subsets to keep and perform c steps on until convergence</span>
-<span class="sd">            - n_partitions (int, optional):</span>
+<span class="sd">            n_partitions (int, optional):</span>
 <span class="sd">              Number of partitions to split the data into.</span>
 <span class="sd">              This can speed up the algorithm for large datasets (n &gt; 600 suggested in paper)</span>
 <span class="sd">              If None, 5 partitions are used if n &gt; 600, otherwise 1 partition is used.</span>
-<span class="sd">            - tolerance (float, optional):</span>
+<span class="sd">            tolerance (float, optional):</span>
 <span class="sd">              Minimum difference in determinant between two iterations to stop the C-step</span>
-<span class="sd">            - correct_covariance (bool, optional):</span>
+<span class="sd">            correct_covariance (bool, optional):</span>
 <span class="sd">              Whether to apply a consistency correction to the raw covariance estimate</span>
-<span class="sd">            - reweighting (bool, optional):</span>
+<span class="sd">            reweighting (bool, optional):</span>
 <span class="sd">              Whether to apply reweighting to the raw covariance estimate</span>
 <span class="sd">        References:</span>
-<span class="sd">            - Rousseeuw and Van Driessen, A Fast Algorithm for the Minimum Covariance Determinant</span>
-<span class="sd">              Estimator, 1999, American Statistical Association and the American Society for Quality,</span>
-<span class="sd">              TECHNOMETRICS</span>
+<span class="sd">            Rousseeuw and Van Driessen, A Fast Algorithm for the Minimum Covariance Determinant</span>
+<span class="sd">            Estimator, 1999, American Statistical Association and</span>
+<span class="sd">            the American Society for Quality, TECHNOMETRICS</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">store_precision</span><span class="o">=</span><span class="n">store_precision</span><span class="p">,</span> <span class="n">assume_centered</span><span class="o">=</span><span class="n">assume_centered</span><span class="p">)</span>
@@ -346,23 +346,23 @@
 <span class="sd">        Hubert, Rousseeuw and Verdonck (2012)</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            - h_size (int | None, optional):</span>
+<span class="sd">            h_size (int | None, optional):</span>
 <span class="sd">              size of the h subset.</span>
 <span class="sd">              If an integer between n/2 and n is passed, it is interpreted as an absolute value.</span>
 <span class="sd">              If a float between 0.5 and 1 is passed, it is interpreted as a proportation</span>
 <span class="sd">              of n (the training set size).</span>
 <span class="sd">              If None, it is set to (n+p+1) / 2.</span>
 <span class="sd">              Defaults to None.</span>
-<span class="sd">            - tolerance (float, optional):</span>
+<span class="sd">            tolerance (float, optional):</span>
 <span class="sd">              Minimum difference in determinant between two iterations to stop the C-step</span>
-<span class="sd">            - correct_covariance (bool, optional):</span>
+<span class="sd">            correct_covariance (bool, optional):</span>
 <span class="sd">              Whether to apply a consistency correction to the raw covariance estimate</span>
-<span class="sd">            - reweighting (bool, optional):</span>
+<span class="sd">            reweighting (bool, optional):</span>
 <span class="sd">              Whether to apply reweighting to the raw covariance estimate</span>
 
 <span class="sd">        References:</span>
-<span class="sd">            - Hubert, Rousseeuw and Verdonck, A deterministic algorithm for robust location</span>
-<span class="sd">              and scatter, 2012, Journal of Computational and Graphical Statistics</span>
+<span class="sd">            Hubert, Rousseeuw and Verdonck, A deterministic algorithm for robust location</span>
+<span class="sd">            and scatter, 2012, Journal of Computational and Graphical Statistics</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>

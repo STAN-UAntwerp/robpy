@@ -87,12 +87,12 @@
 <span class="k">class</span> <span class="nc">WrappingCovarianceEstimator</span><span class="p">(</span><span class="n">RobustCovarianceEstimator</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Covariance estimator based on the wrapping function proposed in</span>
 <span class="sd">    Jakob Raymaekers &amp; Peter J. Rousseeuw (2021)</span>
-<span class="sd">    </span>
+
 <span class="sd">    The wrapping transformation is defined as follows:</span>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">        \Psi_{b, c}(z) =</span>
+<span class="sd">        \\Psi_{b, c}(z) =</span>
 <span class="sd">        \\begin{cases}</span>
 <span class="sd">          z &amp; if \\  0 \\leq |z| &lt; b \\\\</span>
 <span class="sd">          q_1 \\tanh\\left(q_2 (c - |z|)\\right) \\mathrm{sign}(z) &amp; if \\  b \\leq |z| \\leq c \\\\</span>
@@ -103,9 +103,9 @@
 
 <span class="sd">    The (standard) covariance is subsequently estimated on the rescaled data</span>
 <span class="sd">    Cov(X) = Cov(Median(X) + MAD(X) * phi(X - Median(X) / MAD(X)))</span>
-<span class="sd">    </span>
-<span class="sd">    References: </span>
-<span class="sd">        - Jakob Raymaekers &amp; Peter J. Rousseeuw (2021) </span>
+
+<span class="sd">    References:</span>
+<span class="sd">        - Jakob Raymaekers &amp; Peter J. Rousseeuw (2021)</span>
 <span class="sd">          Fast Robust Correlation for High-Dimensional Data,</span>
 <span class="sd">          Technometrics, 63:2, 184-198, DOI: 10.1080/00401706.2019.1677270</span>
 <span class="sd">    &quot;&quot;&quot;</span>

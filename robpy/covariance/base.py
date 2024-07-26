@@ -19,6 +19,7 @@ class RobustCovarianceEstimator(EmpiricalCovariance):
         self.nans_allowed = nans_allowed
 
     def fit(self, X: np.ndarray | pd.DataFrame) -> RobustCovarianceEstimator:
+        """Fit the covariance estimator."""
         if isinstance(X, pd.DataFrame):
             X = X.values
         if self.nans_allowed:

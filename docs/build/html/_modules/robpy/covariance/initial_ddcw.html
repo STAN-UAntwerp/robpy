@@ -162,9 +162,9 @@
         <span class="n">Zimp_proj_scaler</span> <span class="o">=</span> <span class="n">RobustScaler</span><span class="p">(</span><span class="n">scale_estimator</span><span class="o">=</span><span class="n">OneStepWrappingEstimator</span><span class="p">())</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
             <span class="n">Zimp_proj</span><span class="p">,</span> <span class="n">ignore_nan</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
-        <span class="n">Zimp_proj_scaler</span><span class="o">.</span><span class="n">scales_</span><span class="p">[</span><span class="n">Zimp_proj_scaler</span><span class="o">.</span><span class="n">scales_</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_eigenvalue</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">min_eigenvalue</span>
-        <span class="p">)</span>
+        <span class="n">Zimp_proj_scaler</span><span class="o">.</span><span class="n">scales_</span><span class="p">[</span>
+            <span class="n">Zimp_proj_scaler</span><span class="o">.</span><span class="n">scales_</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_eigenvalue</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_eigenvalue</span>
         <span class="n">Zimp_proj_wrapped_cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cov</span><span class="p">(</span>
             <span class="n">wrapping_transformation</span><span class="p">(</span>
                 <span class="n">Zimp_proj</span><span class="p">,</span>
@@ -194,9 +194,9 @@
         <span class="n">Zimp_proj_scaler</span> <span class="o">=</span> <span class="n">RobustScaler</span><span class="p">(</span><span class="n">scale_estimator</span><span class="o">=</span><span class="n">OneStepWrappingEstimator</span><span class="p">())</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
             <span class="n">Zimp_proj</span><span class="p">,</span> <span class="n">ignore_nan</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
-        <span class="n">Zimp_proj_scaler</span><span class="o">.</span><span class="n">scales_</span><span class="p">[</span><span class="n">Zimp_proj_scaler</span><span class="o">.</span><span class="n">scales_</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_eigenvalue</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">min_eigenvalue</span>
-        <span class="p">)</span>
+        <span class="n">Zimp_proj_scaler</span><span class="o">.</span><span class="n">scales_</span><span class="p">[</span>
+            <span class="n">Zimp_proj_scaler</span><span class="o">.</span><span class="n">scales_</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_eigenvalue</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_eigenvalue</span>
         <span class="n">Zimp_proj_wrapped_cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cov</span><span class="p">(</span>
             <span class="n">wrapping_transformation</span><span class="p">(</span>
                 <span class="n">Zimp_proj</span><span class="p">,</span>

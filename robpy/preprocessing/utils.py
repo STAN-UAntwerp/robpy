@@ -17,11 +17,14 @@ def wrapping_transformation(
     """
     Implementation of wrapping using this transformation function:
 
-    phi(z) = {
-        z                                       if 0 <= |z| < b
-        q1 * tanh(q2 * (c - |z|)) * sign(z)     if b <= |z| <= c
-        0                                       if c <= |z|
-    }
+    .. math::
+
+        \\Psi_{b, c}(z) =
+        \\begin{cases}
+          z & if \\  0 \\leq |z| < b \\\\
+          q_1 \\tanh\\left(q_2 (c - |z|)\\right) \\mathrm{sign}(z) & if \\  b \\leq |z| \\leq c \\\\
+          0  & if \\   c < |z|
+        \\end{cases}
 
     Args:
         X: data to be transformed, must have shape (N, D)

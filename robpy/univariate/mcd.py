@@ -19,6 +19,7 @@ class UnivariateMCDEstimator(RobustScaleEstimator):
             consistency_correction (boolean, optional):
               whether the estimates should be consistent at the normal model.
               Defaults to True.
+
         References:
             Hubert, M., & Debruyne, M. (2010). Minimum covariance determinant.
               Wiley interdisciplinary reviews: Computational statistics, 2(1), 36-43.

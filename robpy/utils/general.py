@@ -6,9 +6,9 @@ def inverse_submatrix(A: np.ndarray, A_inv: np.ndarray, indices: np.array) -> np
     of the submatrix of A consisting of the rows and columns in indices.
 
     Arguments:
-    - A (np.ndarray): the matrix of interest
-    - A_inv (np.ndarray): the inverse of the matrix of interest
-    - indices (np.array): the indices corresponding to the submatrix of interest
+        A (np.ndarray): the matrix of interest
+        A_inv (np.ndarray): the inverse of the matrix of interest
+        indices (np.array): the indices corresponding to the submatrix of interest
     """
 
     p = A.shape[1]

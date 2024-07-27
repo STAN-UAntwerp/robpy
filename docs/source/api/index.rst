@@ -11,4 +11,5 @@ Robpy
    robpy.preprocessing
    robpy.regression
    robpy.univariate
+   robpy.utils
 

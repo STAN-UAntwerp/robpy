@@ -27,4 +27,10 @@ Data Transforming
    :undoc-members:
    :show-inheritance:
 
+Utils
+------------------
+.. automodule:: robpy.preprocessing.utils
+   :members: 
+   :undoc-members:
+   :show-inheritance:
 

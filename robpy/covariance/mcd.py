@@ -43,33 +43,33 @@ class FastMCDEstimator(RobustCovarianceEstimator):
         Fast MCD estimator based on the algorithm proposed in Rousseeuw and Van Driessen (1999)
 
         Args:
-            - h_size (int | None, optional):
+            h_size (int | None, optional):
               size of the h subset.
               If an integer between n/2 and n is passed, it is interpreted as an absolute value.
               If a float between 0.5 and 1 is passed, it is interpreted as a proportation
               of n (the training set size).
               If None, it is set to (n+p+1) / 2.
               Defaults to None.
-            - n_initial_subsets (int, optional):
+            n_initial_subsets (int, optional):
               number of initial random subsets of size p+1
-            - n_initial_c_steps (int, optional):
+            n_initial_c_steps (int, optional):
               number of initial c steps to perform on all initial subsets
-            - n_best_subsets (int, optional):
+            n_best_subsets (int, optional):
               number of best subsets to keep and perform c steps on until convergence
-            - n_partitions (int, optional):
+            n_partitions (int, optional):
               Number of partitions to split the data into.
               This can speed up the algorithm for large datasets (n > 600 suggested in paper)
               If None, 5 partitions are used if n > 600, otherwise 1 partition is used.
-            - tolerance (float, optional):
+            tolerance (float, optional):
               Minimum difference in determinant between two iterations to stop the C-step
-            - correct_covariance (bool, optional):
+            correct_covariance (bool, optional):
               Whether to apply a consistency correction to the raw covariance estimate
-            - reweighting (bool, optional):
+            reweighting (bool, optional):
               Whether to apply reweighting to the raw covariance estimate
         References:
-            - Rousseeuw and Van Driessen, A Fast Algorithm for the Minimum Covariance Determinant
-              Estimator, 1999, American Statistical Association and
-              the American Society for Quality, TECHNOMETRICS
+            Rousseeuw and Van Driessen, A Fast Algorithm for the Minimum Covariance Determinant
+            Estimator, 1999, American Statistical Association and
+            the American Society for Quality, TECHNOMETRICS
 
         """
         super().__init__(store_precision=store_precision, assume_centered=assume_centered)
@@ -257,23 +257,23 @@ class DetMCDEstimator(RobustCovarianceEstimator):
         Hubert, Rousseeuw and Verdonck (2012)
 
         Args:
-            - h_size (int | None, optional):
+            h_size (int | None, optional):
               size of the h subset.
               If an integer between n/2 and n is passed, it is interpreted as an absolute value.
               If a float between 0.5 and 1 is passed, it is interpreted as a proportation
               of n (the training set size).
               If None, it is set to (n+p+1) / 2.
               Defaults to None.
-            - tolerance (float, optional):
+            tolerance (float, optional):
               Minimum difference in determinant between two iterations to stop the C-step
-            - correct_covariance (bool, optional):
+            correct_covariance (bool, optional):
               Whether to apply a consistency correction to the raw covariance estimate
-            - reweighting (bool, optional):
+            reweighting (bool, optional):
               Whether to apply reweighting to the raw covariance estimate
 
         References:
-            - Hubert, Rousseeuw and Verdonck, A deterministic algorithm for robust location
-              and scatter, 2012, Journal of Computational and Graphical Statistics
+            Hubert, Rousseeuw and Verdonck, A deterministic algorithm for robust location
+            and scatter, 2012, Journal of Computational and Graphical Statistics
 
         """
         super().__init__()

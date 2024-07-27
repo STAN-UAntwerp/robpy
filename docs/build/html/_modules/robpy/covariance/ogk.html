@@ -102,22 +102,25 @@
 <span class="sd">        dispersion proposed in Maronna, R. A., &amp; Zamar, R. H. (2002)</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            - store_precision: whether to store the precision matrix</span>
-<span class="sd">            - assume_centered: whether the data is already centered</span>
-<span class="sd">            - location_estimator: function to estimate the location of the data, should accept</span>
-<span class="sd">                an array like input as first value and a named argument axis</span>
-<span class="sd">            - scale_estimator: function to estimate the scale of the data, should accept</span>
-<span class="sd">                an array like input as first value and a named argument axis</span>
-<span class="sd">            - n_iterations: number of iteration for orthogonalization step</span>
-<span class="sd">            - reweighting: whether to apply reweighting at the end</span>
+<span class="sd">            store_precision (boolean, optional): whether to store the precision matrix</span>
+<span class="sd">            assume_centered (boolean, optional): whether the data is already centered</span>
+<span class="sd">            location_estimator (LocationOrScaleEstimator, optional): function to estimate the</span>
+<span class="sd">                location of the data, should accept an array like input as first value and a named</span>
+<span class="sd">                argument axis</span>
+<span class="sd">            scale_estimator (LocationOrScaleEstimator, optional): function to estimate the scale</span>
+<span class="sd">                of the data, should accept an array like input as first value and a named argument</span>
+<span class="sd">                axis</span>
+<span class="sd">            n_iterations (int, optional): number of iteration for orthogonalization step</span>
+<span class="sd">            reweighting (boolean, optional): whether to apply reweighting at the end</span>
 <span class="sd">                (i.e. calculating regular location and covariance after filtering outliers based on</span>
 <span class="sd">                Mahalanobis distance using OGK estimates)</span>
-<span class="sd">            - reweighting_beta: quantile of chi2 distribution to use as cutoff for reweighting</span>
+<span class="sd">            reweighting_beta (float, optional): quantile of chi2 distribution to use as cutoff for</span>
+<span class="sd">                reweighting</span>
 
 <span class="sd">        References:</span>
-<span class="sd">            - Maronna, R. A., &amp; Zamar, R. H. (2002).</span>
-<span class="sd">              Robust Estimates of Location and Dispersion for High-Dimensional Datasets.</span>
-<span class="sd">              Technometrics, 44(4), 307–317. http://www.jstor.org/stable/1271538</span>
+<span class="sd">            Maronna, R. A., &amp; Zamar, R. H. (2002).</span>
+<span class="sd">            Robust Estimates of Location and Dispersion for High-Dimensional Datasets.</span>
+<span class="sd">            Technometrics, 44(4), 307–317. http://www.jstor.org/stable/1271538</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">store_precision</span><span class="o">=</span><span class="n">store_precision</span><span class="p">,</span> <span class="n">assume_centered</span><span class="o">=</span><span class="n">assume_centered</span><span class="p">)</span>

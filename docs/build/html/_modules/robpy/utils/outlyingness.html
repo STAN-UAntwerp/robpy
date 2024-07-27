@@ -86,12 +86,6 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate the degree of outlyingness for multivariate points.</span>
 <span class="sd">    Based on the algorithm proposed by Stahel (1981) and Donoho (1982).</span>
 
-<span class="sd">    Stahel W.A. (1981). Robuste Schatzungen: infinitesimale Optimalitat und Schatzungen von</span>
-<span class="sd">        Kovarianzmatrizen. PhD Thesis, ETH Zurich.</span>
-
-<span class="sd">    Donoho D.L. (1982). Breakdown properties of multivariate location estimators.</span>
-<span class="sd">        Ph.D. Qualifying paper, Dept. Statistics, Harvard University, Boston.</span>
-
 <span class="sd">    Args:</span>
 <span class="sd">        X (np.ndarray): data matric of shape (n_obs, n_features)</span>
 <span class="sd">        n_points: number of points to determine the hyperplane. Defaults to 2.</span>
@@ -99,6 +93,13 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        np.ndarray: single column of outlyingness values</span>
+
+<span class="sd">    References:</span>
+<span class="sd">        Stahel W.A. (1981). Robuste Schatzungen: infinitesimale Optimalitat und Schatzungen von</span>
+<span class="sd">        Kovarianzmatrizen. PhD Thesis, ETH Zurich.</span>
+
+<span class="sd">        Donoho D.L. (1982). Breakdown properties of multivariate location estimators.</span>
+<span class="sd">        Ph.D. Qualifying paper, Dept. Statistics, Harvard University, Boston.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># step 1: get random directions</span>
     <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span>

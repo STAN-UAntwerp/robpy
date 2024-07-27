@@ -152,14 +152,14 @@ Defaults to 3.</p></li>
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dropped_columns</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#robpy.preprocessing.data_cleaner.DataCleaner.dropped_columns" title="Link to this definition"></a></dt>
 <dd><p>Return the columns names that were dropped during the cleaning process.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mapping from reason for dropping to list of column names.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[str, list]</p>
+</dd>
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>NotFittedError</strong> – if the dropped column attributes weren’t set yet.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Mapping from reason for dropping to list of column names.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict[str, list]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -167,14 +167,16 @@ Defaults to 3.</p></li>
 <dl class="py property">
 <dt class="sig sig-object py" id="robpy.preprocessing.data_cleaner.DataCleaner.dropped_rows">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dropped_rows</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#robpy.preprocessing.data_cleaner.DataCleaner.dropped_rows" title="Link to this definition"></a></dt>
-<dd><p>Return the rows indices that were dropped during the cleaning process.
-:raises NotFittedError: if the dropped row attributes weren’t set yet.</p>
+<dd><p>Return the rows indices that were dropped during the cleaning process.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>mapping from reason for dropping to list of row indices.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>dict[str, list]</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>NotFittedError</strong> – if the dropped row attributes weren’t set yet.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -230,14 +232,14 @@ features closer to normality. Uses the Box-Cox or the Yeo-Johnson transformation
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>method</strong> (<em>-</em>) – method used for the power transformation.
+<li><p><strong>method</strong> (<em>Literal str</em><em>, </em><em>optional</em>) – method used for the power transformation.
 Can be “boxcox” for Box-Cox, “yeojohnson” for Yeo-Johnson, or “auto”
 for best objective solution. Box-Cox can only be used for strictly
 positive features. Defaults to “auto”.</p></li>
-<li><p><strong>standardize</strong> (<em>-</em>) – whether to standardize the features before and after
+<li><p><strong>standardize</strong> (<em>boolean</em><em>, </em><em>optional</em>) – whether to standardize the features before and after
 the power transformation. Defaults to True.</p></li>
-<li><p><strong>quantile</strong> (<em>-</em>) – quantile used to calculate the weights. Defaults to 0.99.</p></li>
-<li><p><strong>nsteps</strong> (<em>-</em>) – number of steps used in the reweighted maximum likelihood.
+<li><p><strong>quantile</strong> (<em>float</em><em>, </em><em>optional</em>) – quantile used to calculate the weights. Defaults to 0.99.</p></li>
+<li><p><strong>nsteps</strong> (<em>int</em><em>, </em><em>optional</em>) – number of steps used in the reweighted maximum likelihood.
 Defaults to 2.</p></li>
 </ul>
 </dd>
@@ -256,10 +258,8 @@ Defaults to 2.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="robpy.preprocessing.transfo.RobustPowerTransformer.inverse_transform">
 <span class="sig-name descname"><span class="pre">inverse_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/robpy/preprocessing/transfo.html#RobustPowerTransformer.inverse_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.preprocessing.transfo.RobustPowerTransformer.inverse_transform" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Transforms the data back using inverse Yeo-Johnson/Box-cox, the previously fitted lambda</dt><dd><p>estimate and the corresponding method are used.</p>
-</dd>
-</dl>
+<dd><p>Transforms the data back using inverse Yeo-Johnson/Box-cox, the previously fitted lambda
+estimate and the corresponding method are used.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<em>np.array</em>) – data.</p>

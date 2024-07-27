@@ -5,12 +5,13 @@ def l1median(X: np.ndarray) -> float:
     """
     Implementation of the L1-median
 
-    [Fritz, H. and Filzmoser, P. and Croux, C. (2012)
-        A comparison of algorithms for the multivariate L1-median.
-        Computational Statistics 27, 393–410]
-
     Args:
         X (np.ndarray): Data to compute the L1-median on.
+
+    References:
+        Fritz, H. and Filzmoser, P. and Croux, C. (2012)
+        A comparison of algorithms for the multivariate L1-median.
+        Computational Statistics 27, 393–410
     """
     epsilon = 1e-7
     mu_0 = np.mean(X, axis=0)
@@ -27,9 +28,9 @@ def l1median(X: np.ndarray) -> float:
 
 def weighted_median(X: np.ndarray, weights: np.ndarray) -> float:
     """
-    Computes a weighted median.
-    Based on [Time-efficient algorithms for two highly robust estimators of scale,
-    Christophe Croux and Peter J. Rousseeuw (1992)]"""
+    Computes a weighted median. Based on [Time-efficient algorithms for two highly robust estimators
+    of scale, Christophe Croux and Peter J. Rousseeuw (1992)]
+    """
     n = len(X)
     wrest = 0
     wtotal = np.sum(weights)

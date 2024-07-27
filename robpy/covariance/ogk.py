@@ -22,22 +22,25 @@ class OGKEstimator(RobustCovarianceEstimator):
         dispersion proposed in Maronna, R. A., & Zamar, R. H. (2002)
 
         Args:
-            - store_precision: whether to store the precision matrix
-            - assume_centered: whether the data is already centered
-            - location_estimator: function to estimate the location of the data, should accept
-                an array like input as first value and a named argument axis
-            - scale_estimator: function to estimate the scale of the data, should accept
-                an array like input as first value and a named argument axis
-            - n_iterations: number of iteration for orthogonalization step
-            - reweighting: whether to apply reweighting at the end
+            store_precision (boolean, optional): whether to store the precision matrix
+            assume_centered (boolean, optional): whether the data is already centered
+            location_estimator (LocationOrScaleEstimator, optional): function to estimate the
+                location of the data, should accept an array like input as first value and a named
+                argument axis
+            scale_estimator (LocationOrScaleEstimator, optional): function to estimate the scale
+                of the data, should accept an array like input as first value and a named argument
+                axis
+            n_iterations (int, optional): number of iteration for orthogonalization step
+            reweighting (boolean, optional): whether to apply reweighting at the end
                 (i.e. calculating regular location and covariance after filtering outliers based on
                 Mahalanobis distance using OGK estimates)
-            - reweighting_beta: quantile of chi2 distribution to use as cutoff for reweighting
+            reweighting_beta (float, optional): quantile of chi2 distribution to use as cutoff for
+                reweighting
 
         References:
-            - Maronna, R. A., & Zamar, R. H. (2002).
-              Robust Estimates of Location and Dispersion for High-Dimensional Datasets.
-              Technometrics, 44(4), 307–317. http://www.jstor.org/stable/1271538
+            Maronna, R. A., & Zamar, R. H. (2002).
+            Robust Estimates of Location and Dispersion for High-Dimensional Datasets.
+            Technometrics, 44(4), 307–317. http://www.jstor.org/stable/1271538
 
         """
         super().__init__(store_precision=store_precision, assume_centered=assume_centered)

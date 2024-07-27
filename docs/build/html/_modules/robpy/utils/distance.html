@@ -89,10 +89,12 @@
 <span class="sd">    Calculate the Mahalanobis distance for multiple data vectors.</span>
 
 <span class="sd">    Parameters:</span>
-<span class="sd">    - data: An array-like object where each row is a data vector.</span>
+<span class="sd">        data (np.ndarray or pd.DataFrame): An array-like object where each row is a data vector.</span>
+<span class="sd">        location (np.ndarray): the center of the data</span>
+<span class="sd">        covariance (np.ndarray): the scatter estimator of the data</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">    - distances: An array of Mahalanobis distances for each data vector.</span>
+<span class="sd">        distances: An array of Mahalanobis distances for each data vector.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">values</span>

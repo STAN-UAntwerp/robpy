@@ -65,6 +65,7 @@
 <li class="toctree-l2"><a class="reference internal" href="robpy.preprocessing.html">robpy.preprocessing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="robpy.regression.html">robpy.regression</a></li>
 <li class="toctree-l2"><a class="reference internal" href="robpy.univariate.html">robpy.univariate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.utils.html">robpy.utils</a></li>
 </ul>
 </li>
 </ul>
@@ -107,23 +108,21 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>chi2_quantile</strong> (<em>-</em>) – Quantile of the chi-squared distribution to use as threshold
-for univariate outlier detection in step 2.
+<li><p><strong>chi2_quantile</strong> (<em>float</em><em>, </em><em>optional</em>) – Quantile of the chi-squared distribution to use as
+threshold for univariate outlier detection in step 2.
 Default is 0.99.</p></li>
-<li><p><strong>min_correlation</strong> (<em>-</em>) – Minimum correlation between variables to consider them</p></li>
-<li><p><strong>scale_estimator</strong> (<em>-</em>) – robust scale estimator to scale the
-initial data with.
-Defaults to CellwiseOneStepMEstimator().</p></li>
+<li><p><strong>min_correlation</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum correlation between variables to consider
+them</p></li>
+<li><p><strong>scale_estimator</strong> (<a class="reference internal" href="robpy.univariate.html#robpy.univariate.base.RobustScaleEstimator" title="robpy.univariate.base.RobustScaleEstimator"><em>RobustScaleEstimator</em></a><em>, </em><em>optional</em>) – robust scale estimator to scale the
+initial data with. Defaults to CellwiseOneStepMEstimator().</p></li>
 </ul>
 </dd>
 </dl>
 <p class="rubric">References</p>
-<ul class="simple">
-<li><p>Rousseeuw, P. J., &amp; Bossche, W. V. D. (2018). Detecting Deviating Data Cells.
-Technometrics, 60(2), 135–145. <a class="reference external" href="https://doi.org/10.1080/00401706.2017.1340909">https://doi.org/10.1080/00401706.2017.1340909</a></p></li>
-<li><p>R Implementation:
-<a class="reference external" href="https://www.rdocumentation.org/packages/cellWise/versions/2.5.3/topics/DDC">https://www.rdocumentation.org/packages/cellWise/versions/2.5.3/topics/DDC</a></p></li>
-</ul>
+<p>Rousseeuw, P. J., &amp; Bossche, W. V. D. (2018). Detecting Deviating Data Cells.
+Technometrics, 60(2), 135–145. <a class="reference external" href="https://doi.org/10.1080/00401706.2017.1340909">https://doi.org/10.1080/00401706.2017.1340909</a></p>
+<p>R Implementation:
+<a class="reference external" href="https://www.rdocumentation.org/packages/cellWise/versions/2.5.3/topics/DDC">https://www.rdocumentation.org/packages/cellWise/versions/2.5.3/topics/DDC</a></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="robpy.outliers.ddc.DDCEstimator.cellmap">
 <span class="sig-name descname"><span class="pre">cellmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">only_color_outliers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.1f'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(7,</span> <span class="pre">10)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">row_zoom</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Index</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">col_zoom</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Index</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax_clip</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Spectral'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Axes</span></span></span><a class="reference internal" href="../_modules/robpy/outliers/ddc.html#DDCEstimator.cellmap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.outliers.ddc.DDCEstimator.cellmap" title="Link to this definition"></a></dt>

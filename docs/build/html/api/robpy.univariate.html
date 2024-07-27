@@ -21,6 +21,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="robpy.utils" href="robpy.utils.html" />
     <link rel="prev" title="robpy.regression" href="robpy.regression.html" /> 
 </head>
 
@@ -84,6 +85,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.utils.html">robpy.utils</a></li>
 </ul>
 </li>
 </ul>
@@ -162,22 +164,22 @@ Defaults to False.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>h_size</strong> (<em>-</em>) – size of the h subset.
+<li><p><strong>h_size</strong> (<em>float</em><em> or </em><em>int</em><em>, </em><em>optional</em>) – size of the h subset.
 If an integer between n/2 and n is passed, it is interpreted as an absolute value.
 If a float  between 0.5 and 1 is passed, it is interpreted as a proportation
 of n (the training set size).
 If None, it is set to floor(n/2) + 1.
 Defaults to None.</p></li>
-<li><p><strong>consistency_correction</strong> (<em>-</em>) – whether the estimates should be consistent at the normal model.
+<li><p><strong>consistency_correction</strong> (<em>boolean</em><em>, </em><em>optional</em>) – whether the estimates should be consistent at the normal model.
 Defaults to True.</p></li>
 </ul>
 </dd>
 </dl>
 <p class="rubric">References</p>
-<ul class="simple">
-<li><p>Hubert, M., &amp; Debruyne, M. (2010). Minimum covariance determinant.
-Wiley interdisciplinary reviews: Computational statistics, 2(1), 36-43.</p></li>
-</ul>
+<dl class="simple">
+<dt>Hubert, M., &amp; Debruyne, M. (2010). Minimum covariance determinant.</dt><dd><p>Wiley interdisciplinary reviews: Computational statistics, 2(1), 36-43.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -208,7 +210,7 @@ Technometrics, 60(2), 135-145.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="robpy.univariate.onestep_m.OneStepMEstimator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">robpy.univariate.onestep_m.</span></span><span class="sig-name descname"><span class="pre">OneStepMEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loc_rho</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseRho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_rho</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseRho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_abs_scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-12</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/univariate/onestep_m.html#OneStepMEstimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.univariate.onestep_m.OneStepMEstimator" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">robpy.univariate.onestep_m.</span></span><span class="sig-name descname"><span class="pre">OneStepMEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loc_rho</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="robpy.utils.html#robpy.utils.rho.BaseRho" title="robpy.utils.rho.BaseRho"><span class="pre">BaseRho</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_rho</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="robpy.utils.html#robpy.utils.rho.BaseRho" title="robpy.utils.rho.BaseRho"><span class="pre">BaseRho</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_abs_scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-12</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/univariate/onestep_m.html#OneStepMEstimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.univariate.onestep_m.OneStepMEstimator" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#robpy.univariate.base.RobustScaleEstimator" title="robpy.univariate.base.RobustScaleEstimator"><code class="xref py py-class docutils literal notranslate"><span class="pre">RobustScaleEstimator</span></code></a></p>
 <p>Implementation of the single-step M-estimator for location and scale</p>
 <dl class="field-list simple">
@@ -254,8 +256,8 @@ Donald B. Johnson and Tetsuo Mizoguchi (1978)]</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>location_func</strong> – as the location estimator does not estimate location,
-a location function should be explicitly passed.</p></li>
+<li><p><strong>location_func</strong> (<a class="reference internal" href="#robpy.univariate.base.LocationOrScaleEstimator" title="robpy.univariate.base.LocationOrScaleEstimator"><em>LocationOrScaleEstimator</em></a><em>, </em><em>optional</em>) – as the Qn estimator does not
+estimate location, a location function should be explicitly passed.</p></li>
 <li><p><strong>consistency_correction</strong> (<em>bool</em><em>, </em><em>optional</em>) – boolean indicating if consistency for normality should be applied.
 Defaults to True.</p></li>
 <li><p><strong>finite_correction</strong> (<em>bool</em><em>, </em><em>optional</em>) – boolean indicating if finite sample correction should be applied.
@@ -278,10 +280,8 @@ Ricarco A Maronna and Ruben H Zamar (2002)]</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>c1</strong> – float
-constant for the weight function, defaults to 4.5</p></li>
-<li><p><strong>c2</strong> – float
-constant for the rho function, defaults to 3.0</p></li>
+<li><p><strong>c1</strong> (<em>float</em><em>, </em><em>optional</em>) – constant for the weight function, defaults to 4.5</p></li>
+<li><p><strong>c2</strong> (<em>float</em><em>, </em><em>optional</em>) – constant for the rho function, defaults to 3.0</p></li>
 <li><p><strong>consistency_correction</strong> (<em>bool</em><em>, </em><em>optional</em>) – boolean indicating if consistency for normality should be applied.
 Defaults to True.</p></li>
 </ul>
@@ -297,6 +297,7 @@ Defaults to True.</p></li>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="robpy.regression.html" class="btn btn-neutral float-left" title="robpy.regression" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="robpy.utils.html" class="btn btn-neutral float-right" title="robpy.utils" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

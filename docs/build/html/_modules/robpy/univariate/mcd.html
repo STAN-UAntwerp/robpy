@@ -90,17 +90,18 @@
 <span class="sd">        Implementation of univariate MCD (Hubert &amp; Debruyne, 2009)</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            - h_size: size of the h subset.</span>
+<span class="sd">            h_size (float or int, optional): size of the h subset.</span>
 <span class="sd">              If an integer between n/2 and n is passed, it is interpreted as an absolute value.</span>
 <span class="sd">              If a float  between 0.5 and 1 is passed, it is interpreted as a proportation</span>
 <span class="sd">              of n (the training set size).</span>
 <span class="sd">              If None, it is set to floor(n/2) + 1.</span>
 <span class="sd">              Defaults to None.</span>
-<span class="sd">            - consistency_correction:</span>
+<span class="sd">            consistency_correction (boolean, optional):</span>
 <span class="sd">              whether the estimates should be consistent at the normal model.</span>
 <span class="sd">              Defaults to True.</span>
+
 <span class="sd">        References:</span>
-<span class="sd">            - Hubert, M., &amp; Debruyne, M. (2010). Minimum covariance determinant.</span>
+<span class="sd">            Hubert, M., &amp; Debruyne, M. (2010). Minimum covariance determinant.</span>
 <span class="sd">              Wiley interdisciplinary reviews: Computational statistics, 2(1), 36-43.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>

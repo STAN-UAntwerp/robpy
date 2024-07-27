@@ -98,16 +98,17 @@
         <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span>
         <span class="n">min_eigenvalue</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculates the initial robust scatter and location estimates for the CellMCD. Described</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculates the initial robust scatter and location estimates for the CellMCD. Described</span>
 <span class="sd">        in the Supplementary Material to Raymaekers and Rousseeuw 2023.</span>
 
 <span class="sd">        code based on cellWise:::DDCWcov in R</span>
 
 <span class="sd">        Parameters:</span>
-<span class="sd">            - alpha (float, optional):</span>
+<span class="sd">            alpha (float, optional):</span>
 <span class="sd">                Percentage indicating how much cells must remain unflagged in each column.</span>
 <span class="sd">                Defaults to 0.75.</span>
-<span class="sd">            - min_eigenvalue: (float, optional):</span>
+<span class="sd">            min_eigenvalue (float, optional):</span>
 <span class="sd">                Lower bound on the minimum eigenvalue of the covariance estimator</span>
 <span class="sd">                on the standardized data. Should be at least 1e-6.</span>
 <span class="sd">                Defaults to 1e-4.</span>

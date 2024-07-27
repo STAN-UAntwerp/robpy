@@ -18,22 +18,24 @@ class InitialDDCWEstimator(RobustCovarianceEstimator):
         alpha: float = 0.75,
         min_eigenvalue: float = 1e-4,
     ):
-        """Calculates the initial robust scatter and location estimates for the CellMCD. Described
-        in the Supplementary Material to
-
-        [Raymaekers and Rousseeuw, The Cellwise Minimum Covariance Determinant Estimator, 2023,
-        Journal of the American Statistical Association.]
+        """
+        Calculates the initial robust scatter and location estimates for the CellMCD. Described
+        in the Supplementary Material to Raymaekers and Rousseeuw 2023.
 
         code based on cellWise:::DDCWcov in R
 
         Parameters:
-        - alpha (float, optional):
-            Percentage indicating how much cells must remain unflagged in each column.
-            Defaults to 0.75.
-        - min_eigenvalue: (float, optional):
-            Lower bound on the minimum eigenvalue of the covariance estimator
-            on the standardized data. Should be at least 1e-6.
-            Defaults to 1e-4.
+            alpha (float, optional):
+                Percentage indicating how much cells must remain unflagged in each column.
+                Defaults to 0.75.
+            min_eigenvalue (float, optional):
+                Lower bound on the minimum eigenvalue of the covariance estimator
+                on the standardized data. Should be at least 1e-6.
+                Defaults to 1e-4.
+
+        References:
+            - Raymaekers and Rousseeuw, The Cellwise Minimum Covariance Determinant Estimator, 2023,
+        Journal of the American Statistical Association.
         """
         super().__init__(store_precision=True, assume_centered=False, nans_allowed=True)
         self.alpha = alpha

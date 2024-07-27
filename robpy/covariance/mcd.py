@@ -39,35 +39,37 @@ class FastMCDEstimator(RobustCovarianceEstimator):
         store_precision=True,
         assume_centered=False,
     ):
-        """Fast MCD estimator based on the algorithm proposed in
-            Rousseeuw and Van Driessen, A Fast Algorithm for the Minimum Covariance Determinant
-            Estimator, 1999, American Statistical Association and the American Society for Quality,
-            TECHNOMETRICS
+        """
+        Fast MCD estimator based on the algorithm proposed in Rousseeuw and Van Driessen (1999)
 
         Args:
             h_size (int | None, optional):
-                size of the h subset.
-                If an integer between n/2 and n is passed, it is interpreted as an absolute value.
-                If a float between 0.5 and 1 is passed, it is interpreted as a proportation
-                    of n (the training set size).
-                If None, it is set to (n+p+1) / 2.
-                Defaults to None.
+              size of the h subset.
+              If an integer between n/2 and n is passed, it is interpreted as an absolute value.
+              If a float between 0.5 and 1 is passed, it is interpreted as a proportation
+              of n (the training set size).
+              If None, it is set to (n+p+1) / 2.
+              Defaults to None.
             n_initial_subsets (int, optional):
-                number of initial random subsets of size p+1
+              number of initial random subsets of size p+1
             n_initial_c_steps (int, optional):
-                number of initial c steps to perform on all initial subsets
+              number of initial c steps to perform on all initial subsets
             n_best_subsets (int, optional):
-                number of best subsets to keep and perform c steps on until convergence
+              number of best subsets to keep and perform c steps on until convergence
             n_partitions (int, optional):
-                Number of partitions to split the data into.
-                This can speed up the algorithm for large datasets (n > 600 suggested in paper)
-                If None, 5 partitions are used if n > 600, otherwise 1 partition is used.
+              Number of partitions to split the data into.
+              This can speed up the algorithm for large datasets (n > 600 suggested in paper)
+              If None, 5 partitions are used if n > 600, otherwise 1 partition is used.
             tolerance (float, optional):
-                Minimum difference in determinant between two iterations to stop the C-step
+              Minimum difference in determinant between two iterations to stop the C-step
             correct_covariance (bool, optional):
-                Whether to apply a consistency correction to the raw covariance estimate
+              Whether to apply a consistency correction to the raw covariance estimate
             reweighting (bool, optional):
-                Whether to apply reweighting to the raw covariance estimate
+              Whether to apply reweighting to the raw covariance estimate
+        References:
+            Rousseeuw and Van Driessen, A Fast Algorithm for the Minimum Covariance Determinant
+            Estimator, 1999, American Statistical Association and
+            the American Society for Quality, TECHNOMETRICS
 
         """
         super().__init__(store_precision=store_precision, assume_centered=assume_centered)
@@ -160,7 +162,8 @@ class FastMCDEstimator(RobustCovarianceEstimator):
         return subset
 
     def _perform_c_step(self, subset: HSubset, X: np.ndarray) -> HSubset:
-        """Perform a single C-step on the subset of the data
+        """
+        Perform a single C-step on the subset of the data
 
         Args:
             subset_idx: indices of the current subset
@@ -205,14 +208,16 @@ class FastMCDEstimator(RobustCovarianceEstimator):
         n_c_steps: int = 0,
         ensure_non_singular: bool = False,
     ) -> HSubset:
-        """Construct an HSubset from a set of data indices and calculate location, scale and
-         determinant.
+        """
+        Construct an HSubset from a set of data indices and calculate location, scale and
+        determinant.
+
         Args:
              - indices: data indices
              - X: complete dataset
              - n_c_steps: will be passed directly to the HSubset
              - ensure_non_singular: whether to resample in case the determinant is 0 (relevant for
-             sampling initial subsets)
+               sampling initial subsets)
         """
         mu = X[indices].mean(axis=0)
         cov = np.cov(X[indices], rowvar=False)
@@ -247,24 +252,28 @@ class DetMCDEstimator(RobustCovarianceEstimator):
         reweighting: bool = True,
         verbosity: int = logging.WARNING,
     ):
-        """Deterministic MCD estimator (DetMCD) based on the algorithm proposed in
-            Hubert, Rousseeuw and Verdonck, A deterministic algorithm for robust location
-            and scatter, 2012, Journal of Computational and Graphical Statistics
+        """
+        Deterministic MCD estimator (DetMCD) based on the algorithm proposed in
+        Hubert, Rousseeuw and Verdonck (2012)
 
         Args:
             h_size (int | None, optional):
-                size of the h subset.
-                If an integer between n/2 and n is passed, it is interpreted as an absolute value.
-                If a float between 0.5 and 1 is passed, it is interpreted as a proportation
-                    of n (the training set size).
-                If None, it is set to (n+p+1) / 2.
-                Defaults to None.
+              size of the h subset.
+              If an integer between n/2 and n is passed, it is interpreted as an absolute value.
+              If a float between 0.5 and 1 is passed, it is interpreted as a proportation
+              of n (the training set size).
+              If None, it is set to (n+p+1) / 2.
+              Defaults to None.
             tolerance (float, optional):
-                Minimum difference in determinant between two iterations to stop the C-step
+              Minimum difference in determinant between two iterations to stop the C-step
             correct_covariance (bool, optional):
-                Whether to apply a consistency correction to the raw covariance estimate
+              Whether to apply a consistency correction to the raw covariance estimate
             reweighting (bool, optional):
-                Whether to apply reweighting to the raw covariance estimate
+              Whether to apply reweighting to the raw covariance estimate
+
+        References:
+            Hubert, Rousseeuw and Verdonck, A deterministic algorithm for robust location
+            and scatter, 2012, Journal of Computational and Graphical Statistics
 
         """
         super().__init__()

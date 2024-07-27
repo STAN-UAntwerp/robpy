@@ -18,9 +18,9 @@ class TauEstimator(RobustScaleEstimator):
         Ricarco A Maronna and Ruben H Zamar (2002)]
 
         Args:
-            c1: float
+            c1 (float, optional):
                 constant for the weight function, defaults to 4.5
-            c2: float
+            c2 (float, optional):
                 constant for the rho function, defaults to 3.0
             consistency_correction (bool, optional):
                 boolean indicating if consistency for normality should be applied.

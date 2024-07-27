@@ -3,7 +3,7 @@ name = "robpy"
 version = "0.1.0"
 description = ""
 authors = ["Thomas Servotte <servottethomas@gmail.com>", "Sarah Leyder <sarah.leyder@uantwerpen.be>"]
-readme = "README.md"
+readme = "README.rst"
 
 [tool.black]
 line-length = 100
@@ -23,6 +23,7 @@ exclude = [
     ".git",
     "__pycache__",
     ".venv",
+    "conf.py"
 ]
 per-file-ignores = [
     '__init__.py:F401',
@@ -48,6 +49,8 @@ flake8-pyproject = "^1.2.3"
 nbdime = "^4.0.1"
 ipympl = "^0.9.3"
 ipykernel = "^6.29.4"
+sphinx = "^7.4.7"
+sphinx-rtd-theme = "^2.0.0"
 
 
 

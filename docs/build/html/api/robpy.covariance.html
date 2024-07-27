@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>robpy.covariance &mdash; Robpy 0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=8dde47fa"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "displayMath": [["$$", "$$"], ["\\[", "\\]"]], "processEscapes": true}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="robpy.datasets" href="robpy.datasets.html" />
+    <link rel="prev" title="Robpy" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Robpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Robpy</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">robpy.covariance</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-robpy.covariance.base">Base</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#robpy.covariance.base.RobustCovarianceEstimator"><code class="docutils literal notranslate"><span class="pre">RobustCovarianceEstimator</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-robpy.covariance.cellmcd">Cell MCD</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#robpy.covariance.cellmcd.CellMCDEstimator"><code class="docutils literal notranslate"><span class="pre">CellMCDEstimator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#robpy.covariance.initial_ddcw.InitialDDCWEstimator"><code class="docutils literal notranslate"><span class="pre">InitialDDCWEstimator</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-robpy.covariance.kendall">Kendall’s Tau</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#robpy.covariance.kendall.KendallTauEstimator"><code class="docutils literal notranslate"><span class="pre">KendallTauEstimator</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-robpy.covariance.mcd">Minumum Covariance Determinant</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#robpy.covariance.mcd.DetMCDEstimator"><code class="docutils literal notranslate"><span class="pre">DetMCDEstimator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#robpy.covariance.mcd.FastMCDEstimator"><code class="docutils literal notranslate"><span class="pre">FastMCDEstimator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#robpy.covariance.mcd.HSubset"><code class="docutils literal notranslate"><span class="pre">HSubset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-robpy.covariance.ogk">Orthogonalized Gnanadesikan-Kettenring</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#robpy.covariance.ogk.OGKEstimator"><code class="docutils literal notranslate"><span class="pre">OGKEstimator</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-robpy.covariance.wrapping">Wrapping Covariance</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#robpy.covariance.wrapping.WrappingCovarianceEstimator"><code class="docutils literal notranslate"><span class="pre">WrappingCovarianceEstimator</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.datasets.html">robpy.datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.outliers.html">robpy.outliers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.pca.html">robpy.pca</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.preprocessing.html">robpy.preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.regression.html">robpy.regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.univariate.html">robpy.univariate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.utils.html">robpy.utils</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Robpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Robpy</a></li>
+      <li class="breadcrumb-item active">robpy.covariance</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/robpy.covariance.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-robpy.covariance">
+<span id="robpy-covariance"></span><h1>robpy.covariance<a class="headerlink" href="#module-robpy.covariance" title="Link to this heading"></a></h1>
+<section id="module-robpy.covariance.base">
+<span id="base"></span><h2>Base<a class="headerlink" href="#module-robpy.covariance.base" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="robpy.covariance.base.RobustCovarianceEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">robpy.covariance.base.</span></span><span class="sig-name descname"><span class="pre">RobustCovarianceEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store_precision</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assume_centered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nans_allowed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/covariance/base.html#RobustCovarianceEstimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.base.RobustCovarianceEstimator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">EmpiricalCovariance</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.covariance.base.RobustCovarianceEstimator.calculate_covariance">
+<span class="sig-name descname"><span class="pre">calculate_covariance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/robpy/covariance/base.html#RobustCovarianceEstimator.calculate_covariance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.base.RobustCovarianceEstimator.calculate_covariance" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="robpy.covariance.base.RobustCovarianceEstimator.correlation">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">correlation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#robpy.covariance.base.RobustCovarianceEstimator.correlation" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="robpy.covariance.base.RobustCovarianceEstimator.covariance">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">covariance</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#robpy.covariance.base.RobustCovarianceEstimator.covariance" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.covariance.base.RobustCovarianceEstimator.distance_distance_plot">
+<span class="sig-name descname"><span class="pre">distance_distance_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chi2_percentile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.975</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(10,</span> <span class="pre">4)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/covariance/base.html#RobustCovarianceEstimator.distance_distance_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.base.RobustCovarianceEstimator.distance_distance_plot" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.covariance.base.RobustCovarianceEstimator.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#robpy.covariance.base.RobustCovarianceEstimator" title="robpy.covariance.base.RobustCovarianceEstimator"><span class="pre">RobustCovarianceEstimator</span></a></span></span><a class="reference internal" href="../_modules/robpy/covariance/base.html#RobustCovarianceEstimator.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.base.RobustCovarianceEstimator.fit" title="Link to this definition"></a></dt>
+<dd><p>Fit the covariance estimator.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-robpy.covariance.cellmcd">
+<span id="cell-mcd"></span><h2>Cell MCD<a class="headerlink" href="#module-robpy.covariance.cellmcd" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="robpy.covariance.cellmcd.CellMCDEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">robpy.covariance.cellmcd.</span></span><span class="sig-name descname"><span class="pre">CellMCDEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.75</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.99</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_c_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_eigenvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/covariance/cellmcd.html#CellMCDEstimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.cellmcd.CellMCDEstimator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#robpy.covariance.base.RobustCovarianceEstimator" title="robpy.covariance.base.RobustCovarianceEstimator"><code class="xref py py-class docutils literal notranslate"><span class="pre">RobustCovarianceEstimator</span></code></a></p>
+<p>Cell MCD estimator based on the algorithm proposed in Raymaekers and Rousseeuw (2023).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<em>float</em><em>, </em><em>optional</em>) – Percentage indicating how much cells must remain unflagged in each column.
+Defaults to 0.75.</p></li>
+<li><p><strong>quantile</strong> (<em>float</em><em>, </em><em>optional</em>) – Cutoff value to flag cells.
+Defaults to 0.99.</p></li>
+<li><p><strong>crit</strong> (<em>float</em><em>, </em><em>optional</em>) – Stop iterating when successive covariance matrices of the standardized data
+differ by less than crit.
+Defaults to 1e-4</p></li>
+<li><p><strong>max_c_steps</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of C-steps used in the algorithm.
+Defaults to 100.</p></li>
+<li><p><strong>min_eigenvalue</strong> – (float, optional):
+Lower bound on the minimum eigenvalue of the covariance estimator
+on the standardized data. Should be at least 1e-6.
+Defaults to 1e-4.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<ul class="simple">
+<li><p>Raymaekers and Rousseeuw, The Cellwise Minimum Covariance Determinant Estimator, 2023,
+Journal of the American Statistical Association.</p></li>
+</ul>
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.covariance.cellmcd.CellMCDEstimator.calculate_covariance">
+<span class="sig-name descname"><span class="pre">calculate_covariance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/robpy/covariance/cellmcd.html#CellMCDEstimator.calculate_covariance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.cellmcd.CellMCDEstimator.calculate_covariance" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.covariance.cellmcd.CellMCDEstimator.cell_MCD_plot">
+<span class="sig-name descname"><span class="pre">cell_MCD_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'variable'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">row_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_variable_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'second</span> <span class="pre">variable'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plottype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'indexplot'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'residuals_vs_variable'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'residuals_vs_predictions'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'variable_vs_predictions'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'bivariate'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'indexplot'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(8,</span> <span class="pre">8)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/covariance/cellmcd.html#CellMCDEstimator.cell_MCD_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.cellmcd.CellMCDEstimator.cell_MCD_plot" title="Link to this definition"></a></dt>
+<dd><p>Function to plot the results of a cellMCD analysis: 5 types of diagnostic plots.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plottype</strong> (<em>Literal string</em><em>, </em><em>optional</em>) – <p>“indexplot”: plots the residuals of a variable,
+“residuals_vs_variable”: plots a variable versus its residuals,
+“residuals_vs_predictions”: plots the predictions of a variable versus its
+residuals,
+“variable_vs_predictions”: plots a variable against its predictions,
+“bivariate”: plots two variables against each other,</p>
+<p>Defaults to “indexplot”.</p>
+</p></li>
+<li><p><strong>variable</strong> (<em>int</em>) – Index of the variable under consideration.</p></li>
+<li><p><strong>variable_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the variable of interest for the axis label.
+Defaults to “variable”.</p></li>
+<li><p><strong>second_variable</strong> (<em>int</em>) – Index of the second variable under consideration,
+only needed for plottype “bivariate”.</p></li>
+<li><p><strong>second_variable_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the second variable for the axis label,
+only relevant for plottype “bivariate”. Defaults to “second variable”.</p></li>
+<li><p><strong>row_names</strong> (<em>list</em><em> of </em><em>strings</em><em>, </em><em>optional</em>) – Row_names of the observations if you want
+the outliers annoted with their name.</p></li>
+<li><p><strong>figsize</strong> (<em>tuple</em><em>[</em><em>int</em><em>,</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – Size of the figure. Defaults to (8,8).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="module-robpy.covariance.initial_ddcw">
+<dt class="sig sig-object py" id="robpy.covariance.initial_ddcw.InitialDDCWEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">robpy.covariance.initial_ddcw.</span></span><span class="sig-name descname"><span class="pre">InitialDDCWEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.75</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_eigenvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/covariance/initial_ddcw.html#InitialDDCWEstimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.initial_ddcw.InitialDDCWEstimator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#robpy.covariance.base.RobustCovarianceEstimator" title="robpy.covariance.base.RobustCovarianceEstimator"><code class="xref py py-class docutils literal notranslate"><span class="pre">RobustCovarianceEstimator</span></code></a></p>
+<p>Calculates the initial robust scatter and location estimates for the CellMCD. Described
+in the Supplementary Material to Raymaekers and Rousseeuw 2023.</p>
+<p>code based on cellWise:::DDCWcov in R</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<em>float</em><em>, </em><em>optional</em>) – Percentage indicating how much cells must remain unflagged in each column.
+Defaults to 0.75.</p></li>
+<li><p><strong>min_eigenvalue</strong> (<em>float</em><em>, </em><em>optional</em>) – Lower bound on the minimum eigenvalue of the covariance estimator
+on the standardized data. Should be at least 1e-6.
+Defaults to 1e-4.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<ul class="simple">
+<li><p>Raymaekers and Rousseeuw, The Cellwise Minimum Covariance Determinant Estimator, 2023,</p></li>
+</ul>
+<p>Journal of the American Statistical Association.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.covariance.initial_ddcw.InitialDDCWEstimator.calculate_covariance">
+<span class="sig-name descname"><span class="pre">calculate_covariance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/covariance/initial_ddcw.html#InitialDDCWEstimator.calculate_covariance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.initial_ddcw.InitialDDCWEstimator.calculate_covariance" title="Link to this definition"></a></dt>
+<dd><p>Calculates the initial cellwise robust estimates of location and scatter using an
+adaptation of DDC.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>np.ndarray</em>) – scaled data set</p>
+</dd>
+</dl>
+<p>[based on cellWise:::DDCWcov]</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-robpy.covariance.kendall">
+<span id="kendall-s-tau"></span><h2>Kendall’s Tau<a class="headerlink" href="#module-robpy.covariance.kendall" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="robpy.covariance.kendall.KendallTauEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">robpy.covariance.kendall.</span></span><span class="sig-name descname"><span class="pre">KendallTauEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store_precision</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assume_centered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nans_allowed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/covariance/kendall.html#KendallTauEstimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.kendall.KendallTauEstimator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#robpy.covariance.base.RobustCovarianceEstimator" title="robpy.covariance.base.RobustCovarianceEstimator"><code class="xref py py-class docutils literal notranslate"><span class="pre">RobustCovarianceEstimator</span></code></a></p>
+<p>Estimate the covariance matrix using Kendall’s tau correlation.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.covariance.kendall.KendallTauEstimator.calculate_covariance">
+<span class="sig-name descname"><span class="pre">calculate_covariance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/robpy/covariance/kendall.html#KendallTauEstimator.calculate_covariance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.kendall.KendallTauEstimator.calculate_covariance" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-robpy.covariance.mcd">
+<span id="minumum-covariance-determinant"></span><h2>Minumum Covariance Determinant<a class="headerlink" href="#module-robpy.covariance.mcd" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="robpy.covariance.mcd.DetMCDEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">robpy.covariance.mcd.</span></span><span class="sig-name descname"><span class="pre">DetMCDEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct_covariance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reweighting</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/covariance/mcd.html#DetMCDEstimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.mcd.DetMCDEstimator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#robpy.covariance.base.RobustCovarianceEstimator" title="robpy.covariance.base.RobustCovarianceEstimator"><code class="xref py py-class docutils literal notranslate"><span class="pre">RobustCovarianceEstimator</span></code></a></p>
+<p>Deterministic MCD estimator (DetMCD) based on the algorithm proposed in
+Hubert, Rousseeuw and Verdonck (2012)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>h_size</strong> (<em>int</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – size of the h subset.
+If an integer between n/2 and n is passed, it is interpreted as an absolute value.
+If a float between 0.5 and 1 is passed, it is interpreted as a proportation
+of n (the training set size).
+If None, it is set to (n+p+1) / 2.
+Defaults to None.</p></li>
+<li><p><strong>tolerance</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum difference in determinant between two iterations to stop the C-step</p></li>
+<li><p><strong>correct_covariance</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to apply a consistency correction to the raw covariance estimate</p></li>
+<li><p><strong>reweighting</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to apply reweighting to the raw covariance estimate</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Hubert, Rousseeuw and Verdonck, A deterministic algorithm for robust location
+and scatter, 2012, Journal of Computational and Graphical Statistics</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.covariance.mcd.DetMCDEstimator.calculate_covariance">
+<span class="sig-name descname"><span class="pre">calculate_covariance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/robpy/covariance/mcd.html#DetMCDEstimator.calculate_covariance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.mcd.DetMCDEstimator.calculate_covariance" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="robpy.covariance.mcd.FastMCDEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">robpy.covariance.mcd.</span></span><span class="sig-name descname"><span class="pre">FastMCDEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_initial_subsets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_initial_c_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_best_subsets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_partitions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct_covariance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reweighting</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store_precision</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assume_centered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/covariance/mcd.html#FastMCDEstimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.mcd.FastMCDEstimator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#robpy.covariance.base.RobustCovarianceEstimator" title="robpy.covariance.base.RobustCovarianceEstimator"><code class="xref py py-class docutils literal notranslate"><span class="pre">RobustCovarianceEstimator</span></code></a></p>
+<p>Fast MCD estimator based on the algorithm proposed in Rousseeuw and Van Driessen (1999)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>h_size</strong> (<em>int</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – size of the h subset.
+If an integer between n/2 and n is passed, it is interpreted as an absolute value.
+If a float between 0.5 and 1 is passed, it is interpreted as a proportation
+of n (the training set size).
+If None, it is set to (n+p+1) / 2.
+Defaults to None.</p></li>
+<li><p><strong>n_initial_subsets</strong> (<em>int</em><em>, </em><em>optional</em>) – number of initial random subsets of size p+1</p></li>
+<li><p><strong>n_initial_c_steps</strong> (<em>int</em><em>, </em><em>optional</em>) – number of initial c steps to perform on all initial subsets</p></li>
+<li><p><strong>n_best_subsets</strong> (<em>int</em><em>, </em><em>optional</em>) – number of best subsets to keep and perform c steps on until convergence</p></li>
+<li><p><strong>n_partitions</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of partitions to split the data into.
+This can speed up the algorithm for large datasets (n &gt; 600 suggested in paper)
+If None, 5 partitions are used if n &gt; 600, otherwise 1 partition is used.</p></li>
+<li><p><strong>tolerance</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum difference in determinant between two iterations to stop the C-step</p></li>
+<li><p><strong>correct_covariance</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to apply a consistency correction to the raw covariance estimate</p></li>
+<li><p><strong>reweighting</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to apply reweighting to the raw covariance estimate</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Rousseeuw and Van Driessen, A Fast Algorithm for the Minimum Covariance Determinant
+Estimator, 1999, American Statistical Association and
+the American Society for Quality, TECHNOMETRICS</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.covariance.mcd.FastMCDEstimator.calculate_covariance">
+<span class="sig-name descname"><span class="pre">calculate_covariance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/robpy/covariance/mcd.html#FastMCDEstimator.calculate_covariance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.mcd.FastMCDEstimator.calculate_covariance" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="robpy.covariance.mcd.HSubset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">robpy.covariance.mcd.</span></span><span class="sig-name descname"><span class="pre">HSubset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">determinant</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_c_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/covariance/mcd.html#HSubset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.mcd.HSubset" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="robpy.covariance.mcd.HSubset.determinant">
+<span class="sig-name descname"><span class="pre">determinant</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#robpy.covariance.mcd.HSubset.determinant" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="robpy.covariance.mcd.HSubset.indices">
+<span class="sig-name descname"><span class="pre">indices</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#robpy.covariance.mcd.HSubset.indices" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="robpy.covariance.mcd.HSubset.location">
+<span class="sig-name descname"><span class="pre">location</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#robpy.covariance.mcd.HSubset.location" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="robpy.covariance.mcd.HSubset.n_c_steps">
+<span class="sig-name descname"><span class="pre">n_c_steps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#robpy.covariance.mcd.HSubset.n_c_steps" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="robpy.covariance.mcd.HSubset.scale">
+<span class="sig-name descname"><span class="pre">scale</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#robpy.covariance.mcd.HSubset.scale" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-robpy.covariance.ogk">
+<span id="orthogonalized-gnanadesikan-kettenring"></span><h2>Orthogonalized Gnanadesikan-Kettenring<a class="headerlink" href="#module-robpy.covariance.ogk" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="robpy.covariance.ogk.OGKEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">robpy.covariance.ogk.</span></span><span class="sig-name descname"><span class="pre">OGKEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store_precision=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assume_centered=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location_estimator:</span> <span class="pre">~robpy.univariate.base.LocationOrScaleEstimator</span> <span class="pre">=</span> <span class="pre">&lt;function</span> <span class="pre">median&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_estimator:</span> <span class="pre">~robpy.univariate.base.LocationOrScaleEstimator</span> <span class="pre">=</span> <span class="pre">&lt;function</span> <span class="pre">median_abs_deviation&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iterations:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reweighting:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reweighting_beta:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">0.9</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/covariance/ogk.html#OGKEstimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.ogk.OGKEstimator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#robpy.covariance.base.RobustCovarianceEstimator" title="robpy.covariance.base.RobustCovarianceEstimator"><code class="xref py py-class docutils literal notranslate"><span class="pre">RobustCovarianceEstimator</span></code></a></p>
+<p>Implementation of the Orthogonalized Gnanadesikan-Kettenring estimator for location
+dispersion proposed in Maronna, R. A., &amp; Zamar, R. H. (2002)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>store_precision</strong> (<em>boolean</em><em>, </em><em>optional</em>) – whether to store the precision matrix</p></li>
+<li><p><strong>assume_centered</strong> (<em>boolean</em><em>, </em><em>optional</em>) – whether the data is already centered</p></li>
+<li><p><strong>location_estimator</strong> (<a class="reference internal" href="robpy.univariate.html#robpy.univariate.base.LocationOrScaleEstimator" title="robpy.univariate.base.LocationOrScaleEstimator"><em>LocationOrScaleEstimator</em></a><em>, </em><em>optional</em>) – function to estimate the
+location of the data, should accept an array like input as first value and a named
+argument axis</p></li>
+<li><p><strong>scale_estimator</strong> (<a class="reference internal" href="robpy.univariate.html#robpy.univariate.base.LocationOrScaleEstimator" title="robpy.univariate.base.LocationOrScaleEstimator"><em>LocationOrScaleEstimator</em></a><em>, </em><em>optional</em>) – function to estimate the scale
+of the data, should accept an array like input as first value and a named argument
+axis</p></li>
+<li><p><strong>n_iterations</strong> (<em>int</em><em>, </em><em>optional</em>) – number of iteration for orthogonalization step</p></li>
+<li><p><strong>reweighting</strong> (<em>boolean</em><em>, </em><em>optional</em>) – whether to apply reweighting at the end
+(i.e. calculating regular location and covariance after filtering outliers based on
+Mahalanobis distance using OGK estimates)</p></li>
+<li><p><strong>reweighting_beta</strong> (<em>float</em><em>, </em><em>optional</em>) – quantile of chi2 distribution to use as cutoff for
+reweighting</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Maronna, R. A., &amp; Zamar, R. H. (2002).
+Robust Estimates of Location and Dispersion for High-Dimensional Datasets.
+Technometrics, 44(4), 307–317. <a class="reference external" href="http://www.jstor.org/stable/1271538">http://www.jstor.org/stable/1271538</a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.covariance.ogk.OGKEstimator.calculate_covariance">
+<span class="sig-name descname"><span class="pre">calculate_covariance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/robpy/covariance/ogk.html#OGKEstimator.calculate_covariance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.ogk.OGKEstimator.calculate_covariance" title="Link to this definition"></a></dt>
+<dd><p>Calculate location and covariance with the algorithm described in Maronna &amp; Zamar (2002).
+Covariance is returned, location is overwritten.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-robpy.covariance.wrapping">
+<span id="wrapping-covariance"></span><h2>Wrapping Covariance<a class="headerlink" href="#module-robpy.covariance.wrapping" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="robpy.covariance.wrapping.WrappingCovarianceEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">robpy.covariance.wrapping.</span></span><span class="sig-name descname"><span class="pre">WrappingCovarianceEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.540793</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8622731</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rescale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store_precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assume_centered</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/covariance/wrapping.html#WrappingCovarianceEstimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.wrapping.WrappingCovarianceEstimator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#robpy.covariance.base.RobustCovarianceEstimator" title="robpy.covariance.base.RobustCovarianceEstimator"><code class="xref py py-class docutils literal notranslate"><span class="pre">RobustCovarianceEstimator</span></code></a></p>
+<p>Covariance estimator based on the wrapping function proposed in
+Jakob Raymaekers &amp; Peter J. Rousseeuw (2021)</p>
+<p>The wrapping transformation is defined as follows:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\Psi_{b, c}(z) =
+\begin{cases}
+  z &amp; if \  0 \leq |z| &lt; b \\
+  q_1 \tanh\left(q_2 (c - |z|)\right) \mathrm{sign}(z) &amp; if \  b \leq |z| \leq c \\
+  0  &amp; if \   c &lt; |z|
+\end{cases}\end{split}\]</div>
+<p>Data is first scaled using median and MAD before applying the transformation.</p>
+<p>The (standard) covariance is subsequently estimated on the rescaled data
+Cov(X) = Cov(Median(X) + MAD(X) * phi(X - Median(X) / MAD(X)))</p>
+<p class="rubric">References</p>
+<ul class="simple">
+<li><p>Jakob Raymaekers &amp; Peter J. Rousseeuw (2021)
+Fast Robust Correlation for High-Dimensional Data,
+Technometrics, 63:2, 184-198, DOI: 10.1080/00401706.2019.1677270</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> – data to be transformed, must have shape (N, D)</p></li>
+<li><p><strong>b</strong> – lower cutoff</p></li>
+<li><p><strong>c</strong> – upper cutoff</p></li>
+<li><p><strong>q1</strong> – transformation parameters (see formula)</p></li>
+<li><p><strong>q2</strong> – transformation parameters (see formula)</p></li>
+<li><p><strong>rescale</strong> – whether to rescale the wrapped data so the robust location and scale
+of the transformed data are the same as the original data</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.covariance.wrapping.WrappingCovarianceEstimator.calculate_covariance">
+<span class="sig-name descname"><span class="pre">calculate_covariance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/robpy/covariance/wrapping.html#WrappingCovarianceEstimator.calculate_covariance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.covariance.wrapping.WrappingCovarianceEstimator.calculate_covariance" title="Link to this definition"></a></dt>
+<dd><p>Calculate the covariance matrix of the data X after applying the wrapping transformation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> – data to calculate the covariance matrix of, must have shape (N, D)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>robust covariance matrix of X</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Robpy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="robpy.datasets.html" class="btn btn-neutral float-right" title="robpy.datasets" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, STAN-Uantwerp.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

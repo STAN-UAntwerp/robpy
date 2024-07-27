@@ -5,6 +5,8 @@ from robpy.univariate import QnEstimator
 
 
 class KendallTauEstimator(RobustCovarianceEstimator):
+    """Estimate the covariance matrix using Kendall's tau correlation."""
+
     def calculate_covariance(self, X) -> np.ndarray:
         p = X.shape[1]
         scales = [QnEstimator().fit(col).scale for col in X.T]

@@ -90,10 +90,12 @@ class CellwiseOneStepMEstimator(OneStepMEstimator):
     def __init__(self):
         """
         Implementation of the single step M estimator (robLoc and robScale) proposed in
-        Rousseeuw, P. J., & Bossche, W. V. D. (2018).
-            Detecting deviating data cells. Technometrics, 60(2), 135-145.
-            --> loc_rho = TukeyBiWeight(c=3) and scale_rho = Huber(b=2.5)
+        Rousseeuw, P. J., & Bossche, W. V. D. (2018). In this paper, the location rho function is
+        set to `TukeyBiWeight(c=3)` and the scale rho function to `Huber(b=2.5)`
 
+        References:
+            - Rousseeuw, P. J., & Bossche, W. V. D. (2018). Detecting deviating data cells.
+              Technometrics, 60(2), 135-145.
         """
         super().__init__(loc_rho=TukeyBisquare(c=3), scale_rho=Huber(b=2.5), delta=0.845)
 

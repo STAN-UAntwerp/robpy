@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>robpy.regression &mdash; Robpy 0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=8dde47fa"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="robpy.univariate" href="robpy.univariate.html" />
+    <link rel="prev" title="robpy.preprocessing" href="robpy.preprocessing.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Robpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Robpy</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="robpy.covariance.html">robpy.covariance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.datasets.html">robpy.datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.outliers.html">robpy.outliers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.pca.html">robpy.pca</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.preprocessing.html">robpy.preprocessing</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">robpy.regression</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-robpy.regression.base">Base</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#robpy.regression.base.RobustRegressor"><code class="docutils literal notranslate"><span class="pre">RobustRegressor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-robpy.regression.lts">Least Trimmed Squares</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#robpy.regression.lts.FastLTSRegressor"><code class="docutils literal notranslate"><span class="pre">FastLTSRegressor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#robpy.regression.lts.get_correction_factor"><code class="docutils literal notranslate"><span class="pre">get_correction_factor()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#robpy.regression.lts.get_correction_factor_reweighting"><code class="docutils literal notranslate"><span class="pre">get_correction_factor_reweighting()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-robpy.regression.s_estimator">S Estimator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#robpy.regression.s_estimator.SEstimator"><code class="docutils literal notranslate"><span class="pre">SEstimator</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-robpy.regression.mm_estimator">MM_estimator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#robpy.regression.mm_estimator.MMEstimator"><code class="docutils literal notranslate"><span class="pre">MMEstimator</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.univariate.html">robpy.univariate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.utils.html">robpy.utils</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Robpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Robpy</a></li>
+      <li class="breadcrumb-item active">robpy.regression</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/robpy.regression.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-robpy.regression">
+<span id="robpy-regression"></span><h1>robpy.regression<a class="headerlink" href="#module-robpy.regression" title="Link to this heading"></a></h1>
+<section id="module-robpy.regression.base">
+<span id="base"></span><h2>Base<a class="headerlink" href="#module-robpy.regression.base" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="robpy.regression.base.RobustRegressor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">robpy.regression.base.</span></span><span class="sig-name descname"><span class="pre">RobustRegressor</span></span><a class="reference internal" href="../_modules/robpy/regression/base.html#RobustRegressor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.regression.base.RobustRegressor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">RegressorMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEstimator</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.regression.base.RobustRegressor.diagnostic_plot">
+<span class="sig-name descname"><span class="pre">diagnostic_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">robust_scaling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">robust_distance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical_outlier_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leverage_threshold_percentile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.975</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(10,</span> <span class="pre">4)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/robpy/regression/base.html#RobustRegressor.diagnostic_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.regression.base.RobustRegressor.diagnostic_plot" title="Link to this definition"></a></dt>
+<dd><p>Create a diagnostic plot where robust residuals are plotted against the robust
+mahalabobis distances of the training data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>array like</em><em> of </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – training features</p></li>
+<li><p><strong>y</strong> (<em>array like</em><em> of </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>)</em>) – training targets</p></li>
+<li><p><strong>robust_scaling</strong> (<em>bool</em>) – whether to scale residuals using MAD instead of std</p></li>
+<li><p><strong>robust_distance</strong> (<em>bool</em>) – whether to use MCD as loc/scale estimator instead of mean/cov
+for calculating the Mahalanobis distances</p></li>
+<li><p><strong>vertical_outlier_threshold</strong> – where to draw the upper (and lower) limit for
+the standardized residuals to indicate outliers</p></li>
+<li><p><strong>leverage_threshold_percentile</strong> – which percentile from the chisquare distribution
+to use to set as threshold for leverage points</p></li>
+<li><p><strong>figsize</strong> (<em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>, </em><em>optional</em>) – Size of the plot. Defaults to (10, 4).</p></li>
+<li><p><strong>return_data</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to return the residuals, the standardized residuals and the distances.
+Defaults to False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.regression.base.RobustRegressor.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#robpy.regression.base.RobustRegressor" title="robpy.regression.base.RobustRegressor"><span class="pre">RobustRegressor</span></a></span></span><a class="reference internal" href="../_modules/robpy/regression/base.html#RobustRegressor.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.regression.base.RobustRegressor.fit" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.regression.base.RobustRegressor.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/regression/base.html#RobustRegressor.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.regression.base.RobustRegressor.predict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="robpy.regression.base.RobustRegressor.scale">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">scale</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#robpy.regression.base.RobustRegressor.scale" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-robpy.regression.lts">
+<span id="least-trimmed-squares"></span><h2>Least Trimmed Squares<a class="headerlink" href="#module-robpy.regression.lts" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="robpy.regression.lts.FastLTSRegressor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">robpy.regression.lts.</span></span><span class="sig-name descname"><span class="pre">FastLTSRegressor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_initial_subsets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_initial_c_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_best_models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reweighting</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/regression/lts.html#FastLTSRegressor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.regression.lts.FastLTSRegressor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#robpy.regression.base.RobustRegressor" title="robpy.regression.base.RobustRegressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">RobustRegressor</span></code></a></p>
+<p>Implementation of FAST-LTS model based on R implementation of the
+ltsReg method in the robustbase R package
+(cfr. <a class="reference external" href="https://www.rdocumentation.org/packages/robustbase/versions/0.93-8/topics/ltsReg">https://www.rdocumentation.org/packages/robustbase/versions/0.93-8/topics/ltsReg</a>)
+and the python implementation <cite>Reweighted-FastLTS</cite>
+(cfr. <a class="reference external" href="https://github.com/GiuseppeCannata/Reweighted-FastLTS/blob/master/Reweighted_FastLTS.py">https://github.com/GiuseppeCannata/Reweighted-FastLTS/blob/master/Reweighted_FastLTS.py</a>)</p>
+<p>Initialize a FAST LTS regressor</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<em>float</em>) – percentage of data to consider as subset for
+calculating the trimmed squared error.
+Must be between 0.5 and 1, with 1 being equal to normal LS regression.
+Defaults to 0.5.</p></li>
+<li><p><strong>n_initial_subset</strong> (<em>int</em>) – number of initial subsets to apply C-steps on
+(cfr <cite>m</cite> in original R implementatino). Defaults to 500.</p></li>
+<li><p><strong>n_initial_c_steps</strong> (<em>int</em>) – number of c-steps to apply on n_initial_subsets
+before final c-steps until convergenge . Defaults to 2.</p></li>
+<li><p><strong>n_best_models</strong> (<em>int</em>) – number of best models after initial c-steps to consider
+until convergence. Defaults to 10.</p></li>
+<li><p><strong>reweighting</strong> (<em>bool</em>) – Whether to apply reweighting to the raw estimates. Defaults to True.</p></li>
+<li><p><strong>tolerance</strong> (<em>float</em>) – Acceptable delta in loss value between C-steps.
+If current loss  -  previous loss &lt;= tolerance, model is converged.
+Defaults to 1e-15.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.regression.lts.FastLTSRegressor.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#robpy.regression.lts.FastLTSRegressor" title="robpy.regression.lts.FastLTSRegressor"><span class="pre">FastLTSRegressor</span></a></span></span><a class="reference internal" href="../_modules/robpy/regression/lts.html#FastLTSRegressor.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.regression.lts.FastLTSRegressor.fit" title="Link to this definition"></a></dt>
+<dd><p>Fit the model to the data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>np.ndarray</em>) – Training features</p></li>
+<li><p><strong>y</strong> (<em>np.ndarray</em>) – Training labels</p></li>
+<li><p><strong>initial_weights</strong> (<em>Optional</em><em>[</em><em>np.ndarray</em><em>]</em><em>, </em><em>optional</em>) – Optionally pass fixed initial weights,
+in case of n_initial_subsets &gt; 1, this means all models start
+from the same initial weights.
+There is therefore no benefit from setting n_initial_subsets &gt; 1
+Defaults to None.</p></li>
+<li><p><strong>verbosity</strong> (<em>int</em><em>, </em><em>optional</em>) – [description]. Defaults to logging.INFO.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The fitted FastLTS object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.regression.lts.FastLTSRegressor.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/robpy/regression/lts.html#FastLTSRegressor.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.regression.lts.FastLTSRegressor.predict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="robpy.regression.lts.get_correction_factor">
+<span class="sig-prename descclassname"><span class="pre">robpy.regression.lts.</span></span><span class="sig-name descname"><span class="pre">get_correction_factor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/robpy/regression/lts.html#get_correction_factor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.regression.lts.get_correction_factor" title="Link to this definition"></a></dt>
+<dd><p>Calculate the small sample correction factor for the scale resulting from LTS regression.</p>
+<p class="rubric">References</p>
+<p>Pison, G., Van Aelst, S. &amp; Willems, G. Small sample corrections for LTS and MCD.
+Metrika 55, 111–123 (2002). <a class="reference external" href="https://doi.org/10.1007/s001840200191">https://doi.org/10.1007/s001840200191</a></p>
+<p><a class="reference external" href="https://github.com/cran/robustbase/blob/c4b9d21cfc4beb64653bb2ffba9e549e2dbb98ed/R/ltsReg.R">https://github.com/cran/robustbase/blob/c4b9d21cfc4beb64653bb2ffba9e549e2dbb98ed/R/ltsReg.R</a></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="robpy.regression.lts.get_correction_factor_reweighting">
+<span class="sig-prename descclassname"><span class="pre">robpy.regression.lts.</span></span><span class="sig-name descname"><span class="pre">get_correction_factor_reweighting</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/robpy/regression/lts.html#get_correction_factor_reweighting"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.regression.lts.get_correction_factor_reweighting" title="Link to this definition"></a></dt>
+<dd><p>Calculate the small sample correction factor for the scale resulting from LTS regression.</p>
+<p class="rubric">References</p>
+<p>Pison, G., Van Aelst, S. &amp; Willems, G. Small sample corrections for LTS and MCD.
+Metrika 55, 111–123 (2002). <a class="reference external" href="https://doi.org/10.1007/s001840200191">https://doi.org/10.1007/s001840200191</a></p>
+<p><a class="reference external" href="https://github.com/cran/robustbase/blob/c4b9d21cfc4beb64653bb2ffba9e549e2dbb98ed/R/ltsReg.R">https://github.com/cran/robustbase/blob/c4b9d21cfc4beb64653bb2ffba9e549e2dbb98ed/R/ltsReg.R</a></p>
+</dd></dl>
+
+</section>
+<section id="module-robpy.regression.s_estimator">
+<span id="s-estimator"></span><h2>S Estimator<a class="headerlink" href="#module-robpy.regression.s_estimator" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="robpy.regression.s_estimator.SEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">robpy.regression.s_estimator.</span></span><span class="sig-name descname"><span class="pre">SEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rho:</span> <span class="pre">~robpy.utils.rho.BaseRho</span> <span class="pre">=</span> <span class="pre">&lt;robpy.utils.rho.TukeyBisquare</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_initial_subsets:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_initial_i_steps:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_best_subsets:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_scale_iterations:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relative_tolerance:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">1e-07</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_tolerance:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">101</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/regression/s_estimator.html#SEstimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.regression.s_estimator.SEstimator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#robpy.regression.base.RobustRegressor" title="robpy.regression.base.RobustRegressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">RobustRegressor</span></code></a></p>
+<p>Fast S algorithm similar to lmrob.S on robustbase
+(<a class="reference external" href="https://search.r-project.org/CRAN/refmans/robustbase/html/lmrob.S.html">https://search.r-project.org/CRAN/refmans/robustbase/html/lmrob.S.html</a>).
+S-estimation was initially described in</p>
+<p>Rousseeuw, P. J., and Yohai, V. J. (1984), “Robust Regression by Means of S-Estimators,”
+in Robust and Nonlinear Time Series,
+eds. J. Franke, W. Hardie, and D. Martin, Lecture Notes in Statistics, 26, Berlin:
+Springer-Verlag, pp. 256-272.</p>
+<p>This code is an implementation of the Fast S algorithm described in</p>
+<p>Salibian-Barrera, M., &amp; Yohai, V. J. (2006).
+A Fast Algorithm for S-Regression Estimates.
+Journal of Computational and Graphical Statistics, 15(2), 414–427.
+<a class="reference external" href="http://www.jstor.org/stable/27594186">http://www.jstor.org/stable/27594186</a></p>
+<p>Fast S estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rho</strong> (<a class="reference internal" href="robpy.utils.html#robpy.utils.rho.BaseRho" title="robpy.utils.rho.BaseRho"><em>BaseRho</em></a><em>, </em><em>optional</em>) – score function to use on the residuals. Defaults to bisquare.</p></li>
+<li><p><strong>n_initial_subsets</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of initial subsets to sample (<cite>N</cite> in the original paper).
+Defaults to 500.</p></li>
+<li><p><strong>n_initial_i_steps</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of i-steps to take on the initial subsets (<cite>k</cite> in the original paper).
+Defaults to 2.</p></li>
+<li><p><strong>n_best_subsets</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of subsets with the best M-scales (residuals transformered by score function)
+(<cite>t</cite> in the original paper).
+Defaults to 5.</p></li>
+<li><p><strong>max_scale_iterations</strong> (<em>int</em><em>, </em><em>optional</em>) – number of iterative steps to derive M-scale estimates (<cite>r</cite> in the original paper).</p></li>
+<li><p><strong>b</strong> (<em>float</em><em>, </em><em>optional</em>) – constant on the RHS of the M scale equation</p></li>
+<li><p><strong>fit_intercept</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether an intercept should be included in the linear regression</p></li>
+<li><p><strong>relative_tolerance</strong> (<em>float</em><em>, </em><em>optional</em>) – Determines the stopping criterium for the i-steps untill convergence
+(diff in beta norm should be higher then
+relative_tolerance * max(relative_tolerance, beta_norm))</p></li>
+<li><p><strong>scale_tolerance</strong> (<em>float</em><em>, </em><em>optional</em>) – If the difference between 2 subsequent scale estimates is below this threshold,
+the iterations are stopped and it is assumed the scale estimate converged.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.regression.s_estimator.SEstimator.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/regression/s_estimator.html#SEstimator.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.regression.s_estimator.SEstimator.fit" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.regression.s_estimator.SEstimator.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/robpy/regression/s_estimator.html#SEstimator.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.regression.s_estimator.SEstimator.predict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-robpy.regression.mm_estimator">
+<span id="mm-estimator"></span><h2>MM_estimator<a class="headerlink" href="#module-robpy.regression.mm_estimator" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="robpy.regression.mm_estimator.MMEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">robpy.regression.mm_estimator.</span></span><span class="sig-name descname"><span class="pre">MMEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_estimator:</span> <span class="pre">~robpy.regression.base.RobustRegressor</span> <span class="pre">=</span> <span class="pre">SEstimator()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho:</span> <span class="pre">~robpy.utils.rho.BaseRho</span> <span class="pre">=</span> <span class="pre">&lt;robpy.utils.rho.TukeyBisquare</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterations:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">1e-07</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/robpy/regression/mm_estimator.html#MMEstimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.regression.mm_estimator.MMEstimator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#robpy.regression.base.RobustRegressor" title="robpy.regression.base.RobustRegressor"><code class="xref py py-class docutils literal notranslate"><span class="pre">RobustRegressor</span></code></a></p>
+<p>Implementation of MM-regression estimator</p>
+<p class="rubric">References</p>
+<p><a class="reference external" href="https://www.jstor.org/stable/2241331">https://www.jstor.org/stable/2241331</a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.regression.mm_estimator.MMEstimator.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Series</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#robpy.regression.mm_estimator.MMEstimator" title="robpy.regression.mm_estimator.MMEstimator"><span class="pre">MMEstimator</span></a></span></span><a class="reference internal" href="../_modules/robpy/regression/mm_estimator.html#MMEstimator.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.regression.mm_estimator.MMEstimator.fit" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="robpy.regression.mm_estimator.MMEstimator.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/robpy/regression/mm_estimator.html#MMEstimator.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#robpy.regression.mm_estimator.MMEstimator.predict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="robpy.preprocessing.html" class="btn btn-neutral float-left" title="robpy.preprocessing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="robpy.univariate.html" class="btn btn-neutral float-right" title="robpy.univariate" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, STAN-Uantwerp.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

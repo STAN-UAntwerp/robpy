@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from scipy.stats import chi2, median_abs_deviation
-from typing import Literal
+from typing import Literal, Optional
 from robpy.covariance.utils.alter_covariance import truncated_covariance
 from robpy.covariance.base import RobustCovarianceEstimator
 from robpy.utils.logging import get_logger
@@ -33,9 +33,9 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         min_eigenvalue: float = 1e-4,
         verbosity: int = logging.WARNING,
     ):
-        """Cell MCD estimator based on the algorithm proposed in
-            Raymaekers and Rousseeuw, The Cellwise Minimum Covariance Determinant Estimator, 2023,
-            Journal of the American Statistical Association.
+        """
+        Cell MCD estimator based on the algorithm proposed in Raymaekers and Rousseeuw (2023).
+
 
         Args:
             alpha (float, optional):
@@ -55,6 +55,10 @@ class CellMCDEstimator(RobustCovarianceEstimator):
                 Lower bound on the minimum eigenvalue of the covariance estimator
                 on the standardized data. Should be at least 1e-6.
                 Defaults to 1e-4.
+
+        References:
+            - Raymaekers and Rousseeuw, The Cellwise Minimum Covariance Determinant Estimator, 2023,
+              Journal of the American Statistical Association.
         """
         if min_eigenvalue < 1e-6:
             raise ValueError("The lower bound on the eigenvalues should be at least 1e-6.")
@@ -124,8 +128,8 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         self,
         variable: int,
         variable_name: str = "variable",
-        row_names: list = None,
-        second_variable: int = None,
+        row_names: Optional[list] = None,
+        second_variable: Optional[int] = None,
         second_variable_name: str = "second variable",
         plottype: Literal[
             "indexplot",
@@ -136,31 +140,29 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         ] = "indexplot",
         figsize: tuple[int, int] = (8, 8),
     ):
-        """Function to plot the results of a cellMCD analysis: 5 types of diagnostic plots.
+        """
+        Function to plot the results of a cellMCD analysis: 5 types of diagnostic plots.
 
         Arguments:
-        plottype (Literal string, optional):
-            - "indexplot": plots the residuals of a variable
-            - "residuals_vs_variable": plots a variable versus its residuals
-            - "residuals_vs_predictions": plots the predictions of a variable versus its residuals
-            - "variable_vs_predictions": plots a variable against its predictions
-            - "bivariate": plots two variables against each other
-            Defaults to "indexplot".
-        variable (int):
-            Index of the variable under consideration.
-        variable_name (str, optional):
-            Name of the variable of interest for the axis label.
-            Defaults to "variable".
-        second_variable (int):
-            Index of the second variable under consideration, only needed for plottype "bivariate".
-        second_variable_name (str, optional):
-            Name of the second variable for the axis label, only relevant for plottype "bivariate".
-            Defaults to "second variable".
-        row_names (list of strings, optional):
-            Row_names of the observations if you want the outliers annoted with their name.
-        figsize (tuple[int,int], optional):
-            Size of the figure.
-            Defaults to (8,8).
+            plottype (Literal string, optional):
+                 "indexplot": plots the residuals of a variable,
+                 "residuals_vs_variable": plots a variable versus its residuals,
+                 "residuals_vs_predictions": plots the predictions of a variable versus its
+                 residuals,
+                 "variable_vs_predictions": plots a variable against its predictions,
+                 "bivariate": plots two variables against each other,
+
+                 Defaults to "indexplot".
+            variable (int): Index of the variable under consideration.
+            variable_name (str, optional): Name of the variable of interest for the axis label.
+              Defaults to "variable".
+            second_variable (int): Index of the second variable under consideration,
+              only needed for plottype "bivariate".
+            second_variable_name (str, optional): Name of the second variable for the axis label,
+              only relevant for plottype "bivariate". Defaults to "second variable".
+            row_names (list of strings, optional): Row_names of the observations if you want
+              the outliers annoted with their name.
+            figsize (tuple[int,int], optional): Size of the figure. Defaults to (8,8).
         """
 
         if not hasattr(self, "covariance_"):

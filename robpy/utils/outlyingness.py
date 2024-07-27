@@ -6,19 +6,20 @@ def stahel_donoho(X: np.ndarray, n_points: int = 2, n_dir: int = 250) -> np.ndar
     """Calculate the degree of outlyingness for multivariate points.
     Based on the algorithm proposed by Stahel (1981) and Donoho (1982).
 
-    Stahel W.A. (1981). Robuste Schatzungen: infinitesimale Optimalitat und Schatzungen von
-        Kovarianzmatrizen. PhD Thesis, ETH Zurich.
-
-    Donoho D.L. (1982). Breakdown properties of multivariate location estimators.
-        Ph.D. Qualifying paper, Dept. Statistics, Harvard University, Boston.
-
     Args:
         X (np.ndarray): data matric of shape (n_obs, n_features)
-        n_points: number of points to determine the hyperplane. Defaults to 2.
+        n_points (int, optional): number of points to determine the hyperplane. Defaults to 2.
         n_dir (int, optional): number of random directions to consider. Defaults to 250.
 
     Returns:
         np.ndarray: single column of outlyingness values
+
+    References:
+        Stahel W.A. (1981). Robuste Schatzungen: infinitesimale Optimalitat und Schatzungen von
+        Kovarianzmatrizen. PhD Thesis, ETH Zurich.
+
+        Donoho D.L. (1982). Breakdown properties of multivariate location estimators.
+        Ph.D. Qualifying paper, Dept. Statistics, Harvard University, Boston.
     """
     # step 1: get random directions
     D = np.hstack(

@@ -20,8 +20,8 @@ class QnEstimator(RobustScaleEstimator):
         Donald B. Johnson and Tetsuo Mizoguchi (1978)]
 
         Args:
-            location_func: as the location estimator does not estimate location,
-                a location function should be explicitly passed.
+            location_func (LocationOrScaleEstimator, optional): as the Qn estimator does not
+                estimate location, a location function should be explicitly passed.
             consistency_correction (bool, optional):
                 boolean indicating if consistency for normality should be applied.
                 Defaults to True.

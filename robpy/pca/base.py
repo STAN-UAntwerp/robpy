@@ -21,6 +21,7 @@ class RobustPCAEstimator(_BasePCA):
     @abstractmethod
     def fit(self, X: np.ndarray):
         """Fit the robust PCA model to the data
+
         Args:
             X (np.ndarray): Data to fit the model to
         """
@@ -49,7 +50,8 @@ class RobustPCAEstimator(_BasePCA):
         return (X - self.location_) @ self.components_
 
     def project(self, X: np.ndarray) -> np.ndarray:
-        """Project the data onto the subspace spanned by the principal components
+        """Project the data onto the subspace spanned by the principal components.
+
         Args:
             X (np.ndarray): Data to project
 

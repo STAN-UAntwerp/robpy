@@ -303,6 +303,7 @@ class FastLTSRegressor(RobustRegressor):
 def get_correction_factor(p: int, n: int, alpha: float) -> float:
     """
     Calculate the small sample correction factor for the scale resulting from LTS regression.
+
     References:
         Pison, G., Van Aelst, S. & Willems, G. Small sample corrections for LTS and MCD.
         Metrika 55, 111–123 (2002). https://doi.org/10.1007/s001840200191
@@ -356,6 +357,7 @@ def get_correction_factor(p: int, n: int, alpha: float) -> float:
 def get_correction_factor_reweighting(p: int, n: int, alpha: float) -> float:
     """
     Calculate the small sample correction factor for the scale resulting from LTS regression.
+
     References:
         Pison, G., Van Aelst, S. & Willems, G. Small sample corrections for LTS and MCD.
         Metrika 55, 111–123 (2002). https://doi.org/10.1007/s001840200191

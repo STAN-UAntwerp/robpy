@@ -6,20 +6,28 @@ from robpy.covariance.base import RobustCovarianceEstimator
 
 class WrappingCovarianceEstimator(RobustCovarianceEstimator):
     """Covariance estimator based on the wrapping function proposed in
-    Jakob Raymaekers & Peter J. Rousseeuw (2021) Fast Robust Correlation for High-Dimensional Data,
-    Technometrics, 63:2, 184-198, DOI: 10.1080/00401706.2019.1677270
+    Jakob Raymaekers & Peter J. Rousseeuw (2021)
 
     The wrapping transformation is defined as follows:
-    phi(z) = {
-        z                                       if 0 <= |z| < b
-        q1 * tanh(q2 * (c - |z|)) * sign(z)     if b <= |z| <= c
-        0                                       if c <= |z|
-    }
+
+    .. math::
+
+        \\Psi_{b, c}(z) =
+        \\begin{cases}
+          z & if \\  0 \\leq |z| < b \\\\
+          q_1 \\tanh\\left(q_2 (c - |z|)\\right) \\mathrm{sign}(z) & if \\  b \\leq |z| \\leq c \\\\
+          0  & if \\   c < |z|
+        \\end{cases}
 
     Data is first scaled using median and MAD before applying the transformation.
 
     The (standard) covariance is subsequently estimated on the rescaled data
     Cov(X) = Cov(Median(X) + MAD(X) * phi(X - Median(X) / MAD(X)))
+
+    References:
+        - Jakob Raymaekers & Peter J. Rousseeuw (2021)
+          Fast Robust Correlation for High-Dimensional Data,
+          Technometrics, 63:2, 184-198, DOI: 10.1080/00401706.2019.1677270
     """
 
     def __init__(

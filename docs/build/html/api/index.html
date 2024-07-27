@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Robpy &mdash; Robpy 0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=8dde47fa"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "displayMath": [["$$", "$$"], ["\\[", "\\]"]], "processEscapes": true}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="robpy.covariance" href="robpy.covariance.html" />
+    <link rel="prev" title="Examples" href="../examples.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Robpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Robpy</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="robpy.covariance.html">robpy.covariance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.datasets.html">robpy.datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.outliers.html">robpy.outliers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.pca.html">robpy.pca</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.preprocessing.html">robpy.preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.regression.html">robpy.regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.univariate.html">robpy.univariate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.utils.html">robpy.utils</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Robpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Robpy</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="robpy">
+<h1>Robpy<a class="headerlink" href="#robpy" title="Link to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="robpy.covariance.html">robpy.covariance</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="robpy.covariance.html#module-robpy.covariance.base">Base</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.base.RobustCovarianceEstimator"><code class="docutils literal notranslate"><span class="pre">RobustCovarianceEstimator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.base.RobustCovarianceEstimator.calculate_covariance"><code class="docutils literal notranslate"><span class="pre">RobustCovarianceEstimator.calculate_covariance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.base.RobustCovarianceEstimator.correlation"><code class="docutils literal notranslate"><span class="pre">RobustCovarianceEstimator.correlation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.base.RobustCovarianceEstimator.covariance"><code class="docutils literal notranslate"><span class="pre">RobustCovarianceEstimator.covariance</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.base.RobustCovarianceEstimator.distance_distance_plot"><code class="docutils literal notranslate"><span class="pre">RobustCovarianceEstimator.distance_distance_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.base.RobustCovarianceEstimator.fit"><code class="docutils literal notranslate"><span class="pre">RobustCovarianceEstimator.fit()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.covariance.html#module-robpy.covariance.cellmcd">Cell MCD</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.cellmcd.CellMCDEstimator"><code class="docutils literal notranslate"><span class="pre">CellMCDEstimator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.cellmcd.CellMCDEstimator.calculate_covariance"><code class="docutils literal notranslate"><span class="pre">CellMCDEstimator.calculate_covariance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.cellmcd.CellMCDEstimator.cell_MCD_plot"><code class="docutils literal notranslate"><span class="pre">CellMCDEstimator.cell_MCD_plot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.initial_ddcw.InitialDDCWEstimator"><code class="docutils literal notranslate"><span class="pre">InitialDDCWEstimator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.initial_ddcw.InitialDDCWEstimator.calculate_covariance"><code class="docutils literal notranslate"><span class="pre">InitialDDCWEstimator.calculate_covariance()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.covariance.html#module-robpy.covariance.kendall">Kendall’s Tau</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.kendall.KendallTauEstimator"><code class="docutils literal notranslate"><span class="pre">KendallTauEstimator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.kendall.KendallTauEstimator.calculate_covariance"><code class="docutils literal notranslate"><span class="pre">KendallTauEstimator.calculate_covariance()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.covariance.html#module-robpy.covariance.mcd">Minumum Covariance Determinant</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.mcd.DetMCDEstimator"><code class="docutils literal notranslate"><span class="pre">DetMCDEstimator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.mcd.DetMCDEstimator.calculate_covariance"><code class="docutils literal notranslate"><span class="pre">DetMCDEstimator.calculate_covariance()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.mcd.FastMCDEstimator"><code class="docutils literal notranslate"><span class="pre">FastMCDEstimator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.mcd.FastMCDEstimator.calculate_covariance"><code class="docutils literal notranslate"><span class="pre">FastMCDEstimator.calculate_covariance()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.mcd.HSubset"><code class="docutils literal notranslate"><span class="pre">HSubset</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.mcd.HSubset.determinant"><code class="docutils literal notranslate"><span class="pre">HSubset.determinant</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.mcd.HSubset.indices"><code class="docutils literal notranslate"><span class="pre">HSubset.indices</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.mcd.HSubset.location"><code class="docutils literal notranslate"><span class="pre">HSubset.location</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.mcd.HSubset.n_c_steps"><code class="docutils literal notranslate"><span class="pre">HSubset.n_c_steps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.mcd.HSubset.scale"><code class="docutils literal notranslate"><span class="pre">HSubset.scale</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.covariance.html#module-robpy.covariance.ogk">Orthogonalized Gnanadesikan-Kettenring</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.ogk.OGKEstimator"><code class="docutils literal notranslate"><span class="pre">OGKEstimator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.ogk.OGKEstimator.calculate_covariance"><code class="docutils literal notranslate"><span class="pre">OGKEstimator.calculate_covariance()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.covariance.html#module-robpy.covariance.wrapping">Wrapping Covariance</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.wrapping.WrappingCovarianceEstimator"><code class="docutils literal notranslate"><span class="pre">WrappingCovarianceEstimator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.covariance.html#robpy.covariance.wrapping.WrappingCovarianceEstimator.calculate_covariance"><code class="docutils literal notranslate"><span class="pre">WrappingCovarianceEstimator.calculate_covariance()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="robpy.datasets.html">robpy.datasets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="robpy.datasets.html#robpy.datasets.base.load_animals"><code class="docutils literal notranslate"><span class="pre">load_animals()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.datasets.html#robpy.datasets.base.load_glass"><code class="docutils literal notranslate"><span class="pre">load_glass()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.datasets.html#robpy.datasets.base.load_stars"><code class="docutils literal notranslate"><span class="pre">load_stars()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.datasets.html#robpy.datasets.base.load_telephone"><code class="docutils literal notranslate"><span class="pre">load_telephone()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.datasets.html#robpy.datasets.base.load_topgear"><code class="docutils literal notranslate"><span class="pre">load_topgear()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="robpy.outliers.html">robpy.outliers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="robpy.outliers.html#module-robpy.outliers.ddc">Detect Deviating Cells</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.outliers.html#robpy.outliers.ddc.DDCEstimator"><code class="docutils literal notranslate"><span class="pre">DDCEstimator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.outliers.html#robpy.outliers.ddc.DDCEstimator.cellmap"><code class="docutils literal notranslate"><span class="pre">DDCEstimator.cellmap()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.outliers.html#robpy.outliers.ddc.DDCEstimator.fit"><code class="docutils literal notranslate"><span class="pre">DDCEstimator.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.outliers.html#robpy.outliers.ddc.DDCEstimator.impute"><code class="docutils literal notranslate"><span class="pre">DDCEstimator.impute()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.outliers.html#robpy.outliers.ddc.DDCEstimator.predict"><code class="docutils literal notranslate"><span class="pre">DDCEstimator.predict()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="robpy.pca.html">robpy.pca</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="robpy.pca.html#module-robpy.pca.base">Base</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.pca.html#robpy.pca.base.RobustPCAEstimator"><code class="docutils literal notranslate"><span class="pre">RobustPCAEstimator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.pca.html#robpy.pca.base.RobustPCAEstimator.fit"><code class="docutils literal notranslate"><span class="pre">RobustPCAEstimator.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.pca.html#robpy.pca.base.RobustPCAEstimator.plot_outlier_map"><code class="docutils literal notranslate"><span class="pre">RobustPCAEstimator.plot_outlier_map()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.pca.html#robpy.pca.base.RobustPCAEstimator.project"><code class="docutils literal notranslate"><span class="pre">RobustPCAEstimator.project()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.pca.html#robpy.pca.base.RobustPCAEstimator.transform"><code class="docutils literal notranslate"><span class="pre">RobustPCAEstimator.transform()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="robpy.pca.html#robpy.pca.base.get_od_cutoff"><code class="docutils literal notranslate"><span class="pre">get_od_cutoff()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.pca.html#module-robpy.pca.robpca">ROBPCA</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.pca.html#robpy.pca.robpca.ROBPCAEstimator"><code class="docutils literal notranslate"><span class="pre">ROBPCAEstimator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.pca.html#robpy.pca.robpca.ROBPCAEstimator.fit"><code class="docutils literal notranslate"><span class="pre">ROBPCAEstimator.fit()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.pca.html#module-robpy.pca.spca">Spherical</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.pca.html#robpy.pca.spca.PCALocantoreEstimator"><code class="docutils literal notranslate"><span class="pre">PCALocantoreEstimator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.pca.html#robpy.pca.spca.PCALocantoreEstimator.fit"><code class="docutils literal notranslate"><span class="pre">PCALocantoreEstimator.fit()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="robpy.preprocessing.html">robpy.preprocessing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="robpy.preprocessing.html#module-robpy.preprocessing.data_cleaner">Data Cleaning</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.preprocessing.html#robpy.preprocessing.data_cleaner.DataCleaner"><code class="docutils literal notranslate"><span class="pre">DataCleaner</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.preprocessing.html#robpy.preprocessing.data_cleaner.DataCleaner.dropped_columns"><code class="docutils literal notranslate"><span class="pre">DataCleaner.dropped_columns</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.preprocessing.html#robpy.preprocessing.data_cleaner.DataCleaner.dropped_rows"><code class="docutils literal notranslate"><span class="pre">DataCleaner.dropped_rows</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.preprocessing.html#robpy.preprocessing.data_cleaner.DataCleaner.fit"><code class="docutils literal notranslate"><span class="pre">DataCleaner.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.preprocessing.html#robpy.preprocessing.data_cleaner.DataCleaner.transform"><code class="docutils literal notranslate"><span class="pre">DataCleaner.transform()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.preprocessing.html#module-robpy.preprocessing.scaling">Data Scaling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.preprocessing.html#robpy.preprocessing.scaling.RobustScaler"><code class="docutils literal notranslate"><span class="pre">RobustScaler</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.preprocessing.html#robpy.preprocessing.scaling.RobustScaler.fit"><code class="docutils literal notranslate"><span class="pre">RobustScaler.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.preprocessing.html#robpy.preprocessing.scaling.RobustScaler.inverse_transform"><code class="docutils literal notranslate"><span class="pre">RobustScaler.inverse_transform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.preprocessing.html#robpy.preprocessing.scaling.RobustScaler.transform"><code class="docutils literal notranslate"><span class="pre">RobustScaler.transform()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.preprocessing.html#module-robpy.preprocessing.transfo">Data Transforming</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.preprocessing.html#robpy.preprocessing.transfo.RobustPowerTransformer"><code class="docutils literal notranslate"><span class="pre">RobustPowerTransformer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.preprocessing.html#robpy.preprocessing.transfo.RobustPowerTransformer.fit"><code class="docutils literal notranslate"><span class="pre">RobustPowerTransformer.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.preprocessing.html#robpy.preprocessing.transfo.RobustPowerTransformer.inverse_transform"><code class="docutils literal notranslate"><span class="pre">RobustPowerTransformer.inverse_transform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.preprocessing.html#robpy.preprocessing.transfo.RobustPowerTransformer.transform"><code class="docutils literal notranslate"><span class="pre">RobustPowerTransformer.transform()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.preprocessing.html#module-robpy.preprocessing.utils">Utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.preprocessing.html#robpy.preprocessing.utils.wrapping_transformation"><code class="docutils literal notranslate"><span class="pre">wrapping_transformation()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="robpy.regression.html">robpy.regression</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="robpy.regression.html#module-robpy.regression.base">Base</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.regression.html#robpy.regression.base.RobustRegressor"><code class="docutils literal notranslate"><span class="pre">RobustRegressor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.regression.html#robpy.regression.base.RobustRegressor.diagnostic_plot"><code class="docutils literal notranslate"><span class="pre">RobustRegressor.diagnostic_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.regression.html#robpy.regression.base.RobustRegressor.fit"><code class="docutils literal notranslate"><span class="pre">RobustRegressor.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.regression.html#robpy.regression.base.RobustRegressor.predict"><code class="docutils literal notranslate"><span class="pre">RobustRegressor.predict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.regression.html#robpy.regression.base.RobustRegressor.scale"><code class="docutils literal notranslate"><span class="pre">RobustRegressor.scale</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.regression.html#module-robpy.regression.lts">Least Trimmed Squares</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.regression.html#robpy.regression.lts.FastLTSRegressor"><code class="docutils literal notranslate"><span class="pre">FastLTSRegressor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.regression.html#robpy.regression.lts.FastLTSRegressor.fit"><code class="docutils literal notranslate"><span class="pre">FastLTSRegressor.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.regression.html#robpy.regression.lts.FastLTSRegressor.predict"><code class="docutils literal notranslate"><span class="pre">FastLTSRegressor.predict()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="robpy.regression.html#robpy.regression.lts.get_correction_factor"><code class="docutils literal notranslate"><span class="pre">get_correction_factor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="robpy.regression.html#robpy.regression.lts.get_correction_factor_reweighting"><code class="docutils literal notranslate"><span class="pre">get_correction_factor_reweighting()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.regression.html#module-robpy.regression.s_estimator">S Estimator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.regression.html#robpy.regression.s_estimator.SEstimator"><code class="docutils literal notranslate"><span class="pre">SEstimator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.regression.html#robpy.regression.s_estimator.SEstimator.fit"><code class="docutils literal notranslate"><span class="pre">SEstimator.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.regression.html#robpy.regression.s_estimator.SEstimator.predict"><code class="docutils literal notranslate"><span class="pre">SEstimator.predict()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.regression.html#module-robpy.regression.mm_estimator">MM_estimator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.regression.html#robpy.regression.mm_estimator.MMEstimator"><code class="docutils literal notranslate"><span class="pre">MMEstimator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.regression.html#robpy.regression.mm_estimator.MMEstimator.fit"><code class="docutils literal notranslate"><span class="pre">MMEstimator.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.regression.html#robpy.regression.mm_estimator.MMEstimator.predict"><code class="docutils literal notranslate"><span class="pre">MMEstimator.predict()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="robpy.univariate.html">robpy.univariate</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="robpy.univariate.html#module-robpy.univariate.base">Base</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.univariate.html#robpy.univariate.base.LocationOrScaleEstimator"><code class="docutils literal notranslate"><span class="pre">LocationOrScaleEstimator</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="robpy.univariate.html#robpy.univariate.base.RobustScaleEstimator"><code class="docutils literal notranslate"><span class="pre">RobustScaleEstimator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.univariate.html#robpy.univariate.base.RobustScaleEstimator.fit"><code class="docutils literal notranslate"><span class="pre">RobustScaleEstimator.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.univariate.html#robpy.univariate.base.RobustScaleEstimator.location"><code class="docutils literal notranslate"><span class="pre">RobustScaleEstimator.location</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.univariate.html#robpy.univariate.base.RobustScaleEstimator.scale"><code class="docutils literal notranslate"><span class="pre">RobustScaleEstimator.scale</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.univariate.html#module-robpy.univariate.mcd">Minimum Covariance Determinant</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.univariate.html#robpy.univariate.mcd.UnivariateMCDEstimator"><code class="docutils literal notranslate"><span class="pre">UnivariateMCDEstimator</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.univariate.html#module-robpy.univariate.onestep_m">Onestep M-estimator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.univariate.html#robpy.univariate.onestep_m.CellwiseOneStepMEstimator"><code class="docutils literal notranslate"><span class="pre">CellwiseOneStepMEstimator</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="robpy.univariate.html#robpy.univariate.onestep_m.HuberOneStepMEstimator"><code class="docutils literal notranslate"><span class="pre">HuberOneStepMEstimator</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="robpy.univariate.html#robpy.univariate.onestep_m.OneStepMEstimator"><code class="docutils literal notranslate"><span class="pre">OneStepMEstimator</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="robpy.univariate.html#robpy.univariate.onestep_m.OneStepWrappingEstimator"><code class="docutils literal notranslate"><span class="pre">OneStepWrappingEstimator</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.univariate.html#module-robpy.univariate.qn">Qn Estimator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.univariate.html#robpy.univariate.qn.QnEstimator"><code class="docutils literal notranslate"><span class="pre">QnEstimator</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.univariate.html#module-robpy.univariate.tau">Tau Estimator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.univariate.html#robpy.univariate.tau.TauEstimator"><code class="docutils literal notranslate"><span class="pre">TauEstimator</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="robpy.utils.html">robpy.utils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="robpy.utils.html#module-robpy.utils.distance">Distance</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.utils.html#robpy.utils.distance.mahalanobis_distance"><code class="docutils literal notranslate"><span class="pre">mahalanobis_distance()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.utils.html#module-robpy.utils.rho">Rho functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.utils.html#robpy.utils.rho.BaseRho"><code class="docutils literal notranslate"><span class="pre">BaseRho</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.utils.html#robpy.utils.rho.BaseRho.psi"><code class="docutils literal notranslate"><span class="pre">BaseRho.psi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.utils.html#robpy.utils.rho.BaseRho.rho"><code class="docutils literal notranslate"><span class="pre">BaseRho.rho()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="robpy.utils.html#robpy.utils.rho.Huber"><code class="docutils literal notranslate"><span class="pre">Huber</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.utils.html#robpy.utils.rho.Huber.psi"><code class="docutils literal notranslate"><span class="pre">Huber.psi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.utils.html#robpy.utils.rho.Huber.rho"><code class="docutils literal notranslate"><span class="pre">Huber.rho()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="robpy.utils.html#robpy.utils.rho.TukeyBisquare"><code class="docutils literal notranslate"><span class="pre">TukeyBisquare</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="robpy.utils.html#robpy.utils.rho.TukeyBisquare.psi"><code class="docutils literal notranslate"><span class="pre">TukeyBisquare.psi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="robpy.utils.html#robpy.utils.rho.TukeyBisquare.rho"><code class="docutils literal notranslate"><span class="pre">TukeyBisquare.rho()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="robpy.utils.html#module-robpy.utils.general">Other</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="robpy.utils.html#robpy.utils.general.inverse_submatrix"><code class="docutils literal notranslate"><span class="pre">inverse_submatrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="robpy.utils.html#robpy.utils.median.l1median"><code class="docutils literal notranslate"><span class="pre">l1median()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="robpy.utils.html#robpy.utils.median.weighted_median"><code class="docutils literal notranslate"><span class="pre">weighted_median()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="robpy.utils.html#robpy.utils.outlyingness.stahel_donoho"><code class="docutils literal notranslate"><span class="pre">stahel_donoho()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../examples.html" class="btn btn-neutral float-left" title="Examples" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="robpy.covariance.html" class="btn btn-neutral float-right" title="robpy.covariance" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, STAN-Uantwerp.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

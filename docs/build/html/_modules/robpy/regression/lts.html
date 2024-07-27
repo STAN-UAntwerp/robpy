@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>robpy.regression.lts &mdash; Robpy 0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=8dde47fa"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Robpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">Robpy</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Robpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">robpy.regression.lts</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for robpy.regression.lts</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">sklearn.exceptions</span> <span class="kn">import</span> <span class="n">NotFittedError</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">norm</span>
+
+<span class="kn">from</span> <span class="nn">tqdm.auto</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">LinearRegression</span>
+
+<span class="kn">from</span> <span class="nn">robpy.regression.base</span> <span class="kn">import</span> <span class="n">RobustRegressor</span><span class="p">,</span> <span class="n">_convert_input_to_array</span>
+
+
+<div class="viewcode-block" id="FastLTSRegressor">
+<a class="viewcode-back" href="../../../api/robpy.regression.html#robpy.regression.lts.FastLTSRegressor">[docs]</a>
+<span class="k">class</span> <span class="nc">FastLTSRegressor</span><span class="p">(</span><span class="n">RobustRegressor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implementation of FAST-LTS model based on R implementation of the</span>
+<span class="sd">    ltsReg method in the robustbase R package</span>
+<span class="sd">    (cfr. https://www.rdocumentation.org/packages/robustbase/versions/0.93-8/topics/ltsReg)</span>
+<span class="sd">    and the python implementation `Reweighted-FastLTS`</span>
+<span class="sd">    (cfr. https://github.com/GiuseppeCannata/Reweighted-FastLTS/blob/master/Reweighted_FastLTS.py)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">n_initial_subsets</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+        <span class="n">n_initial_c_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">n_best_models</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">reweighting</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-15</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a FAST LTS regressor</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alpha (float): percentage of data to consider as subset for</span>
+<span class="sd">                           calculating the trimmed squared error.</span>
+<span class="sd">                           Must be between 0.5 and 1, with 1 being equal to normal LS regression.</span>
+<span class="sd">                           Defaults to 0.5.</span>
+<span class="sd">            n_initial_subset (int): number of initial subsets to apply C-steps on</span>
+<span class="sd">                                    (cfr `m` in original R implementatino). Defaults to 500.</span>
+<span class="sd">            n_initial_c_steps (int): number of c-steps to apply on n_initial_subsets</span>
+<span class="sd">                                     before final c-steps until convergenge . Defaults to 2.</span>
+<span class="sd">            n_best_models (int): number of best models after initial c-steps to consider</span>
+<span class="sd">                                 until convergence. Defaults to 10.</span>
+<span class="sd">            reweighting (bool): Whether to apply reweighting to the raw estimates. Defaults to True.</span>
+<span class="sd">            tolerance (float): Acceptable delta in loss value between C-steps.</span>
+<span class="sd">                               If current loss  -  previous loss &lt;= tolerance, model is converged.</span>
+<span class="sd">                               Defaults to 1e-15.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_initial_subsets</span> <span class="o">=</span> <span class="n">n_initial_subsets</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_initial_c_steps</span> <span class="o">=</span> <span class="n">n_initial_c_steps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_best_models</span> <span class="o">=</span> <span class="n">n_best_models</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reweighting</span> <span class="o">=</span> <span class="n">reweighting</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span> <span class="o">=</span> <span class="n">tolerance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span> <span class="o">=</span> <span class="n">random_state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;FastLTS&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FastLTSRegressor.fit">
+<a class="viewcode-back" href="../../../api/robpy.regression.html#robpy.regression.lts.FastLTSRegressor.fit">[docs]</a>
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
+        <span class="n">initial_weights</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">verbosity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FastLTSRegressor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the model to the data</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X (np.ndarray): Training features</span>
+<span class="sd">            y (np.ndarray): Training labels</span>
+<span class="sd">            initial_weights (Optional[np.ndarray], optional): Optionally pass fixed initial weights,</span>
+<span class="sd">                            in case of n_initial_subsets &gt; 1, this means all models start</span>
+<span class="sd">                            from the same initial weights.</span>
+<span class="sd">                            There is therefore no benefit from setting n_initial_subsets &gt; 1</span>
+<span class="sd">                            Defaults to None.</span>
+<span class="sd">            verbosity (int, optional): [description]. Defaults to logging.INFO.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The fitted FastLTS object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">verbosity</span><span class="p">)</span>
+
+        <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">_convert_input_to_array</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">&lt;</span> <span class="mf">0.5</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;alpha must be between 0.5 and 1, but received </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Applying </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_initial_c_steps</span><span class="si">}</span><span class="s2"> initial c-steps &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_initial_subsets</span><span class="si">}</span><span class="s2"> initial subsets&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">lr_models</span><span class="p">,</span> <span class="n">losses</span><span class="p">,</span> <span class="n">h_subsets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_initial_C_steps</span><span class="p">(</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">initial_weights</span><span class="o">=</span><span class="n">initial_weights</span><span class="p">,</span> <span class="n">verbosity</span><span class="o">=</span><span class="n">verbosity</span>
+        <span class="p">)</span>
+        <span class="n">best_model_idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">losses</span><span class="p">)[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_best_models</span><span class="p">]</span>
+        <span class="n">best_model</span><span class="p">,</span> <span class="n">best_loss</span><span class="p">,</span> <span class="n">best_h_subset</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">lr_models</span><span class="p">[</span><span class="n">best_model_idxs</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+            <span class="n">losses</span><span class="p">[</span><span class="n">best_model_idxs</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+            <span class="n">h_subsets</span><span class="p">[</span><span class="n">best_model_idxs</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Performing final C-steps on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_best_models</span><span class="si">}</span><span class="s2"> best models&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">model_idx</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">best_model_idxs</span><span class="p">,</span> <span class="n">disable</span><span class="o">=</span><span class="n">verbosity</span> <span class="o">&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">):</span>
+            <span class="p">(</span>
+                <span class="n">current_model</span><span class="p">,</span>
+                <span class="n">current_h_subset</span><span class="p">,</span>
+                <span class="n">current_loss</span><span class="p">,</span>
+                <span class="n">_</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_C_steps_untill_convergence</span><span class="p">(</span>
+                <span class="n">lr_models</span><span class="p">[</span><span class="n">model_idx</span><span class="p">],</span> <span class="n">losses</span><span class="p">[</span><span class="n">model_idx</span><span class="p">],</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">current_loss</span> <span class="o">&lt;</span> <span class="n">best_loss</span><span class="p">:</span>
+                <span class="n">best_loss</span> <span class="o">=</span> <span class="n">current_loss</span>
+                <span class="n">best_model</span> <span class="o">=</span> <span class="n">current_model</span>
+                <span class="n">best_h_subset</span> <span class="o">=</span> <span class="n">current_h_subset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">best_model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_h_subset</span> <span class="o">=</span> <span class="n">best_h_subset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scale</span> <span class="o">=</span> <span class="n">get_correction_factor</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">n</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+            <span class="n">best_loss</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reweighting</span><span class="p">:</span>
+            <span class="n">residuals</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">residuals</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">residuals</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="n">norm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="mf">0.9875</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="p">:],</span> <span class="n">y</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span>
+            <span class="n">new_subset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="n">mask</span><span class="p">]</span>
+            <span class="n">best_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_loss_value</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">new_subset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scale</span> <span class="o">=</span> <span class="n">get_correction_factor_reweighting</span><span class="p">(</span>
+                <span class="n">p</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">n</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span>
+            <span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">best_loss</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="FastLTSRegressor.predict">
+<a class="viewcode-back" href="../../../api/robpy.regression.html#robpy.regression.lts.FastLTSRegressor.predict">[docs]</a>
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">NotFittedError</span>
+
+        <span class="n">X</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_convert_input_to_array</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_apply_initial_C_steps</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">h</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">initial_weights</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">verbosity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">LinearRegression</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform initial c_steps on n_initial_subsets of size n_features + 1</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of models, List of losses and List of h subsets</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">)</span>
+        <span class="n">lr_models</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">losses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">h_subsets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">seed</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span>
+            <span class="nb">enumerate</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_initial_subsets</span><span class="p">),</span> <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">),</span>
+            <span class="n">disable</span><span class="o">=</span><span class="n">verbosity</span> <span class="o">&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+            <span class="n">total</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_initial_subsets</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">lr_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_initial_model</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">seed</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">initial_weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Initializing models with fixed weights </span><span class="si">{</span><span class="n">initial_weights</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;instead of random initializations.&quot;</span>
+                <span class="p">)</span>
+                <span class="n">lr_model</span><span class="o">.</span><span class="n">intercept_</span> <span class="o">=</span> <span class="n">initial_weights</span><span class="p">[[</span><span class="mi">0</span><span class="p">]]</span>
+                <span class="n">lr_model</span><span class="o">.</span><span class="n">coef_</span> <span class="o">=</span> <span class="n">initial_weights</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]</span>
+            <span class="n">h_subset_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_h_subset</span><span class="p">(</span><span class="n">lr_model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_initial_c_steps</span><span class="p">):</span>
+                <span class="n">h_subset_idx</span><span class="p">,</span> <span class="n">lr_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_C_step</span><span class="p">(</span><span class="n">lr_model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+            <span class="c1"># get final residuals</span>
+            <span class="n">losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_loss_value</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">h_subset_idx</span><span class="p">,</span> <span class="n">lr_model</span><span class="p">))</span>
+            <span class="n">lr_models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lr_model</span><span class="p">)</span>
+            <span class="n">h_subsets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">h_subset_idx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lr_models</span><span class="p">,</span> <span class="n">losses</span><span class="p">,</span> <span class="n">h_subsets</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_initial_model</span><span class="p">(</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearRegression</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a Linear Regression model that is fitted on</span>
+<span class="sd">        a random subset of the data of size n_features + 1</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X (np.ndarray): Feature data</span>
+<span class="sd">            y (np.ndarray): Labels</span>
+<span class="sd">            random_state (int, optional): Random seed, will determine the random subset.</span>
+<span class="sd">                Defaults to 42.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            lr_model: A Linear Regression model fitted on a random subset</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_obs</span><span class="p">,</span> <span class="n">n_features</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>  <span class="c1"># n, p</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
+        <span class="n">subset_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">n_obs</span><span class="p">,</span> <span class="n">n_features</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">lr_model</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">subset_idx</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">subset_idx</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">lr_model</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_loss_value</span><span class="p">(</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">h_subset_idx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">LinearRegression</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the Least Trimmed Squared loss for a specific model and h subset</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X (np.ndarray): Features</span>
+<span class="sd">            y (np.ndarray): Labels</span>
+<span class="sd">            h_subset_idx (np.ndarray): Indices of h subset</span>
+<span class="sd">            model (LinearRegression): A trained Linear Regression model</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            mean squared residual of h_subset</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">y_true</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">h_subset_idx</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">h_subset_idx</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">residuals</span> <span class="o">=</span> <span class="n">y_true</span> <span class="o">-</span> <span class="n">y_pred</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">residuals</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">h_subset_idx</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_apply_C_steps_untill_convergence</span><span class="p">(</span>
+        <span class="n">current_model</span><span class="p">:</span> <span class="n">LinearRegression</span><span class="p">,</span>
+        <span class="n">previous_loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">h</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-15</span><span class="p">,</span>
+        <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;FastLTS&quot;</span><span class="p">),</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">LinearRegression</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply c-steps until convergence</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            current_model (LinearRegression): model to start from</span>
+<span class="sd">            previous_loss (float): reference loss value</span>
+<span class="sd">            X (np.ndarray): Training data features</span>
+<span class="sd">            y (np.ndarray): Training data targets</span>
+<span class="sd">            h (int): Number of samples to consider in subset</span>
+<span class="sd">            tolerance (float, optional): min delta in loss between iterations. Defaults to 1e-15.</span>
+<span class="sd">            logger (logging.Logger, optional): logger. Defaults to logging.getLogger(&#39;FastLTS&#39;).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple[LinearRegression, np.ndarray, float, int]:</span>
+<span class="sd">                updated model, h subset indices, final loss value, final iteration idx</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">iteration</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">current_h_subset</span><span class="p">,</span> <span class="n">current_model</span> <span class="o">=</span> <span class="n">FastLTSRegressor</span><span class="o">.</span><span class="n">_apply_C_step</span><span class="p">(</span><span class="n">current_model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+            <span class="n">current_loss</span> <span class="o">=</span> <span class="n">FastLTSRegressor</span><span class="o">.</span><span class="n">_get_loss_value</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">current_h_subset</span><span class="p">,</span> <span class="n">current_model</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Iteration </span><span class="si">{</span><span class="n">iteration</span><span class="si">}</span><span class="s2">: current loss = </span><span class="si">{</span><span class="n">current_loss</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;previous loss = </span><span class="si">{</span><span class="n">previous_loss</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">previous_loss</span> <span class="o">-</span> <span class="n">current_loss</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">tolerance</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">previous_loss</span> <span class="o">=</span> <span class="n">current_loss</span>
+            <span class="n">iteration</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">current_model</span><span class="p">,</span> <span class="n">current_h_subset</span><span class="p">,</span> <span class="n">current_loss</span><span class="p">,</span> <span class="n">iteration</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_h_subset</span><span class="p">(</span>
+        <span class="n">lr_model</span><span class="p">:</span> <span class="n">LinearRegression</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the indices of the h observations with the smallest residuals for a given model</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            lr_model (LinearRegression): A fitted Linear Regression Model</span>
+<span class="sd">            X (np.ndarray): Features</span>
+<span class="sd">            y (np.ndarray): Labels</span>
+<span class="sd">            h (int): Number of observations to include in the subset</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            np.ndarray: Array of indices for the h subset</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">residuals</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">lr_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">residuals</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">())[:</span><span class="n">h</span><span class="p">]</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_apply_C_step</span><span class="p">(</span>
+        <span class="n">lr_model</span><span class="p">:</span> <span class="n">LinearRegression</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">LinearRegression</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply a single C-step</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            h subset indices, fitted lr model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">h_subset_idx</span> <span class="o">=</span> <span class="n">FastLTSRegressor</span><span class="o">.</span><span class="n">_get_h_subset</span><span class="p">(</span><span class="n">lr_model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+        <span class="n">lr_model</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">h_subset_idx</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">h_subset_idx</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">h_subset_idx</span><span class="p">,</span> <span class="n">lr_model</span></div>
+
+
+
+<div class="viewcode-block" id="get_correction_factor">
+<a class="viewcode-back" href="../../../api/robpy.regression.html#robpy.regression.lts.get_correction_factor">[docs]</a>
+<span class="k">def</span> <span class="nf">get_correction_factor</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the small sample correction factor for the scale resulting from LTS regression.</span>
+
+<span class="sd">    References:</span>
+<span class="sd">        Pison, G., Van Aelst, S. &amp; Willems, G. Small sample corrections for LTS and MCD.</span>
+<span class="sd">        Metrika 55, 111–123 (2002). https://doi.org/10.1007/s001840200191</span>
+
+<span class="sd">        https://github.com/cran/robustbase/blob/c4b9d21cfc4beb64653bb2ffba9e549e2dbb98ed/R/ltsReg.R</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">alpha</span> <span class="o">&lt;</span> <span class="mf">0.5</span> <span class="ow">or</span> <span class="n">alpha</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;alpha must be between 0.5 and 1, but received </span><span class="si">{</span><span class="n">alpha</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">p</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># intercept only</span>
+        <span class="n">fp_500_n</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.262024211897096</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="o">**</span><span class="mf">0.604756680630497</span>
+        <span class="n">fp_875_n</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.351584646688712</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="o">**</span><span class="mf">1.01646567502486</span>
+        <span class="k">if</span> <span class="mf">0.5</span> <span class="o">&lt;=</span> <span class="n">alpha</span> <span class="o">&lt;=</span> <span class="mf">0.875</span><span class="p">:</span>
+            <span class="n">fp_alpha_n</span> <span class="o">=</span> <span class="n">fp_500_n</span> <span class="o">+</span> <span class="p">(</span><span class="n">fp_875_n</span> <span class="o">-</span> <span class="n">fp_500_n</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.375</span> <span class="o">*</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># 0.875 &lt; alpha &lt; 1</span>
+            <span class="n">fp_alpha_n</span> <span class="o">=</span> <span class="n">fp_875_n</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">fp_875_n</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.125</span> <span class="o">*</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">0.875</span><span class="p">)</span>
+        <span class="n">fp_alpha_n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">fp_alpha_n</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">fp_500_n</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.630869217886906</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="o">**</span><span class="mf">0.650789250442946</span>
+            <span class="n">fp_875_n</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.565065391014791</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="o">**</span><span class="mf">1.03044199012509</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">coefgqpkwad875</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="p">[</span><span class="o">-</span><span class="mf">0.458580153984614</span><span class="p">,</span> <span class="mf">1.12236071104403</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+                    <span class="p">[</span><span class="o">-</span><span class="mf">0.267178168108996</span><span class="p">,</span> <span class="mf">1.1022478781154</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">coefeqpkwad500</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="p">[</span><span class="o">-</span><span class="mf">0.746945886714663</span><span class="p">,</span> <span class="mf">0.56264937192689</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+                    <span class="p">[</span><span class="o">-</span><span class="mf">0.535478048924724</span><span class="p">,</span> <span class="mf">0.543323462033445</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">y_500</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="o">-</span><span class="n">coefeqpkwad500</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">p</span> <span class="o">**</span> <span class="n">coefeqpkwad500</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]))</span>
+            <span class="n">y_875</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="o">-</span><span class="n">coefgqpkwad875</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">p</span> <span class="o">**</span> <span class="n">coefgqpkwad875</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]))</span>
+            <span class="n">A_500</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">coefeqpkwad500</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="o">**</span><span class="mi">2</span><span class="p">)))</span>
+            <span class="n">coeffic_500</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">A_500</span><span class="p">,</span> <span class="n">y_500</span><span class="p">)</span>
+            <span class="n">A_875</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">coefgqpkwad875</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="o">**</span><span class="mi">2</span><span class="p">)))</span>
+            <span class="n">coeffic_875</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">A_875</span><span class="p">,</span> <span class="n">y_875</span><span class="p">)</span>
+
+            <span class="n">fp_500_n</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">coeffic_500</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">n</span> <span class="o">**</span> <span class="n">coeffic_500</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">fp_875_n</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">coeffic_875</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">n</span> <span class="o">**</span> <span class="n">coeffic_875</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">alpha</span> <span class="o">&lt;=</span> <span class="mf">0.875</span><span class="p">:</span>
+            <span class="n">fp_alpha_n</span> <span class="o">=</span> <span class="n">fp_500_n</span> <span class="o">+</span> <span class="p">(</span><span class="n">fp_875_n</span> <span class="o">-</span> <span class="n">fp_500_n</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.375</span> <span class="o">*</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fp_alpha_n</span> <span class="o">=</span> <span class="n">fp_875_n</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">fp_875_n</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.125</span> <span class="o">*</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">0.875</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">fp_alpha_n</span></div>
+
+
+
+<div class="viewcode-block" id="get_correction_factor_reweighting">
+<a class="viewcode-back" href="../../../api/robpy.regression.html#robpy.regression.lts.get_correction_factor_reweighting">[docs]</a>
+<span class="k">def</span> <span class="nf">get_correction_factor_reweighting</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the small sample correction factor for the scale resulting from LTS regression.</span>
+
+<span class="sd">    References:</span>
+<span class="sd">        Pison, G., Van Aelst, S. &amp; Willems, G. Small sample corrections for LTS and MCD.</span>
+<span class="sd">        Metrika 55, 111–123 (2002). https://doi.org/10.1007/s001840200191</span>
+
+<span class="sd">        https://github.com/cran/robustbase/blob/c4b9d21cfc4beb64653bb2ffba9e549e2dbb98ed/R/ltsReg.R</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">alpha</span> <span class="o">&lt;</span> <span class="mf">0.5</span> <span class="ow">or</span> <span class="n">alpha</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;alpha must be between 0.5 and 1, but received </span><span class="si">{</span><span class="n">alpha</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">p</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># intercept only</span>
+        <span class="n">fp_500_n</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">1.11098143415027</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="o">**</span><span class="mf">1.5182890270453</span>
+        <span class="n">fp_875_n</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.66046776772861</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="o">**</span><span class="mf">0.88939595831888</span>
+        <span class="k">if</span> <span class="mf">0.5</span> <span class="o">&lt;=</span> <span class="n">alpha</span> <span class="o">&lt;=</span> <span class="mf">0.875</span><span class="p">:</span>
+            <span class="n">fp_alpha_n</span> <span class="o">=</span> <span class="n">fp_500_n</span> <span class="o">+</span> <span class="p">(</span><span class="n">fp_875_n</span> <span class="o">-</span> <span class="n">fp_500_n</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.375</span> <span class="o">*</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># 0.875 &lt; alpha &lt; 1</span>
+            <span class="n">fp_alpha_n</span> <span class="o">=</span> <span class="n">fp_875_n</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">fp_875_n</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.125</span> <span class="o">*</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">0.875</span><span class="p">)</span>
+        <span class="n">fp_alpha_n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">fp_alpha_n</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">fp_500_n</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">1.58609654199605</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="o">**</span><span class="mf">1.46340162526468</span>
+            <span class="n">fp_875_n</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.391653958727332</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="o">**</span><span class="mf">1.03167487483316</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">coefgqpkwad875</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="p">[</span><span class="o">-</span><span class="mf">0.474174840843602</span><span class="p">,</span> <span class="mf">1.39681715704956</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+                    <span class="p">[</span><span class="o">-</span><span class="mf">0.276640353112907</span><span class="p">,</span> <span class="mf">1.42543242287677</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">coefeqpkwad500</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="p">[</span><span class="o">-</span><span class="mf">0.773365715932083</span><span class="p">,</span> <span class="mf">2.02013996406346</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+                    <span class="p">[</span><span class="o">-</span><span class="mf">0.337571678986723</span><span class="p">,</span> <span class="mf">2.02037467454833</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">y_500</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="o">-</span><span class="n">coefeqpkwad500</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">p</span> <span class="o">**</span> <span class="n">coefeqpkwad500</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]))</span>
+            <span class="n">y_875</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="o">-</span><span class="n">coefgqpkwad875</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">p</span> <span class="o">**</span> <span class="n">coefgqpkwad875</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]))</span>
+            <span class="n">A_500</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">coefeqpkwad500</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="o">**</span><span class="mi">2</span><span class="p">)))</span>
+            <span class="n">coeffic_500</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">A_500</span><span class="p">,</span> <span class="n">y_500</span><span class="p">)</span>
+            <span class="n">A_875</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">coefgqpkwad875</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="o">**</span><span class="mi">2</span><span class="p">)))</span>
+            <span class="n">coeffic_875</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">A_875</span><span class="p">,</span> <span class="n">y_875</span><span class="p">)</span>
+
+            <span class="n">fp_500_n</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">coeffic_500</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">n</span> <span class="o">**</span> <span class="n">coeffic_500</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">fp_875_n</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">coeffic_875</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">n</span> <span class="o">**</span> <span class="n">coeffic_875</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">alpha</span> <span class="o">&lt;=</span> <span class="mf">0.875</span><span class="p">:</span>
+            <span class="n">fp_alpha_n</span> <span class="o">=</span> <span class="n">fp_500_n</span> <span class="o">+</span> <span class="p">(</span><span class="n">fp_875_n</span> <span class="o">-</span> <span class="n">fp_500_n</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.375</span> <span class="o">*</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fp_alpha_n</span> <span class="o">=</span> <span class="n">fp_875_n</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">fp_875_n</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.125</span> <span class="o">*</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">0.875</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">fp_alpha_n</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, STAN-Uantwerp.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -111,8 +111,11 @@
 <a class="viewcode-back" href="../../../api/robpy.utils.html#robpy.utils.median.weighted_median">[docs]</a>
 <span class="k">def</span> <span class="nf">weighted_median</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Computes a weighted median. Based on [Time-efficient algorithms for two highly robust estimators</span>
-<span class="sd">    of scale, Christophe Croux and Peter J. Rousseeuw (1992)]</span>
+<span class="sd">    Computes a weighted median.</span>
+
+<span class="sd">    References:</span>
+<span class="sd">        Time-efficient algorithms for two highly robust estimators</span>
+<span class="sd">        of scale, Christophe Croux and Peter J. Rousseeuw (1992)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
     <span class="n">wrest</span> <span class="o">=</span> <span class="mi">0</span>

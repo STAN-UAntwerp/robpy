@@ -8,7 +8,7 @@ def stahel_donoho(X: np.ndarray, n_points: int = 2, n_dir: int = 250) -> np.ndar
 
     Args:
         X (np.ndarray): data matric of shape (n_obs, n_features)
-        n_points: number of points to determine the hyperplane. Defaults to 2.
+        n_points (int, optional): number of points to determine the hyperplane. Defaults to 2.
         n_dir (int, optional): number of random directions to consider. Defaults to 250.
 
     Returns:

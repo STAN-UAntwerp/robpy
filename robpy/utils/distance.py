@@ -14,7 +14,7 @@ def mahalanobis_distance(
         covariance (np.ndarray): the scatter estimator of the data
 
     Returns:
-        distances: An array of Mahalanobis distances for each data vector.
+        np.ndarray: an array of Mahalanobis distances for each data vector.
     """
     if isinstance(data, pd.DataFrame):
         data = data.values

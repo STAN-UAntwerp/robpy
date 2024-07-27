@@ -94,7 +94,7 @@
 <span class="sd">        covariance (np.ndarray): the scatter estimator of the data</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        distances: An array of Mahalanobis distances for each data vector.</span>
+<span class="sd">        np.ndarray: an array of Mahalanobis distances for each data vector.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">values</span>

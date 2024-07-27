@@ -28,8 +28,11 @@ def l1median(X: np.ndarray) -> float:
 
 def weighted_median(X: np.ndarray, weights: np.ndarray) -> float:
     """
-    Computes a weighted median. Based on [Time-efficient algorithms for two highly robust estimators
-    of scale, Christophe Croux and Peter J. Rousseeuw (1992)]
+    Computes a weighted median.
+
+    References:
+        Time-efficient algorithms for two highly robust estimators
+        of scale, Christophe Croux and Peter J. Rousseeuw (1992)
     """
     n = len(X)
     wrest = 0

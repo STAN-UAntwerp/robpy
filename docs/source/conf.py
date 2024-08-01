@@ -27,6 +27,7 @@ extensions = [
 ]
 
 templates_path = ["_templates"]
+html_static_path = []
 exclude_patterns = []
 
 autoclass_content = "both"

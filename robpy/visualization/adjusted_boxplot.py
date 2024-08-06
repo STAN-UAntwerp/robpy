@@ -59,7 +59,7 @@ def adjusted_boxplot(
         np.hstack(
             [
                 np.min(X, axis=0).reshape(-1, 1),
-                (q1s - 1.5 * np.exp(-3.5 * mcs) * (q3s - q1s)).reshape(-1, 1),
+                (q1s - 1.5 * np.exp(np.where(mcs >= 0, -4, -3) * mcs) * (q3s - q1s)).reshape(-1, 1),
             ]
         ),
         axis=1,
@@ -68,7 +68,7 @@ def adjusted_boxplot(
         np.hstack(
             [
                 np.max(X, axis=0).reshape(-1, 1),
-                (q3s + 1.5 * np.exp(4 * mcs) * (q3s - q1s)).reshape(-1, 1),
+                (q3s + 1.5 * np.exp(np.where(mcs >= 0, 3, 4) * mcs) * (q3s - q1s)).reshape(-1, 1),
             ]
         ),
         axis=1,

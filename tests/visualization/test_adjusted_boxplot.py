@@ -30,9 +30,9 @@ def test_adjusted_boxplot_multiple_columns():
     # then
     assert len(boxplots) == ncols
     assert boxplots[0].lower_whisker == pytest.approx(0.051133497)
-    assert boxplots[0].upper_whisker == pytest.approx(9.960765645)
-    assert boxplots[1].lower_whisker == pytest.approx(0.125241032)
-    assert boxplots[1].upper_whisker == pytest.approx(12.67247138)
+    assert boxplots[0].upper_whisker == pytest.approx(7.726035291)
+    assert boxplots[1].lower_whisker == pytest.approx(0.21408484)
+    assert boxplots[1].upper_whisker == pytest.approx(12.6724713)
 
 
 def test_adjusted_boxplot_plots():
@@ -48,4 +48,4 @@ def test_adjusted_boxplot_plots():
     # then
     assert len(list(ax.get_lines())) == ncols * 7  # 7 lines per boxplot
     assert ax.get_lines()[3].get_data()[1][0] == pytest.approx(0.051133497)
-    assert ax.get_lines()[4].get_data()[1][0] == pytest.approx(9.960765645)
+    assert ax.get_lines()[4].get_data()[1][0] == pytest.approx(7.726035291)

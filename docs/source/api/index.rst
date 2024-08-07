@@ -12,4 +12,5 @@ Robpy
    robpy.regression
    robpy.univariate
    robpy.utils
+   robpy.visualization
 

@@ -22,6 +22,7 @@ def adjusted_boxplot(
     X: np.ndarray | pd.Series | pd.DataFrame,
     plot: bool = True,
     ax: Axes | None = None,
+    figsize: tuple[int, int] = (6, 6),
     **bxp_kwargs,
 ) -> list[Boxplot]:
     """Calculate and visualize an adjusted boxplot as described in Huber and Vandervieren (2004)
@@ -81,7 +82,7 @@ def adjusted_boxplot(
 
     if plot:
         if ax is None:
-            _, ax = plt.subplots(1, 1)
+            _, ax = plt.subplots(1, 1, figsize=figsize)
         bxp_stats = [
             {
                 "med": m,

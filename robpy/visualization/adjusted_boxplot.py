@@ -32,6 +32,7 @@ def adjusted_boxplot(
         plot (bool, optional): Whether to plot the boxplot. Defaults to True.
         ax (Axes, optional): The matplotlib axes to plot the boxplot.
           If None, a new figure and axes will be created. Defaults to None.
+        figsize (tuple[int, int], optional): Size of the plot. Defaults to (6,6).
         bxp_kwargs (optional): Additional keyword arguments to pass to
           `matplotlib.axes.Axes.bxp`.
 

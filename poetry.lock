@@ -1745,6 +1745,25 @@ docs = ["myst-parser", "pydata-sphinx-theme", "sphinx", "sphinxcontrib-github-al
 test = ["pep440", "pre-commit", "pytest", "testpath"]
 
 [[package]]
+name = "nbsphinx"
+version = "0.9.5"
+description = "Jupyter Notebook Tools for Sphinx"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "nbsphinx-0.9.5-py3-none-any.whl", hash = "sha256:d82f71084425db1f48e72515f15c25b4de8652ceaab513ee462ac05f1b8eae0a"},
+    {file = "nbsphinx-0.9.5.tar.gz", hash = "sha256:736916e7b0dab28fc904f4a9ae3b53a9a50c29fccc6329c052fcc7485abcf2b7"},
+]
+
+[package.dependencies]
+docutils = ">=0.18.1"
+jinja2 = "*"
+nbconvert = ">=5.3,<5.4 || >5.4"
+nbformat = "*"
+sphinx = ">=1.8"
+traitlets = ">=5"
+
+[[package]]
 name = "nest-asyncio"
 version = "1.5.8"
 description = "Patch asyncio to allow nested event loops"
@@ -3393,4 +3412,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "0847edb44e0013fe8eaa7bf5f5a0a08fe288cd218988b3b27cb562e92162feb1"
+content-hash = "9b3a23fa6f56f9038ab7b369f491c7a87446e31fb9225bec04e63914322f9c94"

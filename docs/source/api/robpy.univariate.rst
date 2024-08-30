@@ -40,3 +40,10 @@ Tau Estimator
    :members:
    :undoc-members:
    :show-inheritance:
+
+Adjusted Boxplot
+---------------------
+.. automodule:: robpy.univariate.adjusted_boxplot
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import matplotlib.pyplot as plt
-from robpy.visualization import adjusted_boxplot
+from robpy.univariate import adjusted_boxplot
 
 
 def test_adjusted_boxplot_single_column():

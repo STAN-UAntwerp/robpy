@@ -7,3 +7,4 @@ from robpy.univariate.onestep_m import (
     HuberOneStepMEstimator,
     CellwiseOneStepMEstimator,
 )
+from robpy.univariate.adjusted_boxplot import adjusted_boxplot

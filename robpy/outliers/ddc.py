@@ -3,6 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.colors
+import scipy.stats as stats
 
 from matplotlib.axes import Axes
 from sklearn.base import OutlierMixin
@@ -147,7 +148,7 @@ class DDCEstimator(OutlierMixin):
         figsize: tuple[int, int] = (7, 10),
         row_zoom: tuple[int, int] | pd.Index | None = None,
         col_zoom: tuple[int, int] | pd.Index | None = None,
-        vmax_clip: int = 10,
+        vmax_clip: float = np.sqrt(stats.chi2.ppf(0.999, df=1)),
         cmap: str | matplotlib.colors.Colormap = "custom",
     ) -> Axes:
         """Visualize the standardized residuals of the DDC model as a heatmap.
@@ -164,7 +165,7 @@ class DDCEstimator(OutlierMixin):
                 Defaults to None.
             col_zoom (tuple[int, int] | pd.Index | None, optional):
                 Similar to row_zoom but for columns. Defaults to None.
-            vmax_clip (int): standardized absolute residuals larger than vmax will get the darkest
+            vmax_clip (float): standardized absolute residuals larger than vmax will get the darkest
                 color and hence get clipped
             cmap (str | matplotlib.colors.Colormap, optional): matplotlib colormap or string, maps
                 the data to the color space.

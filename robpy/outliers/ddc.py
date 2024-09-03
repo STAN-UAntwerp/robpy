@@ -17,7 +17,7 @@ def get_custom_cmap(vmax_clip: int):
     norm = matplotlib.colors.Normalize(-vmax_clip, vmax_clip)
     colors = [
         [norm(-vmax_clip), "#4652a3"],
-        [norm(-(vmax_clip - 2.5) / 2), "#8d6d8c"],
+        [norm(-(vmax_clip + 2.5) / 2), "#8d6d8c"],
         [norm(-2.5), "#f6eb15"],
         [norm(2.5), "#f6eb15"],
         [norm(vmax_clip), "#ec2123"],
@@ -156,9 +156,6 @@ class DDCEstimator(OutlierMixin):
             X (pd.DataFrame): The original data used to fit the model.
             annotate (bool, optional): Whether to annotate the heatmap cells
                 with the original values. Defaults to False.
-            only_color_outliers (bool, optional):
-                If True, all none-outliers will be displayed as having 0 standardized residual.
-                Defaults to False.
             fmt (str, optional): Format to use for annotations. Defaults to ".1f".
             figsize (tuple[int, int], optional): Figure size. Defaults to (7, 10).
             row_zoom (tuple[int, int] | pd.Index | None, optional):
@@ -167,6 +164,10 @@ class DDCEstimator(OutlierMixin):
                 Defaults to None.
             col_zoom (tuple[int, int] | pd.Index | None, optional):
                 Similar to row_zoom but for columns. Defaults to None.
+            vmax_clip (int): standardized absolute residuals larger than vmax will get the darkest
+                color and hence get clipped
+            cmap (str | matplotlib.colors.Colormap, optional): matplotlib colormap or string, maps
+                the data to the color space.
 
         Returns:
             Axes: the matplotlib axes with the heatmap
@@ -203,7 +204,7 @@ class DDCEstimator(OutlierMixin):
             ax=ax,
             vmin=-vmax_clip,
             vmax=vmax_clip,
-            linewidths=1 / len(plot_data) ** 2 * figsize[1] ** 2,
+            linewidths=1 / len(plot_data) * figsize[1] * 0.1,
             linecolor="white",
         )
         return ax

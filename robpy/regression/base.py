@@ -41,7 +41,7 @@ class RobustRegressor(RegressorMixin, BaseEstimator):
         robust_distance: bool = True,
         vertical_outlier_threshold: float = 2.5,
         leverage_threshold_percentile: float = 0.975,
-        figsize: tuple[int, int] = (10, 4),
+        figsize: tuple[int, int] = (4, 4),
         return_data: bool = False,
     ) -> None | tuple[np.ndarray, np.ndarray, np.ndarray, float, float]:
         """Create a diagnostic plot where robust residuals are plotted against the robust

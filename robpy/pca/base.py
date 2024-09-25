@@ -63,7 +63,7 @@ class RobustPCAEstimator(_BasePCA):
     def plot_outlier_map(
         self,
         X: np.ndarray | pd.DataFrame,
-        figsize: tuple[int, int] = (10, 4),
+        figsize: tuple[int, int] = (4, 4),
         return_distances: bool = False,
     ) -> None | tuple[np.ndarray, np.ndarray, float, float]:
         """Plot Orthogonal distances vs Score distances to identify different types of outliers

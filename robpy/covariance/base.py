@@ -61,7 +61,7 @@ class RobustCovarianceEstimator(EmpiricalCovariance):
         return self.correlation_
 
     def distance_distance_plot(
-        self, chi2_percentile: float = 0.975, figsize: tuple[int, int] = (10, 4)
+        self, chi2_percentile: float = 0.975, figsize: tuple[int, int] = (4, 4)
     ):
         if not hasattr(self, "covariance_"):
             raise NotFittedError()

@@ -1,9 +1,15 @@
 [tool.poetry]
 name = "robpy"
-version = "0.1.0"
+version = "0.0.0" # versioning is done by poetry-dynamic-versioning
 description = ""
 authors = ["Thomas Servotte <servottethomas@gmail.com>", "Sarah Leyder <sarah.leyder@uantwerpen.be>"]
 readme = "README.rst"
+
+[tool.poetry-dynamic-versioning]
+enable = true
+style = "pep440"  # Default is pep440, can also use "semver" or others
+vcs = "git"
+source = "tag" # use git tags
 
 [tool.black]
 line-length = 100
@@ -52,10 +58,11 @@ ipykernel = "^6.29.4"
 sphinx = "^7.4.7"
 sphinx-rtd-theme = "^2.0.0"
 nbsphinx = "^0.9.5"
+poetry-dynamic-versioning = {extras = ["plugin"], version = "^1.4.1"}
 
 
 
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"

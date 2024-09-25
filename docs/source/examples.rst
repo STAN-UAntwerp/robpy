@@ -1,3 +1,8 @@
 Examples
 ==========
-TODO: add notebook input/output here
+
+.. nbgallery::
+   :maxdepth: 1
+   
+   notebooks/topgear
+   notebooks/cellmcd

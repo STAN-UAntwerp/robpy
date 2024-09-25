@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.colors
+import scipy.stats as stats
 
 from matplotlib.axes import Axes
 from sklearn.base import OutlierMixin
@@ -10,6 +12,18 @@ from scipy.stats import chi2
 from robpy.univariate import CellwiseOneStepMEstimator
 from robpy.utils.distance import mahalanobis_distance
 from robpy.univariate.base import RobustScaleEstimator
+
+
+def get_custom_cmap(vmax_clip: int):
+    norm = matplotlib.colors.Normalize(-vmax_clip, vmax_clip)
+    colors = [
+        [norm(-vmax_clip), "#4652a3"],
+        [norm(-(vmax_clip + 2.5) / 2), "#8d6d8c"],
+        [norm(-2.5), "#f6eb15"],
+        [norm(2.5), "#f6eb15"],
+        [norm(vmax_clip), "#ec2123"],
+    ]
+    return matplotlib.colors.LinearSegmentedColormap.from_list("", colors)
 
 
 class DDCEstimator(OutlierMixin):
@@ -130,13 +144,12 @@ class DDCEstimator(OutlierMixin):
         self,
         X: pd.DataFrame,
         annotate: bool = False,
-        only_color_outliers: bool = False,
         fmt: str = ".1f",
         figsize: tuple[int, int] = (7, 10),
         row_zoom: tuple[int, int] | pd.Index | None = None,
         col_zoom: tuple[int, int] | pd.Index | None = None,
-        vmax_clip: int = 10,
-        cmap: str = "Spectral",
+        vmax_clip: float = np.sqrt(stats.chi2.ppf(0.999, df=1)),
+        cmap: str | matplotlib.colors.Colormap = "custom",
     ) -> Axes:
         """Visualize the standardized residuals of the DDC model as a heatmap.
 
@@ -144,9 +157,6 @@ class DDCEstimator(OutlierMixin):
             X (pd.DataFrame): The original data used to fit the model.
             annotate (bool, optional): Whether to annotate the heatmap cells
                 with the original values. Defaults to False.
-            only_color_outliers (bool, optional):
-                If True, all none-outliers will be displayed as having 0 standardized residual.
-                Defaults to False.
             fmt (str, optional): Format to use for annotations. Defaults to ".1f".
             figsize (tuple[int, int], optional): Figure size. Defaults to (7, 10).
             row_zoom (tuple[int, int] | pd.Index | None, optional):
@@ -155,19 +165,19 @@ class DDCEstimator(OutlierMixin):
                 Defaults to None.
             col_zoom (tuple[int, int] | pd.Index | None, optional):
                 Similar to row_zoom but for columns. Defaults to None.
+            vmax_clip (float): standardized absolute residuals larger than vmax will get the darkest
+                color and hence get clipped
+            cmap (str | matplotlib.colors.Colormap, optional): matplotlib colormap or string, maps
+                the data to the color space.
 
         Returns:
             Axes: the matplotlib axes with the heatmap
         """
         if not self.is_fitted_:
             raise ValueError("Model not fitted yet.")
+        if cmap == "custom":
+            cmap = get_custom_cmap(vmax_clip)
         plot_data = pd.DataFrame(self.standardized_residuals_, index=X.index, columns=X.columns)
-        if only_color_outliers:
-            plot_data = pd.DataFrame(
-                np.where(self.cellwise_outliers_ | plot_data.isna(), plot_data, 0),
-                index=X.index,
-                columns=X.columns,
-            )
         X_annot = X
         if row_zoom is not None:
             if isinstance(row_zoom, tuple):
@@ -186,7 +196,6 @@ class DDCEstimator(OutlierMixin):
         if annotate:
             annotate = X_annot
         _, ax = plt.subplots(1, 1, figsize=figsize)
-        vmax = min(np.nanmax(np.abs(plot_data)), vmax_clip)
         ax = sns.heatmap(
             plot_data,
             cmap=cmap,
@@ -194,8 +203,10 @@ class DDCEstimator(OutlierMixin):
             cbar_kws={"label": "Standardized residuals"},
             fmt=fmt,
             ax=ax,
-            vmin=-vmax,
-            vmax=vmax,
+            vmin=-vmax_clip,
+            vmax=vmax_clip,
+            linewidths=1 / len(plot_data) * figsize[1] * 0.1,
+            linecolor="white",
         )
         return ax
 

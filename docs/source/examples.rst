@@ -2,6 +2,7 @@ Examples
 ==========
 
 .. nbgallery::
-    :maxdepth: 1
+   :maxdepth: 1
+   
    notebooks/topgear
    notebooks/cellmcd

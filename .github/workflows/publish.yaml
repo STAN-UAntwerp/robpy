@@ -26,6 +26,7 @@ jobs:
     - name: Install dependencies
       run: |
         poetry install
+        poetry self add poetry-dynamic-versioning
 
     - name: Set up Poetry token
       run: |

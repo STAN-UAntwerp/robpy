@@ -7,9 +7,7 @@ readme = "README.rst"
 
 [tool.poetry-dynamic-versioning]
 enable = true
-style = "pep440"  # Default is pep440, can also use "semver" or others
 vcs = "git"
-source = "tag" # use git tags
 
 [tool.black]
 line-length = 100

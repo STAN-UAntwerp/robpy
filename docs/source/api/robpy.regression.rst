@@ -21,16 +21,16 @@ Least Trimmed Squares
    :undoc-members:
    :show-inheritance:
 
-S Estimator 
+S Regression
 ----------------
-.. automodule:: robpy.regression.s_estimator
+.. automodule:: robpy.regression.s
    :members: 
    :undoc-members:
    :show-inheritance:
 
-MM_estimator
+MM Regression
 ----------------
-.. automodule:: robpy.regression.mm_estimator
+.. automodule:: robpy.regression.mm
    :members: 
    :undoc-members:
    :show-inheritance:

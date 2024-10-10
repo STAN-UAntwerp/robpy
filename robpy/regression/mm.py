@@ -6,12 +6,12 @@ import pandas as pd
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LinearRegression
 
-from robpy.regression.base import RobustRegressor, _convert_input_to_array
-from robpy.regression.s_estimator import SEstimator
+from robpy.regression.base import RobustRegression, _convert_input_to_array
+from robpy.regression.s import SRegression
 from robpy.utils.rho import BaseRho, TukeyBisquare
 
 
-class MMEstimator(RobustRegressor):
+class MMRegression(RobustRegression):
     """
     Implementation of MM-regression estimator
 
@@ -21,7 +21,7 @@ class MMEstimator(RobustRegressor):
 
     def __init__(
         self,
-        initial_estimator: RobustRegressor = SEstimator(),
+        initial_estimator: RobustRegression = SRegression(),
         rho: BaseRho = TukeyBisquare(c=3.44),
         max_iterations: int = 500,
         epsilon: float = 1e-7,
@@ -32,7 +32,7 @@ class MMEstimator(RobustRegressor):
         self.epsilon = epsilon
         self.model = None
 
-    def fit(self, X: np.ndarray | pd.DataFrame, y: np.ndarray | pd.Series) -> MMEstimator:
+    def fit(self, X: np.ndarray | pd.DataFrame, y: np.ndarray | pd.Series) -> MMRegression:
         X, y = _convert_input_to_array(X, y)
         self.model = self.initial_estimator.fit(X, y)
         self._scale = self.model.scale

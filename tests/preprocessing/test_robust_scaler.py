@@ -1,6 +1,6 @@
 import numpy as np
 from robpy.preprocessing.scaling import RobustScaler
-from robpy.univariate.mcd import UnivariateMCDEstimator
+from robpy.univariate.mcd import UnivariateMCD
 
 
 def test_robust_scaler_can_handle_multiple_dimensions():
@@ -21,7 +21,7 @@ def test_robust_scaler():
     # given
     np.random.seed(2)
     X = np.random.rand(100, 1)
-    estimator = UnivariateMCDEstimator()
+    estimator = UnivariateMCD()
     scaler = RobustScaler(scale_estimator=estimator)
     # when
     estimator.fit(X.flatten())

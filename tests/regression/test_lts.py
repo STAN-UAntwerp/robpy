@@ -4,7 +4,7 @@ import numpy as np
 
 from sklearn.linear_model import LinearRegression
 
-from robpy.regression.lts import FastLTSRegressor, get_correction_factor
+from robpy.regression.lts import FastLTSRegression, get_correction_factor
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def sample_data():
 def test_fit_predict(sample_data):
     # given
     X, y = sample_data
-    model = FastLTSRegressor(
+    model = FastLTSRegression(
         alpha=0.5, n_initial_subsets=10, n_initial_c_steps=2, n_best_models=5, tolerance=1e-10
     )
     # when
@@ -33,7 +33,7 @@ def test_fit_with_initial_weights(sample_data):
     # given
     X, y = sample_data
     initial_weights = np.ones(3)  # 2 features + intercept
-    model = FastLTSRegressor(
+    model = FastLTSRegression(
         alpha=0.5, n_initial_subsets=10, n_initial_c_steps=2, n_best_models=5, tolerance=1e-10
     )
     # when
@@ -47,7 +47,7 @@ def test_fit_with_initial_weights(sample_data):
 def test_predict_without_fit(sample_data):
     # given
     X, y = sample_data
-    model = FastLTSRegressor(
+    model = FastLTSRegression(
         alpha=0.5, n_initial_subsets=10, n_initial_c_steps=2, n_best_models=5, tolerance=1e-10
     )
     # then
@@ -58,7 +58,7 @@ def test_predict_without_fit(sample_data):
 def test_get_loss_value(sample_data):
     # given
     X, y = sample_data
-    model = FastLTSRegressor()
+    model = FastLTSRegression()
     lr_model = LinearRegression().fit(X, y)
     h_subset = np.arange(10)
     # when
@@ -71,7 +71,7 @@ def test_apply_C_steps_untill_convergence(sample_data):
     # given
     X, y = sample_data
     h = 10
-    model = FastLTSRegressor(alpha=h / len(X))
+    model = FastLTSRegression(alpha=h / len(X))
     lr_model = LinearRegression().fit(X, y)
     previous_loss = model._get_loss_value(X, y, np.arange(h), lr_model)
     # when
@@ -92,7 +92,7 @@ def test_get_h_subset(sample_data):
     # given
     X, y = sample_data
     h = 10
-    model = FastLTSRegressor()
+    model = FastLTSRegression()
     lr_model = LinearRegression().fit(X, y)
 
     # when
@@ -105,7 +105,7 @@ def test_apply_C_step(sample_data):
     # given
     X, y = sample_data
     h = 10
-    model = FastLTSRegressor()
+    model = FastLTSRegression()
     lr_model = LinearRegression().fit(X, y)
     # when
     h_subset, new_lr_model = model._apply_C_step(lr_model, X, y, h=h)

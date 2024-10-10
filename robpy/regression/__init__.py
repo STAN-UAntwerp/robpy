@@ -1,3 +1,3 @@
-from robpy.regression.lts import FastLTSRegressor
-from robpy.regression.mm_estimator import MMEstimator
-from robpy.regression.s_estimator import SEstimator
+from robpy.regression.lts import FastLTSRegression
+from robpy.regression.mm import MMRegression
+from robpy.regression.s import SRegression

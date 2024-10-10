@@ -2,7 +2,7 @@ robpy.pca
 =================
 
 .. automodule:: robpy.pca
-   :members: get_od_cutoff, ROBPCAEstimator, PCALocantoreEstimator
+   :members: get_od_cutoff, ROBPCA, PCALocantore
    :undoc-members:
    :show-inheritance:
 

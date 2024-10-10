@@ -1,14 +1,14 @@
 import numpy as np
 import pytest
 
-from robpy.univariate import QnEstimator
+from robpy.univariate import Qn
 
 
 def test_Qn_sets_scale():
     # given
     X = np.random.rand(1000)
     # when
-    estimator = QnEstimator().fit(X)
+    estimator = Qn().fit(X)
     # then
     assert isinstance(estimator.scale, float)
 
@@ -61,6 +61,6 @@ def test_Qn_sets_scale():
 )
 def test_Qn_calculates_correctly(X, expected_result):
     # when
-    estimate = QnEstimator().fit(X).scale
+    estimate = Qn().fit(X).scale
     # then
     np.testing.assert_almost_equal(estimate, expected_result, decimal=1)

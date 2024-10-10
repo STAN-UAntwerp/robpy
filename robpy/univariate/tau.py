@@ -1,10 +1,10 @@
 import numpy as np
 
-from robpy.univariate.base import RobustScaleEstimator
+from robpy.univariate.base import RobustScale
 from scipy.stats import median_abs_deviation, norm
 
 
-class TauEstimator(RobustScaleEstimator):
+class Tau(RobustScale):
     def __init__(
         self,
         c1: float = 4.5,

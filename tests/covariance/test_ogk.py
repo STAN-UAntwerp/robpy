@@ -1,13 +1,13 @@
 import pytest
 import numpy as np
-from robpy.covariance.ogk import OGKEstimator
+from robpy.covariance.ogk import OGK
 
 
 @pytest.mark.parametrize("n_iterations, reweighting", [(1, False), (2, False), (2, True)])
 def test_calculate_covariance(n_iterations, reweighting):
     # given
     X = np.random.normal(size=(100, 5))  # Example data
-    estimator = OGKEstimator(n_iterations=n_iterations, reweighting=reweighting)
+    estimator = OGK(n_iterations=n_iterations, reweighting=reweighting)
     expected_shape = (X.shape[1], X.shape[1])
 
     # when

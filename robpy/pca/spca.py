@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import numpy as np
 
-from robpy.pca.base import RobustPCAEstimator
+from robpy.pca.base import RobustPCA
 from robpy.utils.median import l1median
 from scipy.stats import median_abs_deviation
 
 
-class PCALocantoreEstimator(RobustPCAEstimator):
+class PCALocantore(RobustPCA):
     def __init__(
         self,
         *,
@@ -27,7 +27,7 @@ class PCALocantoreEstimator(RobustPCAEstimator):
         super().__init__(n_components=n_components)
         self.k_min_var_explained = k_min_var_explained
 
-    def fit(self, X: np.ndarray) -> PCALocantoreEstimator:
+    def fit(self, X: np.ndarray) -> PCALocantore:
         n = len(X)
         self.location_ = l1median(X)
         centered_X = X - self.location_

@@ -75,9 +75,9 @@ def load_telephone(*, as_frame=False):
     Fitting a robust regression
 
     >>> from robpy.datasets import load_telephone
-    >>> from robpy.regression import MMEstimator
+    >>> from robpy.regression import MMRegression
     >>> data = load_telephone()
-    >>> mm = MMEstimator().fit(data.data[:, 0], data.data[:, 1])
+    >>> mm = MMRegression().fit(data.data[:, 0], data.data[:, 1])
     """
     data_file_name = "telephone.csv"
     descr_file_name = "telephone.rst"
@@ -138,9 +138,9 @@ def load_stars(*, as_frame=False):
     Fitting a robust covariance estimator
 
     >>> from robpy.datasets import load_stars
-    >>> from robpy.covariance import FastMCDEstimator
+    >>> from robpy.covariance import FastMCD
     >>> data = load_stars()
-    >>> mcd = FastMCDEstimator().fit(data.data)
+    >>> mcd = FastMCD().fit(data.data)
     """
     data_file_name = "stars.csv"
     descr_file_name = "stars.rst"
@@ -198,9 +198,9 @@ def load_animals(*, as_frame=False):
     Fitting a robust covariance estimator
 
     >>> from robpy.datasets import load_animals
-    >>> from robpy.covariance import FastMCDEstimator
+    >>> from robpy.covariance import FastMCD
     >>> data = load_animals()
-    >>> mcd = FastMCDEstimator().fit(data.data)
+    >>> mcd = FastMCD().fit(data.data)
     """
     data_file_name = "animals.csv"
     descr_file_name = "animals.rst"
@@ -261,10 +261,10 @@ def load_topgear(*, as_frame=False):
     Fitting a robust regression estimator
 
     >>> from robpy.datasets import load_topgear
-    >>> from robpy.regression import FastLTSRegressor
+    >>> from robpy.regression import FastLTSRegression
     >>> data = load_topgear(as_frame=True)
     >>> data.data = data.data.dropna(subset=["Cylinders", "Torque", "TopSpeed", "Price"])
-    >>> lts = FastLTSRegressor().fit(
+    >>> lts = FastLTSRegression().fit(
             data.data[["Cylinders", "Torque", "TopSpeed"]], data.data["Price"]
         )
     """

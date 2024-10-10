@@ -4,7 +4,7 @@ from robpy.utils.general import inverse_submatrix
 
 
 def objective_function(
-    X: np.ndarray, W: np.ndarray, location: np.array, cov: np.ndarray, cov_inv: np.ndarray
+    X: np.ndarray, W: np.ndarray, location: np.ndarray, cov: np.ndarray, cov_inv: np.ndarray
 ) -> float:
     """Calculates the value of the objective function in equation (8) of the CellMCD paper without
     the penalty for a certain X, W, location, covariance and the inverse covariance

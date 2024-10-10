@@ -5,11 +5,11 @@ from sklearn.exceptions import NotFittedError
 from statsmodels.api import WLS, add_constant
 from statsmodels.regression.linear_model import RegressionResultsWrapper
 
-from robpy.regression.base import RobustRegressor, _convert_input_to_array
+from robpy.regression.base import RobustRegression, _convert_input_to_array
 from robpy.utils.rho import BaseRho, TukeyBisquare
 
 
-class SEstimator(RobustRegressor):
+class SRegression(RobustRegression):
     """Fast S algorithm similar to lmrob.S on robustbase
     (https://search.r-project.org/CRAN/refmans/robustbase/html/lmrob.S.html).
     S-estimation was initially described in
@@ -82,7 +82,7 @@ class SEstimator(RobustRegressor):
         self.random_state = random_state
         self.relative_tolerance = relative_tolerance
         self.scale_tolerance = scale_tolerance
-        self.logger = logging.getLogger("S-estimator")
+        self.logger = logging.getLogger("S-regression")
 
     def fit(self, X, y, verbosity=logging.WARNING):
         self.logger.setLevel(verbosity)

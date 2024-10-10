@@ -2,12 +2,12 @@ import numpy as np
 
 from scipy.stats import median_abs_deviation
 
-from robpy.univariate.base import RobustScaleEstimator
+from robpy.univariate.base import RobustScale
 from robpy.utils.rho import BaseRho, Huber, TukeyBisquare
-from robpy.univariate.mcd import UnivariateMCDEstimator
+from robpy.univariate.mcd import UnivariateMCD
 
 
-class OneStepMEstimator(RobustScaleEstimator):
+class OneStepM(RobustScale):
     def __init__(
         self,
         loc_rho: BaseRho,
@@ -75,7 +75,7 @@ class OneStepMEstimator(RobustScaleEstimator):
         return self
 
 
-class HuberOneStepMEstimator(OneStepMEstimator):
+class HuberOneStepM(OneStepM):
     def __init__(self):
         """
         Implementation of Huber M-estimator with 1 step: location and scale
@@ -86,7 +86,7 @@ class HuberOneStepMEstimator(OneStepMEstimator):
         super().__init__(loc_rho=Huber(b=1.5), scale_rho=Huber(b=1.5), delta=0.7784655)
 
 
-class CellwiseOneStepMEstimator(OneStepMEstimator):
+class CellwiseOneStepM(OneStepM):
     def __init__(self):
         """
         Implementation of the single step M estimator (robLoc and robScale) proposed in
@@ -100,7 +100,7 @@ class CellwiseOneStepMEstimator(OneStepMEstimator):
         super().__init__(loc_rho=TukeyBisquare(c=3), scale_rho=Huber(b=2.5), delta=0.845)
 
 
-class OneStepWrappingEstimator(RobustScaleEstimator):
+class OneStepWrapping(RobustScale):
     def __init__(self):
         """
         [analoguous to estLocScale {cellWise}: type ="wrap"
@@ -108,7 +108,7 @@ class OneStepWrappingEstimator(RobustScaleEstimator):
         """
         super().__init__()
 
-    def _calculate(self, X: np.array):
+    def _calculate(self, X: np.ndarray):
         """
         Args:
             X (np.ndarray):
@@ -116,7 +116,7 @@ class OneStepWrappingEstimator(RobustScaleEstimator):
         """
 
         # initial estimates: univariate MCD
-        initial_estimates = UnivariateMCDEstimator().fit(X)
+        initial_estimates = UnivariateMCD().fit(X)
 
         # one step M estimator for location using hyperbolic tangent weight function:
         X_standardized = (X - initial_estimates.location) / initial_estimates.scale

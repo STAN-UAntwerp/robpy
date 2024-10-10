@@ -3,12 +3,12 @@ from __future__ import annotations
 import numpy as np
 
 from sklearn.decomposition import PCA
-from robpy.pca.base import RobustPCAEstimator, get_od_cutoff
+from robpy.pca.base import RobustPCA, get_od_cutoff
 from robpy.utils.outlyingness import stahel_donoho
-from robpy.covariance import FastMCDEstimator
+from robpy.covariance import FastMCD
 
 
-class ROBPCAEstimator(RobustPCAEstimator):
+class ROBPCA(RobustPCA):
     def __init__(
         self,
         *,
@@ -45,7 +45,7 @@ class ROBPCAEstimator(RobustPCAEstimator):
         self.alpha = alpha
         self.final_MCD_step = final_MCD_step
 
-    def fit(self, X: np.ndarray) -> ROBPCAEstimator:
+    def fit(self, X: np.ndarray) -> ROBPCA:
         # step 1: singular value decomposition = applying standard PCA
         pca = PCA()
         X = pca.fit_transform(X)
@@ -77,7 +77,7 @@ class ROBPCAEstimator(RobustPCAEstimator):
         self.components_ = eigvecs_v[:, sorted_eig_v_idx[:k]]
         if self.final_MCD_step and k > 1:
             # step 5: final MCD step
-            mcd = FastMCDEstimator().fit(self.transform(X))
+            mcd = FastMCD().fit(self.transform(X))
             _, eigvecs_mcd = np.linalg.eigh(mcd.covariance)
             k = min(k, np.linalg.matrix_rank(mcd.covariance, hermitian=True))
             self.components_ = self.components_ @ np.flip(eigvecs_mcd[:, -k:], axis=1)

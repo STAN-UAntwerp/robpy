@@ -1,10 +1,10 @@
 import numpy as np
 
 from robpy.preprocessing.utils import wrapping_transformation
-from robpy.covariance.base import RobustCovarianceEstimator
+from robpy.covariance.base import RobustCovariance
 
 
-class WrappingCovarianceEstimator(RobustCovarianceEstimator):
+class WrappingCovariance(RobustCovariance):
     """Covariance estimator based on the wrapping function proposed in
     Jakob Raymaekers & Peter J. Rousseeuw (2021)
 

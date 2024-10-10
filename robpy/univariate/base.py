@@ -11,7 +11,7 @@ class LocationOrScaleEstimator(Protocol):
         ...
 
 
-class RobustScaleEstimator(ABC):
+class RobustScale(ABC):
     def __init__(self, *, can_handle_nan: bool = False):
         """Base class for robust univariate scale estimators
 
@@ -23,7 +23,7 @@ class RobustScaleEstimator(ABC):
         """
         self.can_handle_nan = can_handle_nan
 
-    def fit(self, X: np.ndarray, ignore_nan: bool = False) -> RobustScaleEstimator:
+    def fit(self, X: np.ndarray, ignore_nan: bool = False) -> RobustScale:
         if len(X.shape) != 1:
             raise ValueError(
                 f"X must be univariate, but received a matrix with dimensions {X.shape}"

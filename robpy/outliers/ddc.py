@@ -9,12 +9,12 @@ from matplotlib.axes import Axes
 from sklearn.base import OutlierMixin
 from scipy.stats import chi2
 
-from robpy.univariate import CellwiseOneStepMEstimator
+from robpy.univariate import CellwiseOneStepM
 from robpy.utils.distance import mahalanobis_distance
-from robpy.univariate.base import RobustScaleEstimator
+from robpy.univariate.base import RobustScale
 
 
-def get_custom_cmap(vmax_clip: int):
+def get_custom_cmap(vmax_clip: float):
     norm = matplotlib.colors.Normalize(-vmax_clip, vmax_clip)
     colors = [
         [norm(-vmax_clip), "#4652a3"],
@@ -26,12 +26,12 @@ def get_custom_cmap(vmax_clip: int):
     return matplotlib.colors.LinearSegmentedColormap.from_list("", colors)
 
 
-class DDCEstimator(OutlierMixin):
+class DDC(OutlierMixin):
     def __init__(
         self,
         chi2_quantile: float = 0.99,
         min_correlation: float = 0.5,
-        scale_estimator: RobustScaleEstimator = CellwiseOneStepMEstimator(),
+        scale_estimator: RobustScale = CellwiseOneStepM(),
     ):
         """Implementation of the Detecting Deviating Cells (DDC) algorithm.
 
@@ -41,8 +41,8 @@ class DDCEstimator(OutlierMixin):
               Default is 0.99.
             min_correlation (float, optional): Minimum correlation between variables to consider
               them
-            scale_estimator (RobustScaleEstimator, optional) : robust scale estimator to scale the
-              initial data with. Defaults to CellwiseOneStepMEstimator().
+            scale_estimator (RobustScale, optional) : robust scale estimator to scale the
+              initial data with. Defaults to CellwiseOneStepM().
 
         References:
             Rousseeuw, P. J., & Bossche, W. V. D. (2018). Detecting Deviating Data Cells.
@@ -91,7 +91,7 @@ class DDCEstimator(OutlierMixin):
         self.raw_residuals_ = Z.values - self.predictions_
         self.residual_scales_ = np.array(
             [
-                CellwiseOneStepMEstimator()
+                CellwiseOneStepM()
                 .fit(self.raw_residuals_[:, i][~np.isnan(self.raw_residuals_[:, i])])
                 .scale
                 for i in range(X.shape[1])
@@ -101,7 +101,7 @@ class DDCEstimator(OutlierMixin):
         self.cellwise_outliers_ = np.abs(self.standardized_residuals_) > self.cutoff
         # step 7: rowwise outliers
         self.raw_t_values_ = np.nanmean(chi2.cdf(self.standardized_residuals_**2, df=1), axis=1)
-        est = CellwiseOneStepMEstimator().fit(self.raw_t_values_)
+        est = CellwiseOneStepM().fit(self.raw_t_values_)
         self.standardized_t_values_ = (self.raw_t_values_ - est.location) / est.scale
         self.row_outliers_ = self.standardized_t_values_ > self.cutoff
         self.is_fitted_ = True
@@ -148,7 +148,7 @@ class DDCEstimator(OutlierMixin):
         figsize: tuple[int, int] = (7, 10),
         row_zoom: tuple[int, int] | pd.Index | None = None,
         col_zoom: tuple[int, int] | pd.Index | None = None,
-        vmax_clip: float = np.sqrt(stats.chi2.ppf(0.999, df=1)),
+        vmax_clip: float = float(np.sqrt(stats.chi2.ppf(0.999, df=1))),
         cmap: str | matplotlib.colors.Colormap = "custom",
     ) -> Axes:
         """Visualize the standardized residuals of the DDC model as a heatmap.
@@ -242,8 +242,8 @@ class DDCEstimator(OutlierMixin):
                 xy_corr = np.clip(
                     (
                         (
-                            CellwiseOneStepMEstimator().fit(x + y).scale ** 2
-                            - CellwiseOneStepMEstimator().fit(x - y).scale ** 2
+                            CellwiseOneStepM().fit(x + y).scale ** 2
+                            - CellwiseOneStepM().fit(x - y).scale ** 2
                         )
                         / 4
                     ),
@@ -262,7 +262,7 @@ class DDCEstimator(OutlierMixin):
             return 0
         init_slope = np.median(y[x != 0] / x[x != 0])
         residuals = y - init_slope * x
-        r_cutoff = self.cutoff * CellwiseOneStepMEstimator().fit(residuals).scale
+        r_cutoff = self.cutoff * CellwiseOneStepM().fit(residuals).scale
         mask = np.abs(residuals) <= r_cutoff
 
         return np.linalg.lstsq(x[mask].reshape(-1, 1), y[mask], rcond=None)[0][0]

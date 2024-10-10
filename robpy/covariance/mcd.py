@@ -6,12 +6,12 @@ from dataclasses import dataclass
 from scipy.linalg import sqrtm
 from scipy.stats import chi2, gamma, rankdata, norm
 
-from robpy.covariance.base import RobustCovarianceEstimator
+from robpy.covariance.base import RobustCovariance
 from robpy.utils.distance import mahalanobis_distance
 from robpy.utils.logging import get_logger
-from robpy.univariate.qn import QnEstimator
-from robpy.covariance.ogk import OGKEstimator
-from robpy.univariate.tau import TauEstimator
+from robpy.univariate.qn import Qn
+from robpy.covariance.ogk import OGK
+from robpy.univariate.tau import Tau
 
 
 @dataclass
@@ -23,7 +23,7 @@ class HSubset:
     n_c_steps: int = 0
 
 
-class FastMCDEstimator(RobustCovarianceEstimator):
+class FastMCD(RobustCovariance):
     def __init__(
         self,
         *,
@@ -81,7 +81,7 @@ class FastMCDEstimator(RobustCovarianceEstimator):
         self.tolerance = tolerance
         self.correct_covariance = correct_covariance
         self.reweighting = reweighting
-        self.logger = get_logger("FastMCDEstimator", level=verbosity)
+        self.logger = get_logger("FastMCD", level=verbosity)
         self.verbosity = verbosity
 
     def calculate_covariance(self, X) -> np.ndarray:
@@ -242,7 +242,7 @@ class FastMCDEstimator(RobustCovarianceEstimator):
         ]
 
 
-class DetMCDEstimator(RobustCovarianceEstimator):
+class DetMCD(RobustCovariance):
     def __init__(
         self,
         *,
@@ -281,7 +281,7 @@ class DetMCDEstimator(RobustCovarianceEstimator):
         self.tolerance = tolerance
         self.correct_covariance = correct_covariance
         self.reweighting = reweighting
-        self.logger = get_logger("DetMCDEstimator", level=verbosity)
+        self.logger = get_logger("DetMCD", level=verbosity)
         self.verbosity = verbosity
 
     def calculate_covariance(self, X: np.ndarray) -> np.ndarray:
@@ -341,21 +341,21 @@ class DetMCDEstimator(RobustCovarianceEstimator):
 
     def _Qn_scale(self, X: np.ndarray, axis=0):
         if X.ndim == 1:
-            return QnEstimator().fit(X).scale
+            return Qn().fit(X).scale
         elif axis == 0:
-            return [QnEstimator().fit(col).scale for col in X.T]
+            return [Qn().fit(col).scale for col in X.T]
         elif axis == 1:
-            return [QnEstimator().fit(col).scale for col in X]
+            return [Qn().fit(col).scale for col in X]
         else:
             raise ValueError(f"axis {axis} not supported")
 
     def _tau_scale(self, X: np.ndarray, axis=0):
         if X.ndim == 1:
-            return TauEstimator().fit(X).scale
+            return Tau().fit(X).scale
         elif axis == 0:
-            return [TauEstimator().fit(col).scale for col in X.T]
+            return [Tau().fit(col).scale for col in X.T]
         elif axis == 1:
-            return [TauEstimator().fit(col).scale for col in X]
+            return [Tau().fit(col).scale for col in X]
         else:
             raise ValueError(f"axis {axis} not supported")
 
@@ -371,7 +371,7 @@ class DetMCDEstimator(RobustCovarianceEstimator):
         S4 = np.dot((Z * w[:, np.newaxis]).T, (Z * w[:, np.newaxis])) / n
         idx = np.argsort(znorm)[: math.ceil(n / 2)]
         S5 = np.cov(Z[idx, :], rowvar=False)
-        S6 = OGKEstimator(
+        S6 = OGK(
             location_estimator=np.median, scale_estimator=self._Qn_scale, reweighting=False
         ).calculate_covariance(Z)
         estimates_S = [S1, S2, S3, S4, S5, S6]

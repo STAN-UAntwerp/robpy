@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 from abc import abstractmethod
 from sklearn.decomposition._base import _BasePCA
 from scipy.stats import chi2, norm
-from robpy.univariate import UnivariateMCDEstimator
+from robpy.univariate import UnivariateMCD
 
 
-class RobustPCAEstimator(_BasePCA):
+class RobustPCA(_BasePCA):
     def __init__(self, *, n_components: int | None = None):
         """Base class for robust PCA estimators
 
@@ -93,5 +93,5 @@ class RobustPCAEstimator(_BasePCA):
 
 
 def get_od_cutoff(orthogonal_distances: np.ndarray) -> float:
-    mcd = UnivariateMCDEstimator().fit(orthogonal_distances ** (2 / 3))
+    mcd = UnivariateMCD().fit(orthogonal_distances ** (2 / 3))
     return float(mcd.location + mcd.scale * norm.ppf(0.975)) ** (3 / 2)

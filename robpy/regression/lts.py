@@ -9,10 +9,10 @@ from scipy.stats import norm
 from tqdm.auto import tqdm
 from sklearn.linear_model import LinearRegression
 
-from robpy.regression.base import RobustRegressor, _convert_input_to_array
+from robpy.regression.base import RobustRegression, _convert_input_to_array
 
 
-class FastLTSRegressor(RobustRegressor):
+class FastLTSRegression(RobustRegression):
     """
     Implementation of FAST-LTS model based on R implementation of the
     ltsReg method in the robustbase R package
@@ -31,7 +31,7 @@ class FastLTSRegressor(RobustRegressor):
         tolerance: float = 1e-15,
         random_state: int = 42,
     ):
-        """Initialize a FAST LTS regressor
+        """Initialize a FAST LTS regression
 
         Args:
             alpha (float): percentage of data to consider as subset for
@@ -64,7 +64,7 @@ class FastLTSRegressor(RobustRegressor):
         y: np.ndarray | pd.Series,
         initial_weights: np.ndarray | None = None,
         verbosity: int = logging.INFO,
-    ) -> FastLTSRegressor:
+    ) -> FastLTSRegression:
         """Fit the model to the data
 
         Args:
@@ -255,8 +255,10 @@ class FastLTSRegressor(RobustRegressor):
         """
         iteration = 0
         while True:
-            current_h_subset, current_model = FastLTSRegressor._apply_C_step(current_model, X, y, h)
-            current_loss = FastLTSRegressor._get_loss_value(X, y, current_h_subset, current_model)
+            current_h_subset, current_model = FastLTSRegression._apply_C_step(
+                current_model, X, y, h
+            )
+            current_loss = FastLTSRegression._get_loss_value(X, y, current_h_subset, current_model)
             logger.debug(
                 f"Iteration {iteration}: current loss = {current_loss:.3f}, "
                 f"previous loss = {previous_loss:.3f}"
@@ -295,7 +297,7 @@ class FastLTSRegressor(RobustRegressor):
         Returns:
             h subset indices, fitted lr model
         """
-        h_subset_idx = FastLTSRegressor._get_h_subset(lr_model, X, y, h)
+        h_subset_idx = FastLTSRegression._get_h_subset(lr_model, X, y, h)
         lr_model = LinearRegression().fit(X[h_subset_idx], y[h_subset_idx])
         return h_subset_idx, lr_model
 

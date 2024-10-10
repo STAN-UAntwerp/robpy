@@ -2,11 +2,11 @@ import numpy as np
 from scipy.stats import median_abs_deviation, chi2
 
 from robpy.utils.distance import mahalanobis_distance
-from robpy.covariance.base import RobustCovarianceEstimator
+from robpy.covariance.base import RobustCovariance
 from robpy.univariate import LocationOrScaleEstimator
 
 
-class OGKEstimator(RobustCovarianceEstimator):
+class OGK(RobustCovariance):
     def __init__(
         self,
         *,

@@ -3,16 +3,16 @@ import numpy as np
 from matplotlib.axes import Axes
 from scipy.stats import chi2
 from robpy.utils.distance import mahalanobis_distance
-from robpy.univariate.onestep_m import OneStepWrappingEstimator
+from robpy.univariate.onestep_m import OneStepWrapping
 
 
 def annote_outliers(
     ax: Axes,
     row_names,
-    x: np.array,
-    y: np.array,
+    x: np.ndarray,
+    y: np.ndarray,
     h_thresholds: tuple[float, float],
-    v_thresholds: tuple[float, float] = None,
+    v_thresholds: tuple[float, float] | None = None,
 ):
     """Label outlying points (x,y) in a plot with their case name if they exceed a vertical
     or hoizontal threshold.
@@ -37,12 +37,12 @@ def annote_outliers(
 def annote_outliers_ellipse(
     ax: Axes,
     row_names,
-    location: np.array,
+    location: np.ndarray,
     covariance: np.ndarray,
     variable: int,
     second_variable: int,
-    x: np.array,
-    y: np.array,
+    x: np.ndarray,
+    y: np.ndarray,
     quantile: float = 0.99,
 ):
     """Label outlying points (x,y) with their case name if they are outside the tolerance ellipse
@@ -66,7 +66,7 @@ def annote_outliers_ellipse(
         ax.text(xi, yi, name, fontsize=9, ha="center", va="bottom")
 
 
-def draw_ellipse(cov: np.ndarray, center: np.array, ax: Axes, quantile: float):
+def draw_ellipse(cov: np.ndarray, center: np.ndarray, ax: Axes, quantile: float):
     """Get the ellipse for bivariate data given the covariance matrix (for the shape) and the
     location (for the center)."""
 
@@ -79,15 +79,15 @@ def draw_ellipse(cov: np.ndarray, center: np.array, ax: Axes, quantile: float):
     ax.plot(ellipse[:, 0], ellipse[:, 1], linewidth=3, color="darkgray")
 
 
-def get_thresholds(cutoff: float, x: np.array) -> tuple[float, float]:
-    scaler = OneStepWrappingEstimator().fit(x, ignore_nan=True)
+def get_thresholds(cutoff: float, x: np.ndarray) -> tuple[float, float]:
+    scaler = OneStepWrapping().fit(x, ignore_nan=True)
     return (scaler.location - cutoff * scaler.scale, scaler.location + cutoff * scaler.scale)
 
 
 def draw_threshold_lines(
     ax: Axes,
-    h_thresholds: list[float, float],
-    v_thresholds: list[float, float] | None,
+    h_thresholds: list[float],
+    v_thresholds: list[float] | None,
 ):
     for h in h_thresholds:
         ax.axhline(h, color="grey", linestyle="--")

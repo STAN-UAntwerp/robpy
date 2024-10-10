@@ -9,18 +9,18 @@ from sklearn.base import RegressorMixin, BaseEstimator
 from sklearn.exceptions import NotFittedError
 
 from robpy.utils.distance import mahalanobis_distance
-from robpy.covariance import FastMCDEstimator
+from robpy.covariance import FastMCD
 
 logger = logging.getLogger(__name__)
 
 
-class RobustRegressor(RegressorMixin, BaseEstimator):
+class RobustRegression(RegressorMixin, BaseEstimator):
     def __init__(
         self,
     ):
         super().__init__()
 
-    def fit(self, X, y) -> RobustRegressor:
+    def fit(self, X, y) -> RobustRegression:
         raise NotImplementedError
 
     def predict(self, X):
@@ -74,7 +74,7 @@ class RobustRegressor(RegressorMixin, BaseEstimator):
         ).flatten()
 
         if robust_distance:
-            mcd = FastMCDEstimator().fit(X)
+            mcd = FastMCD().fit(X)
             covariance = mcd.covariance_
             location = mcd.location_
         else:

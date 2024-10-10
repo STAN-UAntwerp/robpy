@@ -1,14 +1,14 @@
 import numpy as np
 import pytest
 import math
-from robpy.covariance.cellmcd import CellMCDEstimator
+from robpy.covariance.cellmcd import CellMCD
 
 
 def test_fit_sets_object_attributes():
     # given
     X = np.random.normal(0, 1, [1000, 5])
     # when
-    estimator = CellMCDEstimator()
+    estimator = CellMCD()
     estimator.fit(X)
     eigenvalues = np.linalg.eigvals(estimator.covariance_)
     # then
@@ -24,7 +24,7 @@ def test_large_enough_eigenvalues():
     # given
     X = np.random.normal(0, 1, [1000, 5])
     # when
-    estimator = CellMCDEstimator(min_eigenvalue=1e-5)
+    estimator = CellMCD(min_eigenvalue=1e-5)
     estimator.fit(X)
     eigenvalues = np.linalg.eigvals(estimator.covariance_)
     # then
@@ -44,7 +44,7 @@ def test_estimator_can_handle_different_settings(alpha, quantile, max_c_steps, m
     # given
     X = np.random.normal(0, 1, [1000, 5])
     # when
-    estimator = CellMCDEstimator(
+    estimator = CellMCD(
         alpha=alpha, quantile=quantile, max_c_steps=max_c_steps, min_eigenvalue=min_eigenvalue
     )
     estimator.fit(X)

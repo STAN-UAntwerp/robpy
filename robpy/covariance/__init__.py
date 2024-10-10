@@ -1,6 +1,6 @@
-from robpy.covariance.base import RobustCovarianceEstimator
-from robpy.covariance.mcd import FastMCDEstimator
-from robpy.covariance.wrapping import WrappingCovarianceEstimator
-from robpy.covariance.ogk import OGKEstimator
-from robpy.covariance.kendall import KendallTauEstimator
-from robpy.covariance.cellmcd import CellMCDEstimator
+from robpy.covariance.base import RobustCovariance
+from robpy.covariance.mcd import FastMCD, DetMCD
+from robpy.covariance.wrapping import WrappingCovariance
+from robpy.covariance.ogk import OGK
+from robpy.covariance.kendall import KendallTau
+from robpy.covariance.cellmcd import CellMCD

@@ -1,13 +1,13 @@
 import pytest
 import numpy as np
-from robpy.covariance.mcd import DetMCDEstimator
+from robpy.covariance.mcd import DetMCD
 
 
 def test_fit_sets_object_attributes():
     # given
     X = np.random.rand(100, 2)
     # when
-    estimator = DetMCDEstimator().fit(X)
+    estimator = DetMCD().fit(X)
     # then
     assert hasattr(estimator, "covariance_")
 
@@ -25,7 +25,7 @@ def test_estimator_can_handle_different_settings(h_size, n, p, expected_h_subset
     # given
     X = np.random.rand(n, p)
     # when
-    estimator = DetMCDEstimator(h_size=h_size).fit(X)
+    estimator = DetMCD(h_size=h_size).fit(X)
     # then
     assert hasattr(estimator, "covariance_")
     assert len(estimator.best_subset.indices) == expected_h_subset_size

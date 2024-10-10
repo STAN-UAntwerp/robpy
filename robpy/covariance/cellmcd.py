@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import chi2, median_abs_deviation
 from typing import Literal, Optional
 from robpy.covariance.utils.alter_covariance import truncated_covariance
-from robpy.covariance.base import RobustCovarianceEstimator
+from robpy.covariance.base import RobustCovariance
 from robpy.utils.logging import get_logger
 from robpy.covariance.utils.cellmcd_utils import objective_function
 from robpy.utils.general import inverse_submatrix
@@ -17,12 +17,12 @@ from robpy.covariance.utils.cellmcd_visualization_utils import (
     get_thresholds,
 )
 from robpy.preprocessing.scaling import RobustScaler
-from robpy.univariate.onestep_m import OneStepWrappingEstimator
-from robpy.covariance.initial_ddcw import InitialDDCWEstimator
+from robpy.univariate.onestep_m import OneStepWrapping
+from robpy.covariance.initial_ddcw import InitialDDCW
 from sklearn.exceptions import NotFittedError
 
 
-class CellMCDEstimator(RobustCovarianceEstimator):
+class CellMCD(RobustCovariance):
     def __init__(
         self,
         *,
@@ -68,7 +68,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         self.crit = crit
         self.max_c_steps = max_c_steps
         self.min_eigenvalue = min_eigenvalue
-        self.logger = get_logger("CellMCDEstimator", level=verbosity)
+        self.logger = get_logger("CellMCD", level=verbosity)
         self.verbosity = verbosity
 
     def calculate_covariance(self, X: np.ndarray) -> np.ndarray:
@@ -76,7 +76,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         mads = median_abs_deviation(X, nan_policy="omit", axis=0)
         if np.min(mads) < 1e-8:
             raise ValueError("At least one variable has an almost zero median absolute deviation.")
-        scaler = RobustScaler(scale_estimator=OneStepWrappingEstimator())
+        scaler = RobustScaler(scale_estimator=OneStepWrapping())
         scaler.fit(X, ignore_nan=True)
         X_scaled = scaler.transform(X)
 
@@ -85,7 +85,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         self._check_data(X_scaled)
 
         # Step 2: calculate the initial estimates
-        ddcw = InitialDDCWEstimator(alpha=self.alpha, min_eigenvalue=self.min_eigenvalue)
+        ddcw = InitialDDCW(alpha=self.alpha, min_eigenvalue=self.min_eigenvalue)
         ddcw.fit(X_scaled)
         initial_location = ddcw.location_
         initial_cov = ddcw.covariance_
@@ -109,7 +109,7 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         X_imputed = X.copy()
         X_imputed[W == 0] = predictions[W == 0]
         residuals = (X - predictions) / conditional_stds
-        scaler_residuals = RobustScaler(scale_estimator=OneStepWrappingEstimator())
+        scaler_residuals = RobustScaler(scale_estimator=OneStepWrapping())
         scaler_residuals.fit(residuals, ignore_nan=True)
         residuals = residuals / scaler_residuals.scales_
 
@@ -511,9 +511,9 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         X: np.ndarray,
         predictions: np.ndarray,
         conditional_variances: np.ndarray,
-        row_idx_w: np.array,
-        observed_col_idx: np.array,
-        mu: np.array,
+        row_idx_w: np.ndarray,
+        observed_col_idx: np.ndarray,
+        mu: np.ndarray,
         sigma: np.ndarray,
         sigma_inv: np.ndarray,
     ):
@@ -552,8 +552,8 @@ class CellMCDEstimator(RobustCovarianceEstimator):
         X: np.ndarray,
         predictions: np.ndarray,
         conditional_variances: np.ndarray,
-        row_idx_w: np.array,
-        mu: np.array,
+        row_idx_w: np.ndarray,
+        mu: np.ndarray,
         sigma: np.ndarray,
         sigma_inv: np.ndarray,
     ):

@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from robpy.covariance.mcd import FastMCDEstimator
+from robpy.covariance.mcd import FastMCD
 
 
 def test_fit_sets_object_attributes():
@@ -8,7 +8,7 @@ def test_fit_sets_object_attributes():
     X = np.random.rand(100, 2)
     n_initial_c_steps = 2
     # when
-    estimator = FastMCDEstimator(n_initial_c_steps=n_initial_c_steps).fit(X)
+    estimator = FastMCD(n_initial_c_steps=n_initial_c_steps).fit(X)
     # then
     assert hasattr(estimator, "covariance_")
     assert estimator.best_subset.n_c_steps >= n_initial_c_steps
@@ -29,7 +29,7 @@ def test_estimator_can_handle_different_settings(
     # given
     X = np.random.rand(n, p)
     # when
-    estimator = FastMCDEstimator(h_size=h_size, n_partitions=n_partitions).fit(X)
+    estimator = FastMCD(h_size=h_size, n_partitions=n_partitions).fit(X)
     # then
     assert hasattr(estimator, "covariance_")
     assert len(estimator.best_subset.indices) == expected_h_subset_size

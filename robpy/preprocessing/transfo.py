@@ -9,7 +9,7 @@ from typing import Literal
 from robpy.utils.rho import TukeyBisquare
 from scipy.stats import median_abs_deviation, norm, chi2
 from scipy.optimize import minimize_scalar
-from robpy.univariate import HuberOneStepMEstimator
+from robpy.univariate import HuberOneStepM
 
 
 class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
@@ -278,7 +278,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
                 )
 
         if standardize_too:
-            loc_scale = HuberOneStepMEstimator().fit(xt)
+            loc_scale = HuberOneStepM().fit(xt)
             zt = (xt - loc_scale.location) / loc_scale.scale
         else:
             zt = None
@@ -320,7 +320,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
             xt = (x**my_lambda - 1) / my_lambda
 
         if standardize_too:
-            loc_scale = HuberOneStepMEstimator().fit(xt)
+            loc_scale = HuberOneStepM().fit(xt)
             zt = (xt - loc_scale.location) / loc_scale.scale
         else:
             zt = None
@@ -344,7 +344,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
             xt[~positive_mask] = -((1 - x[~positive_mask]) ** (2 - my_lambda) - 1) / (2 - my_lambda)
 
         if standardize_too:
-            loc_scale = HuberOneStepMEstimator().fit(xt)
+            loc_scale = HuberOneStepM().fit(xt)
             zt = (xt - loc_scale.location) / loc_scale.scale
         else:
             zt = None
@@ -400,7 +400,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
                     ) ** (my_lambda - 1)
 
         if standardize_too:
-            loc_scale = HuberOneStepMEstimator().fit(xt)
+            loc_scale = HuberOneStepM().fit(xt)
             zt = (xt - loc_scale.location) / loc_scale.scale
         else:
             zt = None
@@ -489,7 +489,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         x = x[~np.isnan(x)]
         n = len(x)
 
-        loc_scale = HuberOneStepMEstimator().fit(x)
+        loc_scale = HuberOneStepM().fit(x)
         x = (x - loc_scale.location) / np.where(loc_scale.scale == 0, 1, loc_scale.scale)
 
         theo_quantile = norm.ppf((np.arange(1, n + 1) - 1 / 3) / (n + 1 / 3))

@@ -2,7 +2,7 @@ robpy.outliers
 ======================
 
 .. automodule:: robpy.outliers
-   :members: DDCEstimator
+   :members: DDC
    :undoc-members:
    :show-inheritance:
 

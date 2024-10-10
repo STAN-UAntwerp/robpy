@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from robpy.outliers import DDCEstimator
+from robpy.outliers import DDC
 
 
 def test_ddc_correctly_flags_dummy_data():
@@ -17,7 +17,7 @@ def test_ddc_correctly_flags_dummy_data():
     expected_outliers[4, 0] = True
     expected_outliers[7, 1] = True
     expected_outliers[1, 3] = True
-    ddc = DDCEstimator()
+    ddc = DDC()
     # when
     ddc = ddc.fit(X)
     # then

@@ -114,6 +114,11 @@ class DDC(OutlierMixin):
         Returns:
             np.ndarray: either matrix of shape (n_samples, n_features) with cellwise outliers or
                 of shape (n_samples,) with rowwise outliers
+
+        References:
+            Hubert, M., Rousseeuw, P. J., & Bossche, W. V. D. (2019). MacroPCA: An All-in-one PCA
+            Method Allowing for Missing Values as Well as Cellwise and Rowwise Outliers.
+            Technometrics, 61(4), 459–473. https://doi.org/10.1080/00401706.2018.1562989
         """
         if not self.is_fitted_:
             raise ValueError("Model not fitted yet.")
@@ -122,6 +127,8 @@ class DDC(OutlierMixin):
                 f"Predict can only be called with the same data as fit. "
                 f"Received {X.shape[1]} columns, expected {self.cellwise_outliers_.shape[1]}"
             )
+        if X.select_dtypes(include=np.number).shape != X.shape:
+            raise ValueError("Only numerical data is supported.")
         X = X.replace([np.inf, -np.inf], np.nan)
         # step 1: standardization
         Z = self._standardize(X)

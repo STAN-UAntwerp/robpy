@@ -6,8 +6,8 @@ from sklearn.base import (
     TransformerMixin,
 )
 
-from robpy.univariate.base import RobustScaleEstimator
-from robpy.univariate.mcd import UnivariateMCDEstimator
+from robpy.univariate.base import RobustScale
+from robpy.univariate.mcd import UnivariateMCD
 
 
 class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
@@ -15,7 +15,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        scale_estimator: RobustScaleEstimator = UnivariateMCDEstimator(),
+        scale_estimator: RobustScale = UnivariateMCD(),
         with_centering: bool = True,
         with_scaling: bool = True,
     ):

@@ -1,5 +1,5 @@
 import numpy as np
-from robpy.pca import ROBPCAEstimator
+from robpy.pca import ROBPCA
 
 
 def test_robpca_sets_components():
@@ -9,7 +9,7 @@ def test_robpca_sets_components():
     X = np.random.randn(n, p)
     k = 4
     # when
-    pca = ROBPCAEstimator(n_components=k).fit(X)
+    pca = ROBPCA(n_components=k).fit(X)
     transformed = pca.transform(X)
     projected = pca.project(X)
     # then

@@ -1,10 +1,10 @@
 import numpy as np
 
-from robpy.univariate.base import RobustScaleEstimator
+from robpy.univariate.base import RobustScale
 from scipy.stats import chi2, gamma
 
 
-class UnivariateMCDEstimator(RobustScaleEstimator):
+class UnivariateMCD(RobustScale):
     def __init__(self, h_size: float | int | None = None, consistency_correction: bool = True):
         """
         Implementation of univariate MCD (Hubert & Debruyne, 2009)

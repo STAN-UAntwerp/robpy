@@ -1,5 +1,5 @@
 import numpy as np
-from robpy.pca.spca import PCALocantoreEstimator
+from robpy.pca.spca import PCALocantore
 
 
 def test_spca_sets_components():
@@ -9,7 +9,7 @@ def test_spca_sets_components():
     X = np.random.randn(n, p)
     k = 4
     # when
-    pca = PCALocantoreEstimator(n_components=k).fit(X)
+    pca = PCALocantore(n_components=k).fit(X)
     transformed = pca.transform(X)
     projected = pca.project(X)
     # then

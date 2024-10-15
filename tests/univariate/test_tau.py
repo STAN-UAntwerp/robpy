@@ -1,14 +1,14 @@
 import numpy as np
 import pytest
 
-from robpy.univariate.tau import TauEstimator
+from robpy.univariate.tau import Tau
 
 
 def test_tau_sets_all_attributes():
     # given
     X = np.random.rand(1000)
     # when
-    estimator = TauEstimator().fit(X)
+    estimator = Tau().fit(X)
     # then
     assert isinstance(estimator.location, float)
     assert isinstance(estimator.scale, float)
@@ -62,6 +62,6 @@ def test_tau_sets_all_attributes():
 )
 def test_tau_calculates_correctly(X, expected_result):
     # when
-    estimate = TauEstimator().fit(X).scale
+    estimate = Tau().fit(X).scale
     # then
     np.testing.assert_almost_equal(estimate, expected_result, decimal=1)

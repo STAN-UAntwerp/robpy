@@ -1,17 +1,17 @@
 import numpy as np
 import pandas as pd
 
-from robpy.covariance.base import RobustCovarianceEstimator
+from robpy.covariance.base import RobustCovariance
 from robpy.utils.distance import mahalanobis_distance
 from robpy.covariance.utils.alter_covariance import truncated_covariance, covariance_to_correlation
 from robpy.preprocessing.scaling import RobustScaler
-from robpy.univariate.onestep_m import OneStepWrappingEstimator
-from robpy.outliers.ddc import DDCEstimator
+from robpy.univariate.onestep_m import OneStepWrapping
+from robpy.outliers.ddc import DDC
 from robpy.preprocessing.utils import wrapping_transformation
 from scipy.stats import chi2
 
 
-class InitialDDCWEstimator(RobustCovarianceEstimator):
+class InitialDDCW(RobustCovariance):
     def __init__(
         self,
         *,
@@ -53,23 +53,21 @@ class InitialDDCWEstimator(RobustCovarianceEstimator):
         n, p = X.shape
 
         # DDC with constraint -> imputed and rescaled Zimp:
-        DDC = DDCEstimator(chi2_quantile=0.9, scale_estimator=OneStepWrappingEstimator()).fit(
-            pd.DataFrame(X)
-        )
-        W = np.copy(DDC.cellwise_outliers_)
+        ddc = DDC(chi2_quantile=0.9, scale_estimator=OneStepWrapping()).fit(pd.DataFrame(X))
+        W = np.copy(ddc.cellwise_outliers_)
         flagged_too_many = np.where(np.sum(W, axis=0) / X.shape[0] > 1 - self.alpha)[0]
         for i in flagged_too_many:
-            ordering = np.argsort(np.abs(DDC.standardized_residuals_[:, i]))[::-1]
+            ordering = np.argsort(np.abs(ddc.standardized_residuals_[:, i]))[::-1]
             W[:, i] = [False for _ in range(n)]
             W[ordering[0 : int(n * 0.25)], i] = True
         Zimp = np.copy(X)
-        Zimp[np.logical_or(W, np.isnan(X))] = DDC.impute(
+        Zimp[np.logical_or(W, np.isnan(X))] = ddc.impute(
             pd.DataFrame(X), impute_outliers=True
         ).to_numpy()[np.logical_or(W, np.isnan(X))]
-        Z = (X - DDC.location_) / DDC.scale_
-        Zimp = (Zimp - DDC.location_) / DDC.scale_
+        Z = (X - ddc.location_) / ddc.scale_
+        Zimp = (Zimp - ddc.location_) / ddc.scale_
         Zimp_original = np.copy(Zimp)
-        Zimp = np.delete(Zimp, np.where(DDC.row_outliers_)[0], axis=0)
+        Zimp = np.delete(Zimp, np.where(ddc.row_outliers_)[0], axis=0)
 
         # project data on eigenvectors
         eigvals, eigvecs = np.linalg.eigh(np.cov(Zimp, rowvar=False))
@@ -77,7 +75,7 @@ class InitialDDCWEstimator(RobustCovarianceEstimator):
         Zimp_proj = Zimp @ eigenvectors
 
         # wrapped location and covariance
-        Zimp_proj_scaler = RobustScaler(scale_estimator=OneStepWrappingEstimator()).fit(
+        Zimp_proj_scaler = RobustScaler(scale_estimator=OneStepWrapping()).fit(
             Zimp_proj, ignore_nan=True
         )
         Zimp_proj_scaler.scales_[
@@ -94,7 +92,7 @@ class InitialDDCWEstimator(RobustCovarianceEstimator):
         )
         cov = eigenvectors @ Zimp_proj_wrapped_cov @ eigenvectors.T  # back to original axis system
         cov = covariance_to_correlation(cov)
-        cov = (truncated_covariance(cov, self.min_eigenvalue) * DDC.scale_).T * DDC.scale_
+        cov = (truncated_covariance(cov, self.min_eigenvalue) * ddc.scale_).T * ddc.scale_
 
         # temporary points: delete casewise outliers
         U = np.minimum(np.maximum(Z, -2), 2)
@@ -109,7 +107,7 @@ class InitialDDCWEstimator(RobustCovarianceEstimator):
         Zimp_proj = Zimp @ eigenvectors
 
         # wrapped location and covariance
-        Zimp_proj_scaler = RobustScaler(scale_estimator=OneStepWrappingEstimator()).fit(
+        Zimp_proj_scaler = RobustScaler(scale_estimator=OneStepWrapping()).fit(
             Zimp_proj, ignore_nan=True
         )
         Zimp_proj_scaler.scales_[
@@ -126,8 +124,8 @@ class InitialDDCWEstimator(RobustCovarianceEstimator):
         )
         cov = eigenvectors @ Zimp_proj_wrapped_cov @ eigenvectors.T  # back to original axis system
         cov = covariance_to_correlation(cov)
-        cov = (truncated_covariance(cov, self.min_eigenvalue) * DDC.scale_).T * DDC.scale_
+        cov = (truncated_covariance(cov, self.min_eigenvalue) * ddc.scale_).T * ddc.scale_
 
-        self.location_ = np.array(DDC.location_)
+        self.location_ = np.array(ddc.location_)
 
         return cov

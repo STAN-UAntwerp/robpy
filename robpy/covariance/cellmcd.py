@@ -139,6 +139,7 @@ class CellMCD(RobustCovariance):
             "bivariate",
         ] = "indexplot",
         figsize: tuple[int, int] = (8, 8),
+        annotation_quantile: float | None = None,
     ):
         """
         Function to plot the results of a cellMCD analysis: 5 types of diagnostic plots.
@@ -163,29 +164,49 @@ class CellMCD(RobustCovariance):
             row_names (list of strings, optional): Row_names of the observations if you want
               the outliers annoted with their name.
             figsize (tuple[int,int], optional): Size of the figure. Defaults to (8,8).
+            annotation_quantile (float, optional):
+                the quantile used to draw an imaginary threhsold around the data.
+                Only points outside these thresholds will be annotated. If None, use self.quantile
         """
 
         if not hasattr(self, "covariance_"):
             raise NotFittedError()
 
         fig, ax = plt.subplots(1, 1, figsize=figsize)
-        cutoff = np.sqrt(chi2.ppf(self.quantile, 1))
+        cutoff = float(np.sqrt(chi2.ppf(self.quantile, 1)))
+        annotation_cutoff = (
+            cutoff
+            if annotation_quantile is None
+            else float(np.sqrt(chi2.ppf(annotation_quantile, 1)))
+        )
 
         if plottype == "indexplot":
             x, y = np.arange(self.W.shape[0]), self.residuals[:, variable]
             h_thresholds, v_thresholds = (-cutoff, cutoff), None
+            h_thresholds_annotate, v_thresholds_annotate = (
+                -annotation_cutoff,
+                annotation_cutoff,
+            ), None
             xlabel, ylabel = "index", f"standardized residuals of {variable_name}"
             title = "Indexplot: standardized residuals"
 
         elif plottype == "residuals_vs_variable":
             x, y = self.X[:, variable], self.residuals[:, variable]
             h_thresholds, v_thresholds = (-cutoff, cutoff), get_thresholds(cutoff, x)
+            h_thresholds_annotate, v_thresholds_annotate = (
+                -annotation_cutoff,
+                annotation_cutoff,
+            ), get_thresholds(annotation_cutoff, x)
             xlabel, ylabel = variable_name, f"standardized residuals of {variable_name}"
             title = f"Standardized residuals versus the {variable_name}"
 
         elif plottype == "residuals_vs_predictions":
             x, y = self.predictions[:, variable], self.residuals[:, variable]
             h_thresholds, v_thresholds = (-cutoff, cutoff), get_thresholds(cutoff, x)
+            h_thresholds_annotate, v_thresholds_annotate = (
+                -annotation_cutoff,
+                annotation_cutoff,
+            ), get_thresholds(annotation_cutoff, x)
             xlabel, ylabel = (
                 f"predictions of {variable_name}",
                 f"standardized residuals of {variable_name}",
@@ -195,6 +216,9 @@ class CellMCD(RobustCovariance):
         elif plottype == "variable_vs_predictions":
             x, y = self.predictions[:, variable], self.X[:, variable]
             h_thresholds, v_thresholds = get_thresholds(cutoff, y), get_thresholds(cutoff, x)
+            h_thresholds_annotate, v_thresholds_annotate = get_thresholds(
+                annotation_cutoff, y
+            ), get_thresholds(annotation_cutoff, x)
             xlabel, ylabel = f"predictions of {variable_name}", f"observed {variable_name}"
             ax.axline((x[0], x[0]), slope=1, color="grey", linestyle="-.")
             title = f"{variable_name} versus its predictions"
@@ -218,7 +242,14 @@ class CellMCD(RobustCovariance):
 
         if row_names is not None:
             if plottype != "bivariate":
-                annote_outliers(ax, row_names, x, y, h_thresholds, v_thresholds)
+                annote_outliers(
+                    ax,
+                    row_names,
+                    x,
+                    y,
+                    h_thresholds_annotate,
+                    v_thresholds_annotate,
+                )
             else:
                 annote_outliers_ellipse(
                     ax,
@@ -229,7 +260,7 @@ class CellMCD(RobustCovariance):
                     second_variable,
                     x,
                     y,
-                    self.quantile,
+                    self.quantile if annotation_quantile is None else annotation_quantile,
                 )
 
         draw_threshold_lines(ax, h_thresholds, v_thresholds)

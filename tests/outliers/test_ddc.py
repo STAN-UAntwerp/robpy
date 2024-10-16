@@ -21,7 +21,7 @@ def test_ddc_correctly_flags_dummy_data():
     ddc = DDC()
     # when
     ddc = ddc.fit(X)
-    cellwise_prediction = ddc.predict(X)
+    cellwise_prediction, _ = ddc.predict(X)
     rowwise_prediction = ddc.predict(X, rowwise=True)
 
     predicted_cellwise_idx = list(zip(*np.where(cellwise_prediction)))
@@ -55,7 +55,7 @@ def test_ddc_can_predict_new_data():
     ddc = DDC()
     # when
     ddc = ddc.fit(X)
-    cellwise_prediction = ddc.predict(X_new)
+    cellwise_prediction, _ = ddc.predict(X_new)
     rowwise_prediction = ddc.predict(X_new, rowwise=True)
 
     predicted_cellwise_idx = list(zip(*np.where(cellwise_prediction)))

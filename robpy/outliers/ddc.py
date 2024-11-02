@@ -112,8 +112,15 @@ class DDC(OutlierMixin):
             ValueError: Data shape mismatch
 
         Returns:
-            np.ndarray: either matrix of shape (n_samples, n_features) with cellwise outliers or
-                of shape (n_samples,) with rowwise outliers
+            Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+            - If rowwise is True: A 1D array of shape (n_samples,) with rowwise outliers.
+            - If rowwise is False: A matrix of shape (n_samples, n_features) with cellwise outliers
+              and an array containing the standardized residuals of the cells.
+
+        References:
+            Hubert, M., Rousseeuw, P. J., & Bossche, W. V. D. (2019). MacroPCA: An All-in-one PCA
+            Method Allowing for Missing Values as Well as Cellwise and Rowwise Outliers.
+            Technometrics, 61(4), 459–473. https://doi.org/10.1080/00401706.2018.1562989
         """
         if not self.is_fitted_:
             raise ValueError("Model not fitted yet.")
@@ -122,6 +129,8 @@ class DDC(OutlierMixin):
                 f"Predict can only be called with the same data as fit. "
                 f"Received {X.shape[1]} columns, expected {self.cellwise_outliers_.shape[1]}"
             )
+        if X.select_dtypes(include=np.number).shape != X.shape:
+            raise ValueError("Only numerical data is supported.")
         X = X.replace([np.inf, -np.inf], np.nan)
         # step 1: standardization
         Z = self._standardize(X)
@@ -136,7 +145,7 @@ class DDC(OutlierMixin):
         if rowwise:
             return self._rowwise_outliers(standardized_residuals)
 
-        return cellwise_outliers
+        return cellwise_outliers, standardized_residuals
 
     def _cellwise_outliers(
         self, Z: pd.DataFrame, predictions: np.ndarray, fit: bool = False
@@ -149,8 +158,9 @@ class DDC(OutlierMixin):
             fit (bool, optional): Whether to fit the scale estimator. Defaults to False.
 
         Returns:
-            - cellwise_outliers (np.ndarray): boolean indicator matrix of cellwise outliers
-            - standardized_residuals (np.ndarray): standardized residuals
+            Tuple[np.ndarray, np.ndarray]:
+            - cellwise_outliers (np.ndarray): Boolean indicator matrix of cellwise outliers.
+            - standardized_residuals (np.ndarray): Standardized residuals.
         """
         raw_residuals = Z.values - predictions
         if fit:
@@ -209,7 +219,7 @@ class DDC(OutlierMixin):
         rescaled_predictions = (predictions * self.scale_ + self.location_).round(3)
 
         if impute_outliers:
-            cellwise_outliers = self.predict(X)
+            cellwise_outliers, _ = self.predict(X)
             results = np.where(
                 cellwise_outliers | np.isnan(X.replace([-np.inf, np.inf], np.nan)),
                 rescaled_predictions,
@@ -225,6 +235,7 @@ class DDC(OutlierMixin):
     def cellmap(
         self,
         X: pd.DataFrame,
+        standardized_residuals: np.ndarray | None = None,
         annotate: bool = False,
         fmt: str = ".1f",
         figsize: tuple[int, int] = (7, 10),
@@ -236,7 +247,10 @@ class DDC(OutlierMixin):
         """Visualize the standardized residuals of the DDC model as a heatmap.
 
         Args:
-            X (pd.DataFrame): The original data used to fit the model.
+            X (pd.DataFrame): The data used to predict the residuals.
+            standardized_residuals (np.ndarray | None, optional): if X is not the original data used
+                to fit the model, the standardized residuals of the cells predicted on the new X
+                data should be passed.
             annotate (bool, optional): Whether to annotate the heatmap cells
                 with the original values. Defaults to False.
             fmt (str, optional): Format to use for annotations. Defaults to ".1f".
@@ -259,7 +273,9 @@ class DDC(OutlierMixin):
             raise ValueError("Model not fitted yet.")
         if cmap == "custom":
             cmap = get_custom_cmap(vmax_clip)
-        plot_data = pd.DataFrame(self.standardized_residuals_, index=X.index, columns=X.columns)
+        if standardized_residuals is None:
+            standardized_residuals = self.standardized_residuals_
+        plot_data = pd.DataFrame(standardized_residuals, index=X.index, columns=X.columns)
         X_annot = X
         if row_zoom is not None:
             if isinstance(row_zoom, tuple):

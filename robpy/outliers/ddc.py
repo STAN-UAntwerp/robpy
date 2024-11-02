@@ -61,6 +61,7 @@ class DDC(OutlierMixin):
         self._check_data_conditions(X)
         X = X.replace([np.inf, -np.inf], np.nan)
         # step 1: standardization
+        self._fit_scaler(X)
         Z = self._standardize(X)
         # step 2: univariate outlier detection
         U = pd.DataFrame(
@@ -88,61 +89,153 @@ class DDC(OutlierMixin):
         self.predictions_ = self.raw_predictions_ * self.deshrinkage_
 
         # step 6: cellwise outliers
-        self.raw_residuals_ = Z.values - self.predictions_
-        self.residual_scales_ = np.array(
-            [
-                CellwiseOneStepM()
-                .fit(self.raw_residuals_[:, i][~np.isnan(self.raw_residuals_[:, i])])
-                .scale
-                for i in range(X.shape[1])
-            ]
+        self.cellwise_outliers_, self.standardized_residuals_ = self._cellwise_outliers(
+            Z, self.predictions_, fit=True
         )
-        self.standardized_residuals_ = self.raw_residuals_ / self.residual_scales_
-        self.cellwise_outliers_ = np.abs(self.standardized_residuals_) > self.cutoff
         # step 7: rowwise outliers
-        self.raw_t_values_ = np.nanmean(chi2.cdf(self.standardized_residuals_**2, df=1), axis=1)
-        est = CellwiseOneStepM().fit(self.raw_t_values_)
-        self.standardized_t_values_ = (self.raw_t_values_ - est.location) / est.scale
-        self.row_outliers_ = self.standardized_t_values_ > self.cutoff
+        self.row_outliers_ = self._rowwise_outliers(self.standardized_residuals_, fit=True)
         self.is_fitted_ = True
         # step 8: rescale
         self.rescaled_predictions_ = self.predictions_ * self.scale_ + self.location_
         return self
 
-    def predict(self, X, rowwise: bool = False):
+    def predict(self, X: pd.DataFrame, rowwise: bool = False) -> np.ndarray:
+        """Predict outliers in the data.
+
+        Args:
+            X (pd.DataFrame): New data to predict outliers for.
+            rowwise (bool, optional): Whether to predict rowwise instead of cellwise outliers.
+                Defaults to False.
+
+        Raises:
+            ValueError: Model not fitted
+            ValueError: Data shape mismatch
+
+        Returns:
+            Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+            - If rowwise is True: A 1D array of shape (n_samples,) with rowwise outliers.
+            - If rowwise is False: A matrix of shape (n_samples, n_features) with cellwise outliers
+              and an array containing the standardized residuals of the cells.
+
+        References:
+            Hubert, M., Rousseeuw, P. J., & Bossche, W. V. D. (2019). MacroPCA: An All-in-one PCA
+            Method Allowing for Missing Values as Well as Cellwise and Rowwise Outliers.
+            Technometrics, 61(4), 459–473. https://doi.org/10.1080/00401706.2018.1562989
+        """
         if not self.is_fitted_:
             raise ValueError("Model not fitted yet.")
-        if X.shape != self.cellwise_outliers_.shape:
-            raise ValueError("Predict can only be called with the same data as fit.")
+        if not X.shape[1] == self.cellwise_outliers_.shape[1]:
+            raise ValueError(
+                f"Predict can only be called with the same data as fit. "
+                f"Received {X.shape[1]} columns, expected {self.cellwise_outliers_.shape[1]}"
+            )
+        if X.select_dtypes(include=np.number).shape != X.shape:
+            raise ValueError("Only numerical data is supported.")
+        X = X.replace([np.inf, -np.inf], np.nan)
+        # step 1: standardization
+        Z = self._standardize(X)
+        U = pd.DataFrame(
+            data=np.where(np.abs(Z) > self.cutoff, np.nan, Z),
+            columns=X.columns,
+            index=X.index,
+        )
+        predictions = self._get_predicted_values(U) * self.deshrinkage_
+        cellwise_outliers, standardized_residuals = self._cellwise_outliers(Z, predictions)
+
         if rowwise:
-            return self.row_outliers_
+            return self._rowwise_outliers(standardized_residuals)
 
-        return self.cellwise_outliers_
+        return cellwise_outliers, standardized_residuals
 
-    def impute(self, X, impute_outliers: bool = True):
+    def _cellwise_outliers(
+        self, Z: pd.DataFrame, predictions: np.ndarray, fit: bool = False
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Get cellwise outliers boolean indicator matrix
+
+        Args:
+            Z (pd.DataFrame): Standardize input data
+            predictions (np.ndarray): Predicted standardized values (deshrinked)
+            fit (bool, optional): Whether to fit the scale estimator. Defaults to False.
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray]:
+            - cellwise_outliers (np.ndarray): Boolean indicator matrix of cellwise outliers.
+            - standardized_residuals (np.ndarray): Standardized residuals.
+        """
+        raw_residuals = Z.values - predictions
+        if fit:
+            self.residual_scales = np.array(
+                [
+                    CellwiseOneStepM()
+                    .fit(raw_residuals[:, i][~np.isnan(raw_residuals[:, i])])
+                    .scale
+                    for i in range(raw_residuals.shape[1])
+                ]
+            )
+        standardized_residuals = raw_residuals / self.residual_scales
+        cellwise_outliers = np.abs(standardized_residuals) > self.cutoff
+
+        return cellwise_outliers, standardized_residuals
+
+    def _rowwise_outliers(
+        self, standardized_residuals: np.ndarray, fit: bool = False
+    ) -> np.ndarray:
+        """Calculate rowwise outliers based on standardized residuals.
+
+        Args:
+            standardized_residuals (np.ndarray)
+            fit (bool, optional): Whether to fit the scale estimator. Defaults to False.
+
+        Returns:
+            np.ndarray: array of shape (n_samples,) with boolean rowwise outliers
+        """
+        raw_t_values_ = np.nanmean(chi2.cdf(standardized_residuals**2, df=1), axis=1)
+        if fit:
+            self.t_scale_est = CellwiseOneStepM().fit(raw_t_values_)
+        standardized_t_values_ = (
+            raw_t_values_ - self.t_scale_est.location
+        ) / self.t_scale_est.scale
+        row_outliers = standardized_t_values_ > self.cutoff
+        return row_outliers
+
+    def impute(self, X: pd.DataFrame, impute_outliers: bool = True) -> pd.DataFrame:
         if not self.is_fitted_:
             raise ValueError("Model not fitted yet.")
         if X.shape[1] != self.cellwise_outliers_.shape[1]:
-            raise ValueError("Impute can only be called with the same data as fit.")
+            raise ValueError(
+                f"Impute can only be called with the same data as fit. "
+                f"Received {X.shape[1]} columns, expected {self.cellwise_outliers_.shape[1]}"
+            )
+        X = X.replace([np.inf, -np.inf], np.nan)
+        Z = self._standardize(X)
+        # step 2: univariate outlier detection
+        U = pd.DataFrame(
+            data=np.where(np.abs(Z) > self.cutoff, np.nan, Z),
+            columns=X.columns,
+            index=X.index,
+        )
+        raw_predictions = self._get_predicted_values(U)
+        predictions = raw_predictions * self.deshrinkage_
+        rescaled_predictions = (predictions * self.scale_ + self.location_).round(3)
+
         if impute_outliers:
+            cellwise_outliers, _ = self.predict(X)
             results = np.where(
-                self.cellwise_outliers_ | np.isnan(X.replace([-np.inf, np.inf], np.nan)),
-                self.rescaled_predictions_,
+                cellwise_outliers | np.isnan(X.replace([-np.inf, np.inf], np.nan)),
+                rescaled_predictions,
                 X,
             )
         else:
             results = np.where(
-                np.isnan(X.replace([-np.inf, np.inf], np.nan)), self.rescaled_predictions_, X
+                np.isnan(X.replace([-np.inf, np.inf], np.nan)), rescaled_predictions, X
             )
 
-        if isinstance(X, pd.DataFrame):
-            return pd.DataFrame(results, index=X.index, columns=X.columns)
-        else:
-            return results
+        return pd.DataFrame(results, index=X.index, columns=X.columns)
 
     def cellmap(
         self,
         X: pd.DataFrame,
+        standardized_residuals: np.ndarray | None = None,
         annotate: bool = False,
         fmt: str = ".1f",
         figsize: tuple[int, int] = (7, 10),
@@ -154,7 +247,10 @@ class DDC(OutlierMixin):
         """Visualize the standardized residuals of the DDC model as a heatmap.
 
         Args:
-            X (pd.DataFrame): The original data used to fit the model.
+            X (pd.DataFrame): The data used to predict the residuals.
+            standardized_residuals (np.ndarray | None, optional): if X is not the original data used
+                to fit the model, the standardized residuals of the cells predicted on the new X
+                data should be passed.
             annotate (bool, optional): Whether to annotate the heatmap cells
                 with the original values. Defaults to False.
             fmt (str, optional): Format to use for annotations. Defaults to ".1f".
@@ -177,7 +273,9 @@ class DDC(OutlierMixin):
             raise ValueError("Model not fitted yet.")
         if cmap == "custom":
             cmap = get_custom_cmap(vmax_clip)
-        plot_data = pd.DataFrame(self.standardized_residuals_, index=X.index, columns=X.columns)
+        if standardized_residuals is None:
+            standardized_residuals = self.standardized_residuals_
+        plot_data = pd.DataFrame(standardized_residuals, index=X.index, columns=X.columns)
         X_annot = X
         if row_zoom is not None:
             if isinstance(row_zoom, tuple):
@@ -216,15 +314,29 @@ class DDC(OutlierMixin):
         if any(X.nunique() <= 3):
             raise ValueError("Columns with less than 3 unique values are not supported.")
 
-    def _standardize(self, X: pd.DataFrame):
+    def _fit_scaler(self, X: pd.DataFrame):
         self.location_, self.scale_ = [], []
         for i in range(X.shape[1]):
             est = self.scale_estimator.fit(X.iloc[:, i].to_numpy()[~np.isnan(X.iloc[:, i])])
             self.location_.append(est.location)
             self.scale_.append(est.scale)
+
+    def _standardize(self, X: pd.DataFrame) -> pd.DataFrame:
+        if not hasattr(self, "location_"):
+            raise ValueError("Tried to standardize but scaler not fitted yet.")
         return (X - self.location_) / self.scale_
 
     def _robust_correlation(self, X: pd.DataFrame, verbose: bool = False) -> np.ndarray:
+        """Calculate a correlation matrix with shape (n_feat, n_feat)
+        using a robust scale estimator.
+
+        Args:
+            X (pd.DataFrame): The standardized data.
+            verbose (bool, optional): Whether to print progress. Defaults to False.
+
+        Returns:
+            np.ndarray: correlation matrix (shape = (X.shape[1], X.shape[1]))
+        """
         correlation = np.ones((X.shape[1], X.shape[1]))
         for i in range(X.shape[1]):
             if verbose and i % (X.shape[1] // 10) == 0:

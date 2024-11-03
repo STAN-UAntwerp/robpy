@@ -8,7 +8,7 @@ TopGear dataset
 - Number of Instances: 297 
 - Number of Attributes: 32 (13 numeric, 19 categorical)
 - Attribute Information:
-    * Maker (str): the car maker.
+    * Make (str): the car brand.
     * Model (str): the car model.
     * Type (str): the exact model type.
     * Fuel (str): the type of fuel ("Diesel" or "Petrol").

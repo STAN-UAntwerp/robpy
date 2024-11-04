@@ -33,7 +33,7 @@ class RobustRegression(RegressorMixin, BaseEstimator):
             raise NotFittedError("Model has not been fitted yet.")
         return scale
 
-    def diagnostic_plot(
+    def outlier_map(
         self,
         X,
         y,
@@ -85,8 +85,8 @@ class RobustRegression(RegressorMixin, BaseEstimator):
         _, ax = plt.subplots(1, 1, figsize=figsize)
 
         ax.scatter(x=distances, y=standardized_residuals)
-        ax.set_xlabel(f"Mahalanobis distance {'(robust)' if robust_distance else ''}")
-        ax.set_ylabel(f"Standardized residuals  {'(robust)' if robust_scaling else ''}")
+        ax.set_xlabel(f"{'Robust' if robust_distance else 'Non-robust'} distance of X")
+        ax.set_ylabel(f"{'Robust' if robust_scaling else 'Non-robust'} standardized residuals of y")
 
         ax.axhline(vertical_outlier_threshold, ls="--", c="grey")
         ax.axhline(-vertical_outlier_threshold, ls="--", c="grey")

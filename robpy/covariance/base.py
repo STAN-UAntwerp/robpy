@@ -76,7 +76,7 @@ class RobustCovariance(EmpiricalCovariance):
         ax.axvline(threshold, color="grey", linestyle="--")
         ax.axline((0, 0), slope=1, color="grey", linestyle="-.")
 
-        ax.set_xlabel("Mahalanobis distance (default covariance)")
+        ax.set_xlabel("Non-robust distance")
         ax.set_ylabel("Robust distance")
 
         return fig

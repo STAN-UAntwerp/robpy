@@ -13,7 +13,7 @@ def test_fit_sets_object_attributes():
 
 
 @pytest.mark.parametrize(
-    "h_size, n, p,  expected_h_subset_size",
+    "alpha, n, p,  expected_h_subset_size",
     [
         (None, 100, 2, 51),
         (70, 100, 3, 70),
@@ -21,11 +21,11 @@ def test_fit_sets_object_attributes():
         (None, 1500, 4, 752),
     ],
 )
-def test_estimator_can_handle_different_settings(h_size, n, p, expected_h_subset_size):
+def test_estimator_can_handle_different_settings(alpha, n, p, expected_h_subset_size):
     # given
     X = np.random.rand(n, p)
     # when
-    estimator = DetMCD(h_size=h_size).fit(X)
+    estimator = DetMCD(alpha=alpha).fit(X)
     # then
     assert hasattr(estimator, "covariance_")
     assert len(estimator.best_subset.indices) == expected_h_subset_size

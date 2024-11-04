@@ -5,12 +5,12 @@ from scipy.stats import chi2, gamma
 
 
 class UnivariateMCD(RobustScale):
-    def __init__(self, h_size: float | int | None = None, consistency_correction: bool = True):
+    def __init__(self, alpha: float | int | None = None, consistency_correction: bool = True):
         """
         Implementation of univariate MCD (Hubert & Debruyne, 2009)
 
         Args:
-            h_size (float or int, optional): size of the h subset.
+            alpha (float or int, optional): size of the h subset.
               If an integer between n/2 and n is passed, it is interpreted as an absolute value.
               If a float  between 0.5 and 1 is passed, it is interpreted as a proportation
               of n (the training set size).
@@ -25,7 +25,7 @@ class UnivariateMCD(RobustScale):
               Wiley interdisciplinary reviews: Computational statistics, 2(1), 36-43.
         """
         super().__init__()
-        self.h_size = h_size
+        self.alpha = alpha
         self.consistency_correction = consistency_correction
 
     def _calculate(self, X: np.ndarray):
@@ -71,14 +71,14 @@ class UnivariateMCD(RobustScale):
 
     def _set_h_size(self, X: np.ndarray):
         n = len(X)
-        if self.h_size is None:
+        if self.alpha is None:
             self.h_size = n // 2 + 1
-        elif isinstance(self.h_size, int) and (n / 2 <= self.h_size <= n):
-            pass
-        elif (isinstance(self.h_size, float) and (0.5 <= self.h_size <= 1)) or self.h_size == 1:
+        elif isinstance(self.alpha, int) and (n / 2 <= self.alpha <= n):
+            self.h_size = self.alpha
+        elif (isinstance(self.alpha, float) and (0.5 <= self.alpha <= 1)) or self.alpha == 1:
             self.h_size = int(self.h_size * n)
         else:
             raise ValueError(
-                f"h_size must be an integer between n/2 and n or a float between 0.5 and 1 "
-                f"but received {self.h_size}"
+                f"alpha must be an integer between n/2 and n or a float between 0.5 and 1 "
+                f"but received {self.alpha}"
             )

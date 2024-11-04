@@ -27,7 +27,7 @@ class FastMCD(RobustCovariance):
     def __init__(
         self,
         *,
-        h_size: float | int | None = None,
+        alpha: float | int | None = None,
         n_initial_subsets: int = 500,
         n_initial_c_steps: int = 2,
         n_best_subsets: int = 10,
@@ -43,7 +43,7 @@ class FastMCD(RobustCovariance):
         Fast MCD estimator based on the algorithm proposed in Rousseeuw and Van Driessen (1999)
 
         Args:
-            h_size (int | None, optional):
+            alpha (float | int | None, optional):
               size of the h subset.
               If an integer between n/2 and n is passed, it is interpreted as an absolute value.
               If a float between 0.5 and 1 is passed, it is interpreted as a proportation
@@ -73,7 +73,7 @@ class FastMCD(RobustCovariance):
 
         """
         super().__init__(store_precision=store_precision, assume_centered=assume_centered)
-        self.h_size = h_size
+        self.alpha = alpha
         self.n_initial_subsets = n_initial_subsets
         self.n_initial_c_steps = n_initial_c_steps
         self.n_best_subsets = n_best_subsets
@@ -85,8 +85,8 @@ class FastMCD(RobustCovariance):
         self.verbosity = verbosity
 
     def calculate_covariance(self, X) -> np.ndarray:
-        if self.h_size == 1 or self.h_size == X.shape[0]:
-            self.logger.warning(f"Default covariance is returned as h_size is {self.h_size}.")
+        if self.alpha == 1 or self.alpha == X.shape[0]:
+            self.logger.warning(f"Default covariance is returned as alpha is {self.alpha}.")
             self.location_ = X.mean(0)
             return np.cov(X, rowvar=False)
         # partition data (n_partitions > 1 can speed up algorithm for large datasets)
@@ -174,23 +174,23 @@ class FastMCD(RobustCovariance):
         """
         # Calculate the Mahalanobis distances
         mahalanobis = mahalanobis_distance(X, subset.location, subset.scale)
-        # Find the h_size smallest distances
+        # Find the alpha (h_size) smallest distances
         h = self._get_h(X)
         idx = np.argsort(mahalanobis)[:h]
 
         return self._get_subset(indices=idx, X=X, n_c_steps=subset.n_c_steps + 1)
 
     def _get_h(self, X: np.ndarray) -> int:
-        if self.h_size is None:
+        if self.alpha is None:
             return int((X.shape[0] + X.shape[1] + 1) / 2)
-        elif isinstance(self.h_size, int) and (X.shape[0] / 2 <= self.h_size <= X.shape[0]):
-            return self.h_size
-        elif (isinstance(self.h_size, float) and (0.5 <= self.h_size <= 1)) or self.h_size == 1:
-            return int(self.h_size * X.shape[0])
+        elif isinstance(self.alpha, int) and (X.shape[0] / 2 <= self.alpha <= X.shape[0]):
+            return self.alpha
+        elif (isinstance(self.alpha, float) and (0.5 <= self.alpha <= 1)) or self.alpha == 1:
+            return int(self.alpha * X.shape[0])
         else:
             raise ValueError(
-                f"h_size must be an integer between n/2 ({X.shape[0] // 2}) and n ({X.shape[0]}) or"
-                f" a float between 0.5 and 1, but received {self.h_size}."
+                f"alpha must be an integer between n/2 ({X.shape[0] // 2}) and n ({X.shape[0]}) or"
+                f" a float between 0.5 and 1, but received {self.alpha}."
             )
 
     def _partition_data(self, X: np.ndarray) -> list[np.ndarray]:
@@ -246,7 +246,7 @@ class DetMCD(RobustCovariance):
     def __init__(
         self,
         *,
-        h_size: float | int | None = None,
+        alpha: float | int | None = None,
         tolerance: float = 1e-8,
         correct_covariance: bool = True,
         reweighting: bool = True,
@@ -257,7 +257,7 @@ class DetMCD(RobustCovariance):
         Hubert, Rousseeuw and Verdonck (2012)
 
         Args:
-            h_size (int | None, optional):
+            alpha (float | int | None, optional):
               size of the h subset.
               If an integer between n/2 and n is passed, it is interpreted as an absolute value.
               If a float between 0.5 and 1 is passed, it is interpreted as a proportation
@@ -277,7 +277,7 @@ class DetMCD(RobustCovariance):
 
         """
         super().__init__()
-        self.h_size = h_size
+        self.alpha = alpha
         self.tolerance = tolerance
         self.correct_covariance = correct_covariance
         self.reweighting = reweighting
@@ -285,8 +285,8 @@ class DetMCD(RobustCovariance):
         self.verbosity = verbosity
 
     def calculate_covariance(self, X: np.ndarray) -> np.ndarray:
-        if self.h_size == 1 or self.h_size == X.shape[0]:
-            self.logger.warning(f"Default covariance is returned as h_size is {self.h_size}.")
+        if self.alpha == 1 or self.alpha == X.shape[0]:
+            self.logger.warning(f"Default covariance is returned as alpha is {self.alpha}.")
             self.location_ = X.mean(0)
             return np.cov(X, rowvar=False)
 
@@ -404,16 +404,16 @@ class DetMCD(RobustCovariance):
     # TODO: de functies hieronder moeten nog naar ergens anders.
 
     def _get_h(self, X: np.ndarray) -> int:
-        if self.h_size is None:
+        if self.alpha is None:
             return int((X.shape[0] + X.shape[1] + 1) / 2)
-        elif isinstance(self.h_size, int) and (X.shape[0] / 2 <= self.h_size <= X.shape[0]):
-            return self.h_size
-        elif (isinstance(self.h_size, float) and (0.5 <= self.h_size <= 1)) or self.h_size == 1:
-            return int(self.h_size * X.shape[0])
+        elif isinstance(self.alpha, int) and (X.shape[0] / 2 <= self.alpha <= X.shape[0]):
+            return self.alpha
+        elif (isinstance(self.alpha, float) and (0.5 <= self.alpha <= 1)) or self.alpha == 1:
+            return int(self.alpha * X.shape[0])
         else:
             raise ValueError(
-                f"h_size must be an integer between n/2 ({X.shape[0] // 2}) and n ({X.shape[0]}) or"
-                f" a float between 0.5 and 1, but received {self.h_size}."
+                f"alpha must be an integer between n/2 ({X.shape[0] // 2}) and n ({X.shape[0]}) or"
+                f" a float between 0.5 and 1, but received {self.alpha}."
             )
 
     def _get_subset(
@@ -456,7 +456,7 @@ class DetMCD(RobustCovariance):
         """
         # Calculate the Mahalanobis distances
         mahalanobis = mahalanobis_distance(X, subset.location, subset.scale)
-        # Find the h_size smallest distances
+        # Find the alpha (h_size) smallest distances
         h = self._get_h(X)
         idx = np.argsort(mahalanobis)[:h]
 

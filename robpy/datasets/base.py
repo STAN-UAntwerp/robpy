@@ -272,7 +272,7 @@ def load_topgear(*, as_frame=False):
     desc_file_name = "topgear.rst"
 
     feature_names = [
-        "Maker",
+        "Make",
         "Model",
         "Type",
         "Fuel",
@@ -306,7 +306,7 @@ def load_topgear(*, as_frame=False):
         "Origin",
     ]
     categorical_features = [
-        "Maker",
+        "Make",
         "Model",
         "Type",
         "Fuel",

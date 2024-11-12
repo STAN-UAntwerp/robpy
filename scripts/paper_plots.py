@@ -103,7 +103,7 @@ plt.show()
 plt.savefig(outputfolder / "figure 7 - ddc cellmap zoom.png")
 
 
-### CELL MCD ###
+# CELL MCD ###
 
 data = load_topgear(as_frame=True)
 car_models = data.data["Make"] + data.data["Model"]

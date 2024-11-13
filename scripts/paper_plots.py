@@ -1,12 +1,14 @@
 import pathlib
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.stats as stats
 
 from robpy.datasets import load_topgear
 from robpy.preprocessing import DataCleaner, RobustPowerTransformer, RobustScaler
 from robpy.covariance import FastMCD
 from robpy.pca import ROBPCA
 from robpy.outliers import DDC
+from robpy.outliers.ddc import get_custom_cmap
 from robpy.covariance.cellmcd import CellMCD
 from robpy.regression import MMRegression
 from robpy.univariate import adjusted_boxplot
@@ -92,11 +94,15 @@ plt.savefig(outputfolder / "figure 6 - mm regression outlier map.png")
 
 
 ddc = DDC().fit(clean_data.drop(columns=["Price"]))
+vmax_clip = float(np.sqrt(stats.chi2.ppf(0.999, df=1)))
+cmap = get_custom_cmap(vmax_clip=vmax_clip, neutral_color="#f7f286")
 
 row_indices = np.array(
     [11, 41, 55, 73, 81, 94, 99, 135, 150, 164, 176, 198, 209, 215, 234, 241, 277]
 )
-ax = ddc.cellmap(clean_data.drop(columns=["Price"]), figsize=(8, 10), row_zoom=row_indices)
+ax = ddc.cellmap(
+    clean_data.drop(columns=["Price"]), figsize=(8, 10), row_zoom=row_indices, cmap=cmap
+)
 cars = data.data.apply(lambda row: f"{row['Make']} {row['Model']}", axis=1).tolist()
 ax.set_yticklabels([cars[i] for i in row_indices], rotation=0)
 plt.show()

@@ -14,7 +14,7 @@ from robpy.utils.distance import mahalanobis_distance
 from robpy.univariate.base import RobustScale
 
 
-def get_custom_cmap(vmax_clip: float, neutral_color: str = "#f6eb15") -> matplotlib.colors.Colormap:
+def get_custom_cmap(vmax_clip: float, neutral_color: str = "#f7f286") -> matplotlib.colors.Colormap:
     norm = matplotlib.colors.Normalize(-vmax_clip, vmax_clip)
     colors = [
         [norm(-vmax_clip), "#4652a3"],

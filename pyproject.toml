@@ -6,7 +6,7 @@ authors = ["Thomas Servotte <servottethomas@gmail.com>", "Sarah Leyder <sarah.le
 readme = "README.rst"
 
 [tool.poetry-dynamic-versioning]
-enable = true
+enable = false
 vcs = "git"
 
 [tool.black]

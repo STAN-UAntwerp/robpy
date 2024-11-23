@@ -1,4 +1,5 @@
 import pathlib
+import json
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -16,8 +17,15 @@ print(f"Figures will be stored in {outputfolder}")
 outputfolder.mkdir(exist_ok=True)
 data = load_topgear(as_frame=True)
 
+print(data.DESCR)
+data.data.head()
+
+# 3.1 Preprocessing
 cleaner = DataCleaner().fit(data.data)
 clean_data = cleaner.transform(data.data)
+
+print(json.dumps(cleaner.dropped_columns, indent=4))
+print(cleaner.dropped_rows)
 
 clean_data = clean_data.drop(columns=["Verdict"])
 
@@ -36,6 +44,8 @@ plt.savefig(outputfolder / "figure 1b - price histogram.png")
 price_transformer = RobustPowerTransformer(method="auto").fit(clean_data["Price"])
 
 clean_data["Price_transformed"] = price_transformer.transform(clean_data["Price"])
+
+print(price_transformer.method, price_transformer.lambda_rew)
 
 fig, ax = plt.subplots(1, 1, figsize=(2, 2))
 adjusted_boxplot(clean_data["Price_transformed"], ax=ax)
@@ -65,6 +75,7 @@ fig.tight_layout()
 fig.show()
 plt.savefig(outputfolder / "figure 3 - feature transformations.png")
 
+# 3.2 Location and scatter estimators
 clean_data2 = clean_data.dropna()
 
 mcd = FastMCD().fit(clean_data2.drop(columns=["Price"]))
@@ -72,9 +83,17 @@ fig = mcd.distance_distance_plot()
 fig.show()
 plt.savefig(outputfolder / "figure 4 - mcd distance-distance plot.png")
 
+data.data.loc[
+    clean_data2.index[(mcd._robust_distances > 60) & (mcd._mahalanobis_distances > 12)],
+    ["Make", "Model"] + list(set(clean_data2.columns).intersection(set(data.data.columns))),
+]
 
+# 3.3 Principal Component Analysis
 scaled_data = RobustScaler(with_centering=False).fit_transform(clean_data2.drop(columns=["Price"]))
 pca = ROBPCA().fit(scaled_data)
+
+print(pca.components_)
+print(pca.explained_variance_ratio)
 
 score_distances, orthogonal_distances, score_cutoff, od_cutoff = pca.plot_outlier_map(
     scaled_data, return_distances=True
@@ -82,6 +101,12 @@ score_distances, orthogonal_distances, score_cutoff, od_cutoff = pca.plot_outlie
 fig.show()
 plt.savefig(outputfolder / "figure 5 - pca outlier map.png")
 
+data.data.loc[
+    clean_data2.loc[(score_distances > score_cutoff) & (orthogonal_distances > od_cutoff)].index,
+    ["Make", "Model"] + list(set(clean_data2.columns).intersection(set(data.data.columns))),
+]
+
+# 3.4 Regression
 X = clean_data2.drop(columns=["Price", "Price_transformed"])
 y = clean_data2["Price_transformed"]
 
@@ -91,8 +116,14 @@ estimator.model.coef_
 resid, std_resid, distances, vt, ht = estimator.outlier_map(X, y.to_numpy(), return_data=True)
 fig.show()
 plt.savefig(outputfolder / "figure 6 - mm regression outlier map.png")
+bad_leverage_idx = (np.abs(std_resid) > vt) & (distances > ht)
+data.data.loc[clean_data2[bad_leverage_idx].index, ["Make", "Model", "Price"]].assign(
+    predicted_price=price_transformer.inverse_transform(
+        estimator.predict(X.loc[bad_leverage_idx])
+    ).round()
+)
 
-
+# 3.5 Algorithms for cellwise outliers
 ddc = DDC().fit(clean_data.drop(columns=["Price"]))
 
 row_indices = np.array(

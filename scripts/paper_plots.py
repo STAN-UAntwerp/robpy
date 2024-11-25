@@ -206,11 +206,11 @@ plt.savefig(outputfolder / "figure 8d - cellmcd variable vs predictions.png")
 
 
 fig = cellmcd.cell_MCD_plot(
-    second_variable=4,
-    second_variable_name="Acceleration",
+    variable=4,
+    variable_name="Acceleration",
     row_names=car_models,
-    variable=0,
-    variable_name="Price",
+    second_variable=0,
+    second_variable_name="Price",
     plottype="bivariate",
     annotation_quantile=0.999999,
 )

@@ -12,6 +12,7 @@ from robpy.covariance.cellmcd import CellMCD
 from robpy.regression import MMRegression
 from robpy.univariate import adjusted_boxplot
 
+np.random.seed(0)
 outputfolder = pathlib.Path(__file__).parent / "Output"
 print(f"Figures will be stored in {outputfolder}")
 outputfolder.mkdir(exist_ok=True)
@@ -158,16 +159,13 @@ clean_data["Price"] = np.log(clean_data["Price"] / 1000)
 
 car_models.drop(cleaner.dropped_rows["rows_missings"], inplace=True)
 car_models = car_models.tolist()
-clean_data.head()
 
 cellmcd = CellMCD()
 cellmcd.fit(clean_data.values)
 
-variable = 0
-variable_name = "Price"
 fig = cellmcd.cell_MCD_plot(
-    variable=variable,
-    variable_name=variable_name,
+    variable=0,
+    variable_name="Price",
     row_names=car_models,
     plottype="indexplot",
     annotation_quantile=0.9999999,
@@ -177,8 +175,8 @@ plt.savefig(outputfolder / "figure 8a - cellmcd indexplot.png")
 
 
 fig = cellmcd.cell_MCD_plot(
-    variable=variable,
-    variable_name=variable_name,
+    variable=0,
+    variable_name="Price",
     row_names=car_models,
     plottype="residuals_vs_variable",
     annotation_quantile=0.9999999,
@@ -187,8 +185,8 @@ fig.show()
 plt.savefig(outputfolder / "figure 8b - cellmcd residuals vs variable.png")
 
 fig = cellmcd.cell_MCD_plot(
-    variable=variable,
-    variable_name=variable_name,
+    variable=0,
+    variable_name="Price",
     row_names=car_models,
     plottype="residuals_vs_predictions",
     annotation_quantile=0.9999999,
@@ -197,8 +195,8 @@ fig.show()
 plt.savefig(outputfolder / "figure 8c - cellmcd residuals vs predictions.png")
 
 fig = cellmcd.cell_MCD_plot(
-    variable=variable,
-    variable_name=variable_name,
+    variable=0,
+    variable_name="Price",
     row_names=car_models,
     plottype="variable_vs_predictions",
     annotation_quantile=0.99999,
@@ -207,15 +205,13 @@ fig.show()
 plt.savefig(outputfolder / "figure 8d - cellmcd variable vs predictions.png")
 
 
-second_variable = 4
-second_variable_name = "Acceleration"
 fig = cellmcd.cell_MCD_plot(
-    second_variable,
-    second_variable_name,
-    car_models,
-    variable,
-    variable_name,
-    "bivariate",
+    second_variable=4,
+    second_variable_name="Acceleration",
+    row_names=car_models,
+    variable=0,
+    variable_name="Price",
+    plottype="bivariate",
     annotation_quantile=0.999999,
 )
 fig.show()

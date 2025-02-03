@@ -2,7 +2,12 @@ import numpy as np
 from scipy.stats import median_abs_deviation
 
 
-def stahel_donoho(X: np.ndarray, n_points: int = 2, n_dir: int = 250) -> np.ndarray:
+def stahel_donoho(
+    X: np.ndarray,
+    n_points: int = 2,
+    n_dir: int = 250,
+    random_seed: int | None = None,
+) -> np.ndarray:
     """Calculate the degree of outlyingness for multivariate points.
     Based on the algorithm proposed by Stahel (1981) and Donoho (1982).
 
@@ -10,6 +15,7 @@ def stahel_donoho(X: np.ndarray, n_points: int = 2, n_dir: int = 250) -> np.ndar
         X (np.ndarray): data matric of shape (n_obs, n_features)
         n_points (int, optional): number of points to determine the hyperplane. Defaults to 2.
         n_dir (int, optional): number of random directions to consider. Defaults to 250.
+        random_seed (int | None, optional): can be used to provide a random seed.
 
     Returns:
         np.ndarray: single column of outlyingness values
@@ -23,7 +29,10 @@ def stahel_donoho(X: np.ndarray, n_points: int = 2, n_dir: int = 250) -> np.ndar
     """
     # step 1: get random directions
     D = np.hstack(
-        [_get_random_direction(X, n_points=n_points).reshape(-1, 1) for _ in range(n_dir)]
+        [
+            _get_random_direction(X, n_points=n_points, random_seed=random_seed).reshape(-1, 1)
+            for _ in range(n_dir)
+        ]
     )  # (n_features, n_dir)
     # step 2: projections
     projections = X @ D  # (n_obs, n_dir)
@@ -37,17 +46,23 @@ def stahel_donoho(X: np.ndarray, n_points: int = 2, n_dir: int = 250) -> np.ndar
     )
 
 
-def _get_random_direction(X: np.ndarray, n_points: int = 2) -> np.ndarray:
+def _get_random_direction(
+    X: np.ndarray,
+    n_points: int = 2,
+    random_seed: int | None = None,
+) -> np.ndarray:
     """Get direction orthogonal to the hyperplane spanned by random points in X
 
     Args:
         X (np.ndarray): data matrix (n x p)
         n_points (int, optional): number of points to determine the hyperplane. Defaults to 2.
+        random_seed (int | None, optional): can be used to provide a random seed.
 
     Returns:
         np.ndarray: vector of shape (p, ) indicating the direction
     """
-    points = X[np.random.choice(X.shape[0], n_points, replace=False)]
+    rng = np.random.default_rng(random_seed)
+    points = X[rng.choice(X.shape[0], n_points, replace=False)]
 
     if n_points == 2:
         d = points[0] - points[1]

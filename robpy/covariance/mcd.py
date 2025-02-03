@@ -67,7 +67,7 @@ class FastMCD(RobustCovariance):
               Whether to apply a consistency correction to the raw covariance estimate
             reweighting (bool, optional):
               Whether to apply reweighting to the raw covariance estimate
-            random_seed: (int | None, optional):
+            random_seed (int | None, optional):
               Can be used to provide a random seed.
         References:
             Rousseeuw and Van Driessen, A Fast Algorithm for the Minimum Covariance Determinant

@@ -34,7 +34,7 @@ class ROBPCA(RobustPCA):
                 robust estimates. If False, the eigenvectors after projection onto V1 (subspace
                 determined by points with OD < cutoff) are used as the final estimates.
                 Defaults to True.
-            random_seed: (int | None, optional):
+            random_seed (int | None, optional):
                 Can be used to provide a random seed.
 
         References:

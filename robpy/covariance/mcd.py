@@ -38,6 +38,7 @@ class FastMCD(RobustCovariance):
         verbosity: int = logging.WARNING,
         store_precision=True,
         assume_centered=False,
+        random_seed: int | None = None,
     ):
         """
         Fast MCD estimator based on the algorithm proposed in Rousseeuw and Van Driessen (1999)
@@ -66,6 +67,8 @@ class FastMCD(RobustCovariance):
               Whether to apply a consistency correction to the raw covariance estimate
             reweighting (bool, optional):
               Whether to apply reweighting to the raw covariance estimate
+            random_seed (int | None, optional):
+              Can be used to provide a random seed.
         References:
             Rousseeuw and Van Driessen, A Fast Algorithm for the Minimum Covariance Determinant
             Estimator, 1999, American Statistical Association and
@@ -83,12 +86,14 @@ class FastMCD(RobustCovariance):
         self.reweighting = reweighting
         self.logger = get_logger("FastMCD", level=verbosity)
         self.verbosity = verbosity
+        self.random_seed = random_seed
 
     def calculate_covariance(self, X) -> np.ndarray:
         if self.alpha == 1 or self.alpha == X.shape[0]:
             self.logger.warning(f"Default covariance is returned as alpha is {self.alpha}.")
             self.location_ = X.mean(0)
             return np.cov(X, rowvar=False)
+        self.rng = np.random.default_rng(self.random_seed)
         # partition data (n_partitions > 1 can speed up algorithm for large datasets)
         partitions = self._partition_data(X)
         self.logger.info(f"Partitioned data into {len(partitions)} partitions")
@@ -224,7 +229,7 @@ class FastMCD(RobustCovariance):
         det = np.linalg.det(cov)
         if ensure_non_singular:
             while math.isclose(det, 0):
-                new_index = np.random.choice(np.delete(np.arange(X.shape[0]), indices))
+                new_index = self.rng.choice(np.delete(np.arange(X.shape[0]), indices))
                 indices = np.append(indices, new_index)
                 mu = X[indices].mean(axis=0)
                 cov = np.cov(X[indices], rowvar=False)
@@ -234,7 +239,7 @@ class FastMCD(RobustCovariance):
     def _get_initial_subsets(self, X: np.ndarray, n_subsets: int) -> list[HSubset]:
         return [
             self._get_subset(
-                indices=np.random.choice(X.shape[0], X.shape[1] + 1, replace=False),
+                indices=self.rng.choice(X.shape[0], X.shape[1] + 1, replace=False),
                 X=X,
                 ensure_non_singular=True,
             )

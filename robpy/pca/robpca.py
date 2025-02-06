@@ -16,6 +16,7 @@ class ROBPCA(RobustPCA):
         k_min_var_explained: float = 0.8,
         alpha: float = 0.75,
         final_MCD_step: bool = True,
+        random_seed: int | None = None,
     ):
         """Implementation of ROBPCA algorithm as described in
         Hubert, Rousseeuw & Vanden Branden (2005) and Hubert, Rousseeuw & Verdonck (2009)
@@ -33,6 +34,8 @@ class ROBPCA(RobustPCA):
                 robust estimates. If False, the eigenvectors after projection onto V1 (subspace
                 determined by points with OD < cutoff) are used as the final estimates.
                 Defaults to True.
+            random_seed (int | None, optional):
+                Can be used to provide a random seed.
 
         References:
             - Hubert, Rousseeuw & Vanden Branden (2005),
@@ -44,6 +47,7 @@ class ROBPCA(RobustPCA):
         self.k_min_var_explained = k_min_var_explained
         self.alpha = alpha
         self.final_MCD_step = final_MCD_step
+        self.random_seed = random_seed
 
     def fit(self, X: np.ndarray) -> ROBPCA:
         # step 1: singular value decomposition = applying standard PCA
@@ -52,7 +56,7 @@ class ROBPCA(RobustPCA):
         self.location_ = np.mean(X, axis=0)
         loadings = pca.components_.T
         # step 2: stahel donoho outlyingness --> h subset
-        outlyingness = stahel_donoho(X)
+        outlyingness = stahel_donoho(X, random_seed=self.random_seed)
         h_index = np.argsort(outlyingness)[: int(self.alpha * X.shape[0])]
         h_cov = np.cov(X[h_index], rowvar=False)
         # step 3: project on k-dimensional subspace

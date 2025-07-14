@@ -14,15 +14,20 @@ class PCALocantore(RobustPCA):
         n_components: int | None = None,
         k_min_var_explained: float = 0.8,
     ):
-        """Spherical PCA
+        """Spherical PCA.
 
         Args:
             n_components (int | None, optional):
                 Number of components to select. If None, it is set during fit to explain the
                 minimum variance.
             k_min_var_explained (float, optional):
-                Minimum variance explained by the n_components
-                Only used if n_components is None.
+                Minimum variance explained by the components.
+                Only used if n_components is None. Defaults to 0.8.
+
+        References:
+            - Locantore, N., Marron, J. S., Simpson, D. G., Tripoli, N., Zhang, J. T.,
+            Cohen, K. L., ... & Cohen, K. L. (1999). Robust principal component analysis for
+            functional data. Test, 8(1), 1-73.
         """
         super().__init__(n_components=n_components)
         self.k_min_var_explained = k_min_var_explained

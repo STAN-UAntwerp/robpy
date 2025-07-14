@@ -12,22 +12,25 @@ class Qn(RobustScale):
         finite_correction: bool = True,
     ):
         """
-        Implementation of Qn estimator
-
-        [Time-efficient algorithms for two highly robust estimators of scale,
-        Christophe Croux and Peter J. Rousseeuw (1992)]
-        [Selecting the k^th element in X+Y and X1+...+Xm,
-        Donald B. Johnson and Tetsuo Mizoguchi (1978)]
+        Implementation of Qn estimator of Croux, C., & Rousseeuw, P. J. (1992).
 
         Args:
             location_func (LocationOrScaleEstimator, optional): as the Qn estimator does not
-                estimate location, a location function should be explicitly passed.
-            consistency_correction (bool, optional):
-                boolean indicating if consistency for normality should be applied.
+                estimate location, a location function should be explicitly passed. Defaults to
+                np.median.
+            consistency_correction (boolean, optional):
+                Boolean indicating if consistency for normality should be applied.
                 Defaults to True.
-            finite_correction (bool, optional):
-                boolean indicating if finite sample correction should be applied.
+            finite_correction (boolean, optional):
+                Boolean indicating if finite sample correction should be applied.
                 Defaults to True.
+
+        References:
+            - Croux, C., & Rousseeuw, P. J. (1992). Time-efficient algorithms for two highly robust
+            estimators of scale. In Computational Statistics: Volume 1: Proceedings of the 10th
+            Symposium on Computational Statistics (pp. 411-428). Heidelberg: Physica-Verlag HD.
+            - Johnson, D. B., & Mizoguchi, T. (1978). Selecting the K th Element in X+Y and
+            X_1+X_2+⋯+X_m. SIAM Journal on Computing, 7(2), 147-153.
         """
         super().__init__()
         self.location_func = location_func
@@ -38,7 +41,7 @@ class Qn(RobustScale):
         """
         Args:
             X (np.ndarray):
-                univariate data
+                Univariate data.
         """
 
         n = len(X)
@@ -91,9 +94,12 @@ class Qn(RobustScale):
 
 def _get_small_sample_dn(n: int):
     """
-    Calculates the correction factor for the Qn estimator
-    at small samples [Time-efficient algorithms for two highly robust estimators of scale,
-    Christophe Croux and Peter J. Rousseeuw (1992)].
+    Calculates the correction factor for the Qn estimator at small samples.
+
+    References:
+        - Croux, C., & Rousseeuw, P. J. (1992). Time-efficient algorithms for two highly robust
+        estimators of scale. In Computational Statistics: Volume 1: Proceedings of the 10th
+        Symposium on Computational Statistics (pp. 411-428). Heidelberg: Physica-Verlag HD.
     """
     DNDICT = {
         2: 0.399,

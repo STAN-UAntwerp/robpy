@@ -11,14 +11,22 @@ from robpy.univariate.mcd import UnivariateMCD
 
 
 class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
-    """Scaling features using a RobustScaleEstimator"""
-
     def __init__(
         self,
         scale_estimator: RobustScale = UnivariateMCD(),
         with_centering: bool = True,
         with_scaling: bool = True,
     ):
+        """Scaling features using a univariate RobustScaleEstimator.
+
+        Args:
+            scale_estimator (RobustScale, optional):
+                Robust scale estimator to scale the data with. Defaults to UnivariateMCD().
+            with_centering (boolean, optional):
+                Whether to center the data. Defaults to True.
+            with_scaling (boolean, optional):
+                Whether to scale the data. Defaults to True.
+        """
         self.scale_estimator = scale_estimator
         self.with_centering = with_centering
         self.with_scaling = with_scaling

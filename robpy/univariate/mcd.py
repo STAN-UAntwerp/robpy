@@ -7,22 +7,23 @@ from scipy.stats import chi2, gamma
 class UnivariateMCD(RobustScale):
     def __init__(self, alpha: float | int | None = None, consistency_correction: bool = True):
         """
-        Implementation of univariate MCD (Hubert & Debruyne, 2009)
+        Implementation of the univariate MCD of Hubert, M., & Debruyne, M. (2010).
 
         Args:
-            alpha (float or int, optional): size of the h subset.
+            alpha (float | int | None, optional):
+              Size of the h subset.
               If an integer between n/2 and n is passed, it is interpreted as an absolute value.
-              If a float  between 0.5 and 1 is passed, it is interpreted as a proportation
+              If a float  between 0.5 and 1 is passed, it is interpreted as a proportion
               of n (the training set size).
               If None, it is set to floor(n/2) + 1.
               Defaults to None.
             consistency_correction (boolean, optional):
-              whether the estimates should be consistent at the normal model.
+              Whether the estimates should be consistent at the normal model.
               Defaults to True.
 
         References:
-            Hubert, M., & Debruyne, M. (2010). Minimum covariance determinant.
-              Wiley interdisciplinary reviews: Computational statistics, 2(1), 36-43.
+            - Hubert, M., & Debruyne, M. (2010). Minimum covariance determinant.
+            Wiley interdisciplinary reviews: Computational statistics, 2(1), 36-43.
         """
         super().__init__()
         self.alpha = alpha

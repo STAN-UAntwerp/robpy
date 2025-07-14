@@ -41,38 +41,45 @@ class FastMCD(RobustCovariance):
         random_seed: int | None = None,
     ):
         """
-        Fast MCD estimator based on the algorithm proposed in Rousseeuw and Van Driessen (1999)
+        Fast MCD estimator based on the algorithm proposed in Rousseeuw, P. J., & Driessen, K. V.
+        (1999).
 
         Args:
             alpha (float | int | None, optional):
-              size of the h subset.
+              Size of the h subset.
               If an integer between n/2 and n is passed, it is interpreted as an absolute value.
-              If a float between 0.5 and 1 is passed, it is interpreted as a proportation
-              of n (the training set size).
+              If a float between 0.5 and 1 is passed, it is interpreted as a proportion of n
+              (the training set size).
               If None, it is set to (n+p+1) / 2.
               Defaults to None.
             n_initial_subsets (int, optional):
-              number of initial random subsets of size p+1
+              Number of initial random subsets of size p+1.
+              Defaults to 500.
             n_initial_c_steps (int, optional):
-              number of initial c steps to perform on all initial subsets
+              Number of initial c steps to perform on all initial subsets.
+              Defaults to 2.
             n_best_subsets (int, optional):
-              number of best subsets to keep and perform c steps on until convergence
+              Number of best subsets to keep and perform c steps on until convergence.
+              Defaults to 10.
             n_partitions (int, optional):
               Number of partitions to split the data into.
-              This can speed up the algorithm for large datasets (n > 600 suggested in paper)
+              This can speed up the algorithm for large datasets (n > 600 suggested in paper).
               If None, 5 partitions are used if n > 600, otherwise 1 partition is used.
             tolerance (float, optional):
-              Minimum difference in determinant between two iterations to stop the C-step
+              Minimum difference in determinant between two iterations to stop the C-step.
+              Defaults to 1e-8.
             correct_covariance (bool, optional):
-              Whether to apply a consistency correction to the raw covariance estimate
+              Whether to apply a consistency correction to the raw covariance estimate.
+              Defaults to True.
             reweighting (bool, optional):
-              Whether to apply reweighting to the raw covariance estimate
+              Whether to apply reweighting to the raw covariance estimate.
+              Defaults to True.
             random_seed (int | None, optional):
-              Can be used to provide a random seed.
+              Can be used to provide a random seed. Defaults to None.
+
         References:
-            Rousseeuw and Van Driessen, A Fast Algorithm for the Minimum Covariance Determinant
-            Estimator, 1999, American Statistical Association and
-            the American Society for Quality, TECHNOMETRICS
+            - Rousseeuw, P. J., & Driessen, K. V. (1999). A fast algorithm for the minimum
+            covariance determinant estimator. Technometrics, 41(3), 212-223.
 
         """
         super().__init__(store_precision=store_precision, assume_centered=assume_centered)
@@ -171,11 +178,11 @@ class FastMCD(RobustCovariance):
         Perform a single C-step on the subset of the data
 
         Args:
-            subset_idx: indices of the current subset
-            X: data
+            subset (HSubset): indices of the current subset.
+            X (np.ndarray): data.
 
         Returns:
-            indices for new h subset
+            HSubset: indices for new h subset.
         """
         # Calculate the Mahalanobis distances
         mahalanobis = mahalanobis_distance(X, subset.location, subset.scale)
@@ -218,11 +225,12 @@ class FastMCD(RobustCovariance):
         determinant.
 
         Args:
-             - indices: data indices
-             - X: complete dataset
-             - n_c_steps: will be passed directly to the HSubset
-             - ensure_non_singular: whether to resample in case the determinant is 0 (relevant for
-               sampling initial subsets)
+             - indices (np.ndarray): data indices.
+             - X (np.ndarray): complete dataset.
+             - n_c_steps (int): will be passed directly to the HSubset.
+             - ensure_non_singular (bool): whether to resample in case the determinant is 0
+                (relevant for sampling initial subsets).
+
         """
         mu = X[indices].mean(axis=0)
         cov = np.cov(X[indices], rowvar=False)
@@ -258,27 +266,31 @@ class DetMCD(RobustCovariance):
         verbosity: int = logging.WARNING,
     ):
         """
-        Deterministic MCD estimator (DetMCD) based on the algorithm proposed in
-        Hubert, Rousseeuw and Verdonck (2012)
+        Deterministic MCD estimator (DetMCD) based on the algorithm proposed in Hubert, M.,
+        Rousseeuw, P. J., & Verdonck, T. (2012).
 
         Args:
             alpha (float | int | None, optional):
-              size of the h subset.
-              If an integer between n/2 and n is passed, it is interpreted as an absolute value.
-              If a float between 0.5 and 1 is passed, it is interpreted as a proportation
-              of n (the training set size).
-              If None, it is set to (n+p+1) / 2.
-              Defaults to None.
+                size of the h subset.
+                If an integer between n/2 and n is passed, it is interpreted as an absolute value.
+                If a float between 0.5 and 1 is passed, it is interpreted as a proportion
+                of n (the training set size).
+                If None, it is set to (n+p+1) / 2.
+                Defaults to None.
             tolerance (float, optional):
-              Minimum difference in determinant between two iterations to stop the C-step
+                Minimum difference in determinant between two iterations to stop the C-step.
+                Defaults to 1e-8.
             correct_covariance (bool, optional):
-              Whether to apply a consistency correction to the raw covariance estimate
+                Whether to apply a consistency correction to the raw covariance estimate.
+                Defaults to True.
             reweighting (bool, optional):
-              Whether to apply reweighting to the raw covariance estimate
+                Whether to apply reweighting to the raw covariance estimate.
+                Defaults to True.
 
         References:
-            Hubert, Rousseeuw and Verdonck, A deterministic algorithm for robust location
-            and scatter, 2012, Journal of Computational and Graphical Statistics
+            - Hubert, M., Rousseeuw, P. J., & Verdonck, T. (2012). A deterministic algorithm for
+            robust location and scatter. Journal of Computational and Graphical Statistics, 21(3),
+            618-637.
 
         """
         super().__init__()
@@ -430,12 +442,16 @@ class DetMCD(RobustCovariance):
     ) -> HSubset:
         """Construct an HSubset from a set of data indices and calculate location, scale and
          determinant.
+
         Args:
-             - indices: data indices
-             - X: complete dataset
-             - n_c_steps: will be passed directly to the HSubset
-             - ensure_non_singular: whether to resample in case the determinant is 0 (relevant for
-             sampling initial subsets)
+             - indices (np.ndarray): data indices.
+             - X (np.ndarray): complete dataset.
+             - n_c_steps (int): will be passed directly to the HSubset.
+             - ensure_non_singular (bool): whether to resample in case the determinant is 0
+             (relevant for sampling initial subsets).
+
+        Returns:
+            Hsubset.
         """
         mu = X[indices].mean(axis=0)
         cov = np.cov(X[indices], rowvar=False)
@@ -453,11 +469,11 @@ class DetMCD(RobustCovariance):
         """Perform a single C-step on the subset of the data
 
         Args:
-            subset_idx: indices of the current subset
-            X: data
+            subset (HSubset): indices of the current subset.
+            X (np.ndarray): data.
 
         Returns:
-            indices for new h subset
+            HSubset: indices for new h subset.
         """
         # Calculate the Mahalanobis distances
         mahalanobis = mahalanobis_distance(X, subset.location, subset.scale)

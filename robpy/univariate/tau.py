@@ -12,19 +12,20 @@ class Tau(RobustScale):
         consistency_correction: bool = True,
     ):
         """
-        Implementation of tau estimator of scale
-
-        [Robust Estimates of Location and Dispersion for High-Dimensional Datasets,
-        Ricarco A Maronna and Ruben H Zamar (2002)]
+        Implementation of tau estimator of scale of Maronna, R. A., & Zamar, R. H. (2002).
 
         Args:
             c1 (float, optional):
-                constant for the weight function, defaults to 4.5
+                constant for the weight function, defaults to 4.5.
             c2 (float, optional):
-                constant for the rho function, defaults to 3.0
+                constant for the rho function, defaults to 3.0.
             consistency_correction (bool, optional):
                 boolean indicating if consistency for normality should be applied.
                 Defaults to True.
+
+        References:
+            - Maronna, R. A., & Zamar, R. H. (2002). Robust estimates of location and dispersion for
+            high-dimensional datasets. Technometrics, 44(4), 307-317.
         """
         super().__init__()
         self.c1 = c1
@@ -35,7 +36,7 @@ class Tau(RobustScale):
         """
         Args:
             X (np.ndarray):
-                univariate data
+                Univariate data.
         """
         n = len(X)
         sigma0 = median_abs_deviation(X)

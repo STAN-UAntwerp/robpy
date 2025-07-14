@@ -25,19 +25,25 @@ def adjusted_boxplot(
     figsize: tuple[int, int] = (6, 6),
     **bxp_kwargs,
 ) -> list[Boxplot]:
-    """Calculate and visualize an adjusted boxplot as described in Huber and Vandervieren (2004)
+    """
+    Calculate and visualize an adjusted boxplot as described in Hubert, M., &
+    Vandervieren, E. (2008).
 
     Args:
-        X (np.ndarray or pd.Series or pd.DataFrame): An array of float values
-        plot (bool, optional): Whether to plot the boxplot. Defaults to True.
-        ax (Axes, optional): The matplotlib axes to plot the boxplot.
-          If None, a new figure and axes will be created. Defaults to None.
-        figsize (tuple[int, int], optional): Size of the plot. Defaults to (6,6).
-        bxp_kwargs (optional): Additional keyword arguments to pass to
-          `matplotlib.axes.Axes.bxp`.
+        X (np.ndarray or pd.Series or pd.DataFrame):
+            An array of float values.
+        plot (bool, optional):
+            Whether to plot the boxplot. Defaults to True.
+        ax (Axes, optional):
+            The matplotlib axes to plot the boxplot.
+            If None, a new figure and axes will be created. Defaults to None.
+        figsize (tuple[int, int], optional):
+            Size of the plot. Defaults to (6,6).
+        bxp_kwargs (optional):
+            Additional keyword arguments to pass to `matplotlib.axes.Axes.bxp`.
 
     Returns:
-        - list[Boxplot]: A list of containers with boxplot statistics for each variable in X
+        - list[Boxplot]: A list of containers with boxplot statistics for each variable in X.
 
     References:
         - Hubert, M., & Vandervieren, E. (2008). An adjusted boxplot for skewed distributions.

@@ -44,20 +44,28 @@ class RobustRegression(RegressorMixin, BaseEstimator):
         figsize: tuple[int, int] = (4, 4),
         return_data: bool = False,
     ) -> None | tuple[np.ndarray, np.ndarray, np.ndarray, float, float]:
-        """Create a diagnostic plot where robust residuals are plotted against the robust
-        mahalabobis distances of the training data.
+        """
+        Creates a diagnostic plot where the robust residuals are plotted against the robust
+        mahalanobis distances of the training data.
 
         Args:
-            X (array like of shape (n_samples, n_features)): training features
-            y (array like of shape (n_samples, )): training targets
-            robust_scaling (bool): whether to scale residuals using MAD instead of std
-            robust_distance (bool): whether to use MCD as loc/scale estimator instead of mean/cov
-                for calculating the Mahalanobis distances
-            vertical_outlier_threshold: where to draw the upper (and lower) limit for
-                the standardized residuals to indicate outliers
-            leverage_threshold_percentile: which percentile from the chisquare distribution
-                to use to set as threshold for leverage points
-            figsize (tuple[int, int], optional): Size of the plot. Defaults to (10, 4).
+            X (array like of shape (n_samples, n_features)):
+                Training features.
+            y (array like of shape (n_samples, )):
+                Training targets.
+            robust_scaling (bool, optional):
+                Whether to scale the residuals using MAD instead of std. Defaults to True.
+            robust_distance (bool, optional):
+                Whether to use the MCD as loc/scale estimator instead of mean/cov for calculating
+                the Mahalanobis distances. Defaults to True.
+            vertical_outlier_threshold (float, optional):
+                Where to draw the upper (and lower) limit for the standardized residuals to indicate
+                outliers. Defaults to 2.5.
+            leverage_threshold_percentile (float, optional):
+                Which percentile from the chi-squared distribution to use to set as threshold for
+                leverage points. Defaults to 0.975.
+            figsize (tuple[int, int], optional):
+                Size of the plot. Defaults to (4, 4).
             return_data (bool, optional):
                 Whether to return the residuals, the standardized residuals and the distances.
                 Defaults to False.

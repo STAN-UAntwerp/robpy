@@ -19,28 +19,29 @@ class ROBPCA(RobustPCA):
         random_seed: int | None = None,
     ):
         """Implementation of ROBPCA algorithm as described in
-        Hubert, Rousseeuw & Vanden Branden (2005) and Hubert, Rousseeuw & Verdonck (2009)
-
+        Hubert, M., Rousseeuw, P. J., & Vanden Branden, K. (2005) and Hubert, M., Rousseeuw, P., &
+        Verdonck, T. (2009).
 
         Args:
             n_components (int | None, optional):
-                Number of components to select. If None, it is set during fit to min (X.shape)
-            k_min_var_explained (float, optional): minimum variance explained by the n_components
-                Only used if n_components is None
-            alpha (float, optional): coverage parameter, determines the robustness and efficiency
+                Number of components to select. If None, it is set during fit. Defaults to None.
+            k_min_var_explained (float, optional): Minimum variance explained by the components.
+                Only used if n_components is None. Defaults to 0.8.
+            alpha (float, optional): Coverage parameter, determines the robustness and efficiency
                 trade off of the estimator.
-                Smaller alpha gives more robust but less accurate estimates
-            final_MCD_step (bool, optional): whether to apply the final MCD step to get maximally
+                Smaller alpha gives more robust but less accurate estimates. Defaults to 0.75.
+            final_MCD_step (bool, optional): Whether to apply the final MCD step to get maximally
                 robust estimates. If False, the eigenvectors after projection onto V1 (subspace
                 determined by points with OD < cutoff) are used as the final estimates.
                 Defaults to True.
             random_seed (int | None, optional):
-                Can be used to provide a random seed.
+                Can be used to provide a random seed. Defaults to None.
 
         References:
-            - Hubert, Rousseeuw & Vanden Branden (2005),
-              ROBPCA: A new approach to robust principal component analysis
-            - Hubert, Rousseeuw & Verdonck (2009) Robust PCA for skewed data and its outlier map
+            - Hubert, M., Rousseeuw, P. J., & Vanden Branden, K. (2005). ROBPCA: a new approach to
+                robust principal component analysis. Technometrics, 47(1), 64-79.
+            - Hubert, M., Rousseeuw, P., & Verdonck, T. (2009). Robust PCA for skewed data and its
+                outlier map. Computational Statistics & Data Analysis, 53(6), 2264-2274.
 
         """
         super().__init__(n_components=n_components)

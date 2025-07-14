@@ -12,13 +12,6 @@ from robpy.utils.rho import BaseRho, TukeyBisquare
 
 
 class MMRegression(RobustRegression):
-    """
-    Implementation of MM-regression estimator
-
-    References:
-        https://www.jstor.org/stable/2241331
-    """
-
     def __init__(
         self,
         initial_estimator: RobustRegression = SRegression(),
@@ -26,6 +19,24 @@ class MMRegression(RobustRegression):
         max_iterations: int = 500,
         epsilon: float = 1e-7,
     ):
+        """
+        Implementation of MM-regression estimator of Yohai, V. J. (1987).
+
+        Args:
+            initial_estimator (RobustRegression, optional):
+                Initial regression estimator. Defaults to SRegression.
+            rho (BaseRho, optional):
+                The rho-function used for the MM-estimate. Defaults to TukeyBisquare(c=3.44).
+            max_iterations (int, optional):
+                Maximum number of iterations. Defaults to 500.
+            epsilon (float, optional):
+                If the absolute difference between all the new and old residuals in an iteration
+                is below epsilon, we stop the computation. Defautls to 1e-7.
+
+        References:
+            - Yohai, V. J. (1987). High breakdown-point and high efficiency robust estimates for
+            regression. The Annals of statistics, 15(2), 642-656.
+        """
         self.initial_estimator = initial_estimator
         self.rho = rho
         self.max_iterations = max_iterations

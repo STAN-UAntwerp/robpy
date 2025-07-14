@@ -19,10 +19,9 @@ class InitialDDCW(RobustCovariance):
         min_eigenvalue: float = 1e-4,
     ):
         """
-        Calculates the initial robust scatter and location estimates for the CellMCD. Described
-        in the Supplementary Material to Raymaekers and Rousseeuw 2023.
-
-        code based on cellWise:::DDCWcov in R
+        Calculates the initial robust scatter and location estimates for the CellMCD, described
+        in the Supplementary Material to Raymaekers, J., & Rousseeuw, P. J. (2024). The code is
+        based on the function cellWise:::DDCWcov in R.
 
         Parameters:
             alpha (float, optional):
@@ -34,8 +33,8 @@ class InitialDDCW(RobustCovariance):
                 Defaults to 1e-4.
 
         References:
-            - Raymaekers and Rousseeuw, The Cellwise Minimum Covariance Determinant Estimator, 2023,
-        Journal of the American Statistical Association.
+            - Raymaekers, J., & Rousseeuw, P. J. (2024). The cellwise minimum covariance determinant
+              estimator. Journal of the American Statistical Association, 119(548), 2610-2621.
         """
         super().__init__(store_precision=True, assume_centered=False, nans_allowed=True)
         self.alpha = alpha
@@ -43,12 +42,11 @@ class InitialDDCW(RobustCovariance):
 
     def calculate_covariance(self, X: np.ndarray):
         """Calculates the initial cellwise robust estimates of location and scatter using an
-        adaptation of DDC.
+        adaptation of DDC. The code is based on the function cellWise:::DDCWcov in R.
 
         Arguments:
-            X (np.ndarray): scaled data set
-
-        [based on cellWise:::DDCWcov]"""
+            X (np.ndarray): scaled data set.
+        """
 
         n, p = X.shape
 

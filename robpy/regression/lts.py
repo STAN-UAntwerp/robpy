@@ -13,14 +13,6 @@ from robpy.regression.base import RobustRegression, _convert_input_to_array
 
 
 class FastLTSRegression(RobustRegression):
-    """
-    Implementation of FAST-LTS model based on R implementation of the
-    ltsReg method in the robustbase R package
-    (cfr. https://www.rdocumentation.org/packages/robustbase/versions/0.93-8/topics/ltsReg)
-    and the python implementation `Reweighted-FastLTS`
-    (cfr. https://github.com/GiuseppeCannata/Reweighted-FastLTS/blob/master/Reweighted_FastLTS.py)
-    """
-
     def __init__(
         self,
         alpha: float = 0.5,
@@ -31,23 +23,32 @@ class FastLTSRegression(RobustRegression):
         tolerance: float = 1e-15,
         random_state: int = 42,
     ):
-        """Initialize a FAST LTS regression
+        """
+        Implementation of the FAST-LTS model based on the R implementation of the
+        ltsReg method in the robustbase R package (cfr.
+        https://www.rdocumentation.org/packages/robustbase/versions/0.93-8/topics/ltsReg)
+        and the python implementation `Reweighted-FastLTS` (cfr.
+        https://github.com/GiuseppeCannata/Reweighted-FastLTS/blob/master/Reweighted_FastLTS.py).
 
         Args:
-            alpha (float): percentage of data to consider as subset for
-                           calculating the trimmed squared error.
-                           Must be between 0.5 and 1, with 1 being equal to normal LS regression.
-                           Defaults to 0.5.
-            n_initial_subset (int): number of initial subsets to apply C-steps on
-                                    (cfr `m` in original R implementatino). Defaults to 500.
-            n_initial_c_steps (int): number of c-steps to apply on n_initial_subsets
-                                     before final c-steps until convergenge . Defaults to 2.
-            n_best_models (int): number of best models after initial c-steps to consider
-                                 until convergence. Defaults to 10.
-            reweighting (bool): Whether to apply reweighting to the raw estimates. Defaults to True.
-            tolerance (float): Acceptable delta in loss value between C-steps.
-                               If current loss  -  previous loss <= tolerance, model is converged.
-                               Defaults to 1e-15.
+            alpha (float, optional):
+                Percentage of the data to consider as subset for calculating the trimmed squared
+                error. Must be between 0.5 and 1, with 1 being equal to the classic LS regression.
+                Defaults to 0.5.
+            n_initial_subset (int, optional):
+                Number of initial subsets to apply C-steps on (cfr `m` in original R
+                implementation). Defaults to 500.
+            n_initial_c_steps (int, optional):
+                Number of c-steps to apply on n_initial_subsets before final c-steps until
+                convergence. Defaults to 2.
+            n_best_models (int, optional):
+                Number of best models after initial c-steps to consider until convergence. Defaults
+                to 10.
+            reweighting (bool, optional):
+                Whether to apply reweighting to the raw estimates. Defaults to True.
+            tolerance (float, optional):
+                Acceptable delta in loss value between C-steps.
+                If current loss - previous loss <= tolerance, model is converged. Defaults to 1e-15.
         """
         self.alpha = alpha
         self.n_initial_subsets = n_initial_subsets
@@ -65,11 +66,12 @@ class FastLTSRegression(RobustRegression):
         initial_weights: np.ndarray | None = None,
         verbosity: int = logging.INFO,
     ) -> FastLTSRegression:
-        """Fit the model to the data
+        """
+        Fit the model to the data.
 
         Args:
-            X (np.ndarray): Training features
-            y (np.ndarray): Training labels
+            X (np.ndarray | pd.DataFrame): Training features.
+            y (np.ndarray | pd.DataFrame): Training labels.
             initial_weights (Optional[np.ndarray], optional): Optionally pass fixed initial weights,
                             in case of n_initial_subsets > 1, this means all models start
                             from the same initial weights.
@@ -78,7 +80,7 @@ class FastLTSRegression(RobustRegression):
             verbosity (int, optional): [description]. Defaults to logging.INFO.
 
         Returns:
-            The fitted FastLTS object
+            The fitted FastLTS object.
         """
         self.logger.setLevel(verbosity)
 
@@ -150,10 +152,10 @@ class FastLTSRegression(RobustRegression):
         verbosity: int = logging.DEBUG,
     ) -> tuple[list[LinearRegression], list[float], list[np.ndarray]]:
         """
-        Perform initial c_steps on n_initial_subsets of size n_features + 1
+        Perform initial c_steps on n_initial_subsets of size n_features + 1.
 
         Returns:
-            List of models, List of losses and List of h subsets
+            List of models, List of losses and List of h subsets.
         """
         np.random.seed(self.random_state)
         lr_models = []
@@ -188,16 +190,16 @@ class FastLTSRegression(RobustRegression):
         random_state: int = 42,
     ) -> LinearRegression:
         """Get a Linear Regression model that is fitted on
-        a random subset of the data of size n_features + 1
+        a random subset of the data of size n_features + 1.
 
         Args:
-            X (np.ndarray): Feature data
-            y (np.ndarray): Labels
+            X (np.ndarray): Feature data.
+            y (np.ndarray): Labels.
             random_state (int, optional): Random seed, will determine the random subset.
                 Defaults to 42.
 
         Returns:
-            lr_model: A Linear Regression model fitted on a random subset
+            LinearRegression: A Linear Regression model fitted on a random subset.
         """
         n_obs, n_features = X.shape  # n, p
         np.random.seed(random_state)
@@ -212,16 +214,16 @@ class FastLTSRegression(RobustRegression):
         h_subset_idx: np.ndarray | list[int],
         model: LinearRegression,
     ) -> float:
-        """Get the Least Trimmed Squared loss for a specific model and h subset
+        """Get the Least Trimmed Squared loss for a specific model and h subset.
 
         Args:
-            X (np.ndarray): Features
-            y (np.ndarray): Labels
-            h_subset_idx (np.ndarray): Indices of h subset
-            model (LinearRegression): A trained Linear Regression model
+            X (np.ndarray): Features.
+            y (np.ndarray): Labels.
+            h_subset_idx (np.ndarray): Indices of h subset.
+            model (LinearRegression): A trained Linear Regression model.
 
         Returns:
-            mean squared residual of h_subset
+            float: Mean squared residual of h_subset.
         """
         y_true = y[h_subset_idx].reshape(-1, 1)
         y_pred = model.predict(X[h_subset_idx]).reshape(-1, 1)
@@ -238,20 +240,20 @@ class FastLTSRegression(RobustRegression):
         tolerance: float = 1e-15,
         logger: logging.Logger = logging.getLogger("FastLTS"),
     ) -> tuple[LinearRegression, np.ndarray, float, int]:
-        """Apply c-steps until convergence
+        """Apply c-steps until convergence.
 
         Args:
-            current_model (LinearRegression): model to start from
-            previous_loss (float): reference loss value
-            X (np.ndarray): Training data features
-            y (np.ndarray): Training data targets
-            h (int): Number of samples to consider in subset
-            tolerance (float, optional): min delta in loss between iterations. Defaults to 1e-15.
+            current_model (LinearRegression): Model to start from.
+            previous_loss (float): Reference loss value.
+            X (np.ndarray): Training data features.
+            y (np.ndarray): Training data targets.
+            h (int): Number of samples to consider in subset.
+            tolerance (float, optional): Min delta in loss between iterations. Defaults to 1e-15.
             logger (logging.Logger, optional): logger. Defaults to logging.getLogger('FastLTS').
 
         Returns:
             Tuple[LinearRegression, np.ndarray, float, int]:
-                updated model, h subset indices, final loss value, final iteration idx
+                updated model, h subset indices, final loss value, final iteration idx.
         """
         iteration = 0
         while True:
@@ -273,16 +275,16 @@ class FastLTSRegression(RobustRegression):
     def _get_h_subset(
         lr_model: LinearRegression, X: np.ndarray, y: np.ndarray, h: int
     ) -> np.ndarray:
-        """Get the indices of the h observations with the smallest residuals for a given model
+        """Get the indices of the h observations with the smallest residuals for a given model.
 
         Args:
-            lr_model (LinearRegression): A fitted Linear Regression Model
-            X (np.ndarray): Features
-            y (np.ndarray): Labels
-            h (int): Number of observations to include in the subset
+            lr_model (LinearRegression): A fitted Linear Regression Model.
+            X (np.ndarray): Features.
+            y (np.ndarray): Labels.
+            h (int): Number of observations to include in the subset.
 
         Returns:
-            np.ndarray: Array of indices for the h subset
+            np.ndarray: Array of indices for the h subset.
         """
         residuals = y - lr_model.predict(X).reshape(-1, 1)
         return np.argsort(np.abs(residuals).flatten())[:h]
@@ -292,10 +294,10 @@ class FastLTSRegression(RobustRegression):
         lr_model: LinearRegression, X: np.ndarray, y: np.ndarray, h: int
     ) -> tuple[np.ndarray, LinearRegression]:
         """
-        Apply a single C-step
+        Apply a single C-step.
 
         Returns:
-            h subset indices, fitted lr model
+            h subset indices, fitted lr model.
         """
         h_subset_idx = FastLTSRegression._get_h_subset(lr_model, X, y, h)
         lr_model = LinearRegression().fit(X[h_subset_idx], y[h_subset_idx])
@@ -304,13 +306,14 @@ class FastLTSRegression(RobustRegression):
 
 def get_correction_factor(p: int, n: int, alpha: float) -> float:
     """
-    Calculate the small sample correction factor for the scale resulting from LTS regression.
+    Calculate the small sample correction factor for the scale resulting from LTS regression when
+    there is no reweighting.
 
     References:
-        Pison, G., Van Aelst, S. & Willems, G. Small sample corrections for LTS and MCD.
-        Metrika 55, 111–123 (2002). https://doi.org/10.1007/s001840200191
+     - Pison, G., Van Aelst, S., & Willems, G. (2002). Small sample corrections for LTS and MCD.
+            Metrika, 55(1), 111-123.
 
-        https://github.com/cran/robustbase/blob/c4b9d21cfc4beb64653bb2ffba9e549e2dbb98ed/R/ltsReg.R
+     - https://github.com/cran/robustbase/blob/c4b9d21cfc4beb64653bb2ffba9e549e2dbb98ed/R/ltsReg.R
     """
     if alpha < 0.5 or alpha > 1:
         raise ValueError(f"alpha must be between 0.5 and 1, but received {alpha}")
@@ -358,13 +361,14 @@ def get_correction_factor(p: int, n: int, alpha: float) -> float:
 
 def get_correction_factor_reweighting(p: int, n: int, alpha: float) -> float:
     """
-    Calculate the small sample correction factor for the scale resulting from LTS regression.
+    Calculate the small sample correction factor for the scale resulting from LTS regression when
+    there is reweighting.
 
     References:
-        Pison, G., Van Aelst, S. & Willems, G. Small sample corrections for LTS and MCD.
-        Metrika 55, 111–123 (2002). https://doi.org/10.1007/s001840200191
+     - Pison, G., Van Aelst, S., & Willems, G. (2002). Small sample corrections for LTS and MCD.
+            Metrika, 55(1), 111-123.
 
-        https://github.com/cran/robustbase/blob/c4b9d21cfc4beb64653bb2ffba9e549e2dbb98ed/R/ltsReg.R
+     - https://github.com/cran/robustbase/blob/c4b9d21cfc4beb64653bb2ffba9e549e2dbb98ed/R/ltsReg.R
     """
     if alpha < 0.5 or alpha > 1:
         raise ValueError(f"alpha must be between 0.5 and 1, but received {alpha}")

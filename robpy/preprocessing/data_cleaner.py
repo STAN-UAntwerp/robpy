@@ -12,13 +12,6 @@ from sklearn.exceptions import NotFittedError
 
 
 class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
-    """Cleans a dataset before an analysis.
-
-    Typically used before DDC, cellMCD, transfo...
-
-    based on: [https://rdrr.io/cran/cellWise/man/checkDataSet.html]
-    """
-
     def __init__(
         self,
         max_missing_frac_cols: float = 0.5,
@@ -28,7 +21,12 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         clean_na_first: str = "automatic",
         min_n_rows: int = 3,
     ):
-        """Initialize DataCleaner
+        """Cleans a dataset before an analysis.
+
+        Typically used before DDC, cellMCD, transfo...
+
+        based on the R function checkDataSet in the package cellWise:
+        [https://rdrr.io/cran/cellWise/man/checkDataSet.html]
 
         Args:
             max_missing_frac_cols (float, optional): Keep only the columns that have a
@@ -63,7 +61,8 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def fit(self, X: pd.DataFrame):
         """
-        X (pd.DataFrame): input dataset.
+        Args:
+            X (pd.DataFrame): The input dataset.
         """
 
         self._get_non_numeric_columns_to_drop(X)
@@ -76,7 +75,8 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def transform(self, X: pd.DataFrame):
         """
-        X (pd.DataFrame): input dataset.
+        Args:
+            X (pd.DataFrame): The input dataset.
         """
 
         n, p = X.shape
@@ -105,7 +105,7 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     @property
     def dropped_columns(self) -> dict[str, list]:
-        """Return the columns names that were dropped during the cleaning process.
+        """Return the names of the columns that were dropped during the cleaning process.
 
         Returns:
             dict[str, list]: Mapping from reason for dropping to list of column names.
@@ -135,7 +135,7 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     @property
     def dropped_rows(self) -> dict[str, list]:
         """
-        Return the rows indices that were dropped during the cleaning process.
+        Return the indices of the rows that were dropped during the cleaning process.
 
         Returns:
             dict[str, list]: mapping from reason for dropping to list of row indices.

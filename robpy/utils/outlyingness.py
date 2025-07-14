@@ -13,18 +13,17 @@ def stahel_donoho(
     Based on the algorithm proposed by Stahel, W. A. (1981) and Donoho, D. L. (1982).
 
     Args:
-        X (np.ndarray): data matric of shape (n_obs, n_features)
-        n_points (int, optional): number of points to determine the hyperplane. Defaults to 2.
-        n_dir (int, optional): number of random directions to consider. Defaults to 250.
-        random_seed (int | None, optional): can be used to provide a random seed. Defaults to None.
+        X (np.ndarray): Data matrix of shape (n_obs, n_features)
+        n_points (int, optional): Number of points to determine the hyperplane. Defaults to 2.
+        n_dir (int, optional): Number of random directions to consider. Defaults to 250.
+        random_seed (int | None, optional): Can be used to provide a random seed. Defaults to None.
 
     Returns:
-        np.ndarray: single column of outlyingness values
+        np.ndarray: Single column of outlyingness values.
 
     References:
         - Stahel, W. A. (1981). Robuste schätzungen: infinitesimale optimalität und schätzungen von
           kovarianzmatrizen (Doctoral dissertation, ETH Zurich).
-
         - Donoho, D. L. (1982). Breakdown properties of multivariate location estimators.
           Technical report, Harvard University, Boston.
     """

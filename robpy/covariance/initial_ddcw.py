@@ -41,12 +41,6 @@ class InitialDDCW(RobustCovariance):
         self.min_eigenvalue = min_eigenvalue
 
     def calculate_covariance(self, X: np.ndarray):
-        """Calculates the initial cellwise robust estimates of location and scatter using an
-        adaptation of DDC. The code is based on the function cellWise:::DDCWcov in R.
-
-        Arguments:
-            X (np.ndarray): scaled data set.
-        """
 
         n, p = X.shape
 
@@ -76,9 +70,9 @@ class InitialDDCW(RobustCovariance):
         Zimp_proj_scaler = RobustScaler(scale_estimator=OneStepWrapping()).fit(
             Zimp_proj, ignore_nan=True
         )
-        Zimp_proj_scaler.scales_[
-            Zimp_proj_scaler.scales_ < self.min_eigenvalue
-        ] = self.min_eigenvalue
+        Zimp_proj_scaler.scales_[Zimp_proj_scaler.scales_ < self.min_eigenvalue] = (
+            self.min_eigenvalue
+        )
         Zimp_proj_wrapped_cov = np.cov(
             wrapping_transformation(
                 Zimp_proj,
@@ -108,9 +102,9 @@ class InitialDDCW(RobustCovariance):
         Zimp_proj_scaler = RobustScaler(scale_estimator=OneStepWrapping()).fit(
             Zimp_proj, ignore_nan=True
         )
-        Zimp_proj_scaler.scales_[
-            Zimp_proj_scaler.scales_ < self.min_eigenvalue
-        ] = self.min_eigenvalue
+        Zimp_proj_scaler.scales_[Zimp_proj_scaler.scales_ < self.min_eigenvalue] = (
+            self.min_eigenvalue
+        )
         Zimp_proj_wrapped_cov = np.cov(
             wrapping_transformation(
                 Zimp_proj,

@@ -21,9 +21,9 @@ def wrapping_transformation(
 
         \\Psi_{b, c}(z) =
         \\begin{cases}
-          z & if \\  0 \\leq |z| < b \\\\
-          q_1 \\tanh\\left(q_2 (c - |z|)\\right) \\mathrm{sign}(z) & if \\  b \\leq |z| \\leq c \\\\
-          0  & if \\   c < |z|
+          z & \\text{if } \\  0 \\leq |z| < b \\\\
+          q_1 \\tanh\\left(q_2 (c - |z|)\\right) \\mathrm{sign}(z) & \\text{if } \\  b \\leq |z| \\leq c \\\\
+          0  & \\text{if } \\   c < |z|
         \\end{cases}
 
     Args:
@@ -49,11 +49,11 @@ def wrapping_transformation(
             first value and a named argument axis. Defaults to median_abs_deviation.
 
     Returns:
-        np.ndarry: The transformed data.
+        np.ndarray: The transformed data.
 
     References:
         - Raymaekers, J., & Rousseeuw, P. J. (2021). Fast robust correlation for
-            high-dimensional data. Technometrics, 63(2), 184-198.
+          high-dimensional data. Technometrics, 63(2), 184-198.
     """
     locations = location_estimator(X, axis=0)
     scales = scale_estimator(X, axis=0)

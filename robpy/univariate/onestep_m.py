@@ -73,8 +73,8 @@ class OneStepM(RobustScale):
 class HuberOneStepM(OneStepM):
     def __init__(self):
         """
-        Implementation of Huber M-estimator with 1 step: location and scale. Analoguous to the
-        R function estLocScale in the package cellWise using type ="hubhub".
+        Implementation of Huber M-estimator with 1 step: location and scale. Analogous to the
+        R function estLocScale in the package cellWise using type = `hubhub`.
         (cfr. https://github.com/cran/cellWise/blob/master/src/LocScaleEstimators.cpp)
         """
         super().__init__(loc_rho=Huber(b=1.5), scale_rho=Huber(b=1.5), delta=0.7784655)
@@ -97,7 +97,7 @@ class CellwiseOneStepM(OneStepM):
 class OneStepWrapping(RobustScale):
     def __init__(self):
         """
-        Analoguous to the R function estLocScale in the package cellWise using type = "wrap".
+        Analogous to the R function estLocScale in the package cellWise using type = `wrap`.
         (cfr. https://github.com/cran/cellWise/blob/master/src/LocScaleEstimators.cpp)
         """
         super().__init__()

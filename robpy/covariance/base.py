@@ -11,11 +11,28 @@ from robpy.utils.distance import mahalanobis_distance
 
 
 class RobustCovariance(EmpiricalCovariance):
-    def __init__(self, *, store_precision=True, assume_centered=False, nans_allowed=False):
+    def __init__(
+        self,
+        *,
+        store_precision: bool = True,
+        assume_centered: bool = False,
+        nans_allowed: bool = False,
+    ):
         super().__init__(
             store_precision=store_precision,
             assume_centered=assume_centered,
         )
+        """
+        Base class for robust covariance estimators.
+
+        Args:
+            store_precision (boolean, optional):
+                Whether to store the precision matrix. Defaults to True.
+            assume_centered (boolean, optional):
+                Whether the data is already centered. Defaults to False.
+            nans_allowed (boolean, optional):
+                Attribute specifying if nans are allowed. Defaults to False.
+        """
         self.nans_allowed = nans_allowed
 
     def fit(self, X: np.ndarray | pd.DataFrame) -> RobustCovariance:

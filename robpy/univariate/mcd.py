@@ -23,7 +23,7 @@ class UnivariateMCD(RobustScale):
 
         References:
             - Hubert, M., & Debruyne, M. (2010). Minimum covariance determinant.
-            Wiley interdisciplinary reviews: Computational statistics, 2(1), 36-43.
+              Wiley interdisciplinary reviews: Computational statistics, 2(1), 36-43.
         """
         super().__init__()
         self.alpha = alpha

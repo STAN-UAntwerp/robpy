@@ -35,7 +35,7 @@ class MMRegression(RobustRegression):
 
         References:
             - Yohai, V. J. (1987). High breakdown-point and high efficiency robust estimates for
-            regression. The Annals of statistics, 15(2), 642-656.
+              regression. The Annals of statistics, 15(2), 642-656.
         """
         self.initial_estimator = initial_estimator
         self.rho = rho

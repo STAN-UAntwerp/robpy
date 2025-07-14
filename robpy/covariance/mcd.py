@@ -79,7 +79,7 @@ class FastMCD(RobustCovariance):
 
         References:
             - Rousseeuw, P. J., & Driessen, K. V. (1999). A fast algorithm for the minimum
-            covariance determinant estimator. Technometrics, 41(3), 212-223.
+              covariance determinant estimator. Technometrics, 41(3), 212-223.
 
         """
         super().__init__(store_precision=store_precision, assume_centered=assume_centered)
@@ -289,8 +289,8 @@ class DetMCD(RobustCovariance):
 
         References:
             - Hubert, M., Rousseeuw, P. J., & Verdonck, T. (2012). A deterministic algorithm for
-            robust location and scatter. Journal of Computational and Graphical Statistics, 21(3),
-            618-637.
+              robust location and scatter. Journal of Computational and Graphical Statistics, 21(3),
+              618-637.
 
         """
         super().__init__()

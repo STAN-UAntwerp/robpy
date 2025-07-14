@@ -38,7 +38,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
 
         References:
             - Raymaekers, J., & Rousseeuw, P. J. (2024). Transforming variables to central
-            normality. Machine Learning, 113(8), 4953-4975.
+              normality. Machine Learning, 113(8), 4953-4975.
         """
         self.method = method
         self.standardize = standardize
@@ -51,7 +51,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         """Calculates lambda, the transformation parameter depending on the method.
 
         Args:
-            x (np.array): The data.
+            x (np.ndarray): The data.
         """
 
         self._get_method(x)
@@ -99,7 +99,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         """Transforms the data using the calculated lambda estimate and the corresponding method.
 
         Args:
-            x (np.array): The data.
+            x (np.ndarray): The data.
         """
 
         if self.method == "boxcox":
@@ -123,11 +123,11 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         return x
 
     def inverse_transform(self, x: np.ndarray) -> np.ndarray:
-        """Transforms the data back using inverse Yeo-Johnson/Box-cox. The previously fitted lambda
+        """Transforms the data back using inverse Yeo-Johnson/Box-Cox. The previously fitted lambda
         estimate and the corresponding method are used.
 
         Args:
-            x (np.array): The data.
+            x (np.ndarray): The data.
         """
 
         if self.method == "boxcox":
@@ -152,7 +152,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         """Fits the Box-Cox power transformation.
 
         Args:
-            x (np.array): The data.
+            x (np.ndarray): The data.
         """
         lambdarange = self.lambda_range
         converged = False
@@ -183,7 +183,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         """Fits the Yeo-Johnson power transformation.
 
         Args:
-            x (np.array): The data.
+            x (np.ndarray): The data.
         """
         lambdarange = self.lambda_range
         converged = False
@@ -257,10 +257,12 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
     def _transf_boxcox_rectified(
         self, x: np.ndarray, my_lambda: float, standardize_too: bool = False
     ):
-        """Rectified BoxCox transformation."""
+        """Rectified Box-Cox transformation."""
 
         if np.min(x) <= 0:
-            raise ValueError("Data values should be strictly positive for a BoxCox transformation.")
+            raise ValueError(
+                "Data values should be strictly positive for a Box-Cox transformation."
+            )
         xt = np.zeros_like(x)
 
         if my_lambda == 1.0:
@@ -294,7 +296,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
     def _get_rectified_boxcox_changepoint(
         self, x: np.ndarray, my_lambda: float, factor: float = 1.5, eps: float = 1e-5
     ) -> float:
-        """Get C_u or C_l for the rectified BoxCox transform."""
+        """Get C_u or C_l for the rectified Box-Cox transform."""
         n = len(x)
         Q1 = x[int(np.ceil(n / 4.0) - 1.0)]
         Q3 = x[int(n - np.ceil(n / 4.0))]
@@ -317,9 +319,11 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         return changepoint
 
     def _transf_boxcox(self, x: np.ndarray, my_lambda: float, standardize_too: bool = False):
-        """Classical BoxCox transformation."""
+        """Classical Box-Cox transformation."""
         if np.min(x) <= 0:
-            raise ValueError("Data values should be strictly positive for a BoxCox transformation.")
+            raise ValueError(
+                "Data values should be strictly positive for a Box-Cox transformation."
+            )
         if my_lambda == 0:
             xt = np.log(x)
         else:
@@ -416,7 +420,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
     def _get_rectified_yeojohnson_changepoint(
         self, x: np.ndarray, my_lambda: float, factor: float = 1.5, eps: float = 1e-5
     ) -> float:
-        """Get C_u or C_l for the rectified BoxCox transform."""
+        """Get C_u or C_l for the rectified Box-Cox transformation."""
         n = len(x)
         Q1 = x[int(np.ceil(n / 4.0) - 1.0)]
         Q3 = x[int(n - np.ceil(n / 4.0))]
@@ -439,7 +443,7 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         return changepoint
 
     def _inv_transf_boxcox(self, x: np.ndarray, my_lambda: float) -> np.ndarray:
-        """Classical BoxCox transformation inversed."""
+        """Classical Box-Cox transformation inversed."""
         if my_lambda == 0:
             xt = np.exp(x)
         else:

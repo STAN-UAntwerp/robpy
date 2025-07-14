@@ -15,22 +15,20 @@ class Qn(RobustScale):
         Implementation of Qn estimator of Croux, C., & Rousseeuw, P. J. (1992).
 
         Args:
-            location_func (LocationOrScaleEstimator, optional): as the Qn estimator does not
-                estimate location, a location function should be explicitly passed. Defaults to
-                np.median.
+            location_func (LocationOrScaleEstimator, optional):
+                As the Qn estimator does not estimate location, a location function should be
+                explicitly passed. Defaults to np.median.
             consistency_correction (boolean, optional):
-                Boolean indicating if consistency for normality should be applied.
-                Defaults to True.
+                Boolean indicating if consistency for normality should be applied. Defaults to True.
             finite_correction (boolean, optional):
-                Boolean indicating if finite sample correction should be applied.
-                Defaults to True.
+                Boolean indicating if finite sample correction should be applied. Defaults to True.
 
         References:
             - Croux, C., & Rousseeuw, P. J. (1992). Time-efficient algorithms for two highly robust
-            estimators of scale. In Computational Statistics: Volume 1: Proceedings of the 10th
-            Symposium on Computational Statistics (pp. 411-428). Heidelberg: Physica-Verlag HD.
+              estimators of scale. In Computational Statistics: Volume 1: Proceedings of the 10th
+              Symposium on Computational Statistics (pp. 411-428). Heidelberg: Physica-Verlag HD.
             - Johnson, D. B., & Mizoguchi, T. (1978). Selecting the K th Element in X+Y and
-            X_1+X_2+⋯+X_m. SIAM Journal on Computing, 7(2), 147-153.
+              X_1+X_2+⋯+X_m. SIAM Journal on Computing, 7(2), 147-153.
         """
         super().__init__()
         self.location_func = location_func

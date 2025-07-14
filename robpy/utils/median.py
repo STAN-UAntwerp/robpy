@@ -10,7 +10,7 @@ def l1median(X: np.ndarray) -> float:
 
     References:
         - Fritz, H., Filzmoser, P., & Croux, C. (2012). A comparison of algorithms for the
-        multivariate L1-median. Computational Statistics, 27, 393-410.
+          multivariate L1-median. Computational Statistics, 27, 393-410.
     """
     epsilon = 1e-7
     mu_0 = np.mean(X, axis=0)
@@ -37,8 +37,8 @@ def weighted_median(X: np.ndarray, weights: np.ndarray) -> float:
 
     References:
         - Croux, C., & Rousseeuw, P. J. (1992). Time-efficient algorithms for two highly robust
-        estimators of scale. In Computational Statistics: Volume 1: Proceedings of the 10th
-        Symposium on Computational Statistics (pp. 411-428). Heidelberg: Physica-Verlag HD.
+          estimators of scale. In Computational Statistics: Volume 1: Proceedings of the 10th
+          Symposium on Computational Statistics (pp. 411-428). Heidelberg: Physica-Verlag HD.
     """
     n = len(X)
     wrest = 0

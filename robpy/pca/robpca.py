@@ -39,9 +39,9 @@ class ROBPCA(RobustPCA):
 
         References:
             - Hubert, M., Rousseeuw, P. J., & Vanden Branden, K. (2005). ROBPCA: a new approach to
-                robust principal component analysis. Technometrics, 47(1), 64-79.
+              robust principal component analysis. Technometrics, 47(1), 64-79.
             - Hubert, M., Rousseeuw, P., & Verdonck, T. (2009). Robust PCA for skewed data and its
-                outlier map. Computational Statistics & Data Analysis, 53(6), 2264-2274.
+              outlier map. Computational Statistics & Data Analysis, 53(6), 2264-2274.
 
         """
         super().__init__(n_components=n_components)

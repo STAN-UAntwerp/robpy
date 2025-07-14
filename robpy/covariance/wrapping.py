@@ -25,10 +25,10 @@ class WrappingCovariance(RobustCovariance):
 
             \\Psi_{b, c}(z) =
             \\begin{cases}
-            z & if \\  0 \\leq |z| < b \\\\
-            q_1 \\tanh\\left(q_2 (c - |z|)\\right) \\mathrm{sign}(z) & if \\  b \\leq |z| \\leq c
+            z & \\text{if } \\  0 \\leq |z| < b \\\\
+            q_1 \\tanh\\left(q_2 (c - |z|)\\right) \\mathrm{sign}(z) & \\text{if } \\  b \\leq |z| \\leq c
             \\\\
-            0  & if \\   c < |z|.
+            0  & \\text{if } \\   c < |z|.
             \\end{cases}
 
         The data is first scaled using the median and the MAD before applying the transformation.
@@ -37,7 +37,7 @@ class WrappingCovariance(RobustCovariance):
 
         .. math::
 
-            Cov(X) = Cov(Median(X) + MAD(X) * \\Psi(X - Median(X) / MAD(X)))
+            Cov(X) = Cov(Median(X) + MAD(X) * \\Psi_{b, c}(X - Median(X) / MAD(X)))
 
         Args:
             b (float, optional):

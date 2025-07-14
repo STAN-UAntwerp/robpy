@@ -26,8 +26,8 @@ class PCALocantore(RobustPCA):
 
         References:
             - Locantore, N., Marron, J. S., Simpson, D. G., Tripoli, N., Zhang, J. T.,
-            Cohen, K. L., ... & Cohen, K. L. (1999). Robust principal component analysis for
-            functional data. Test, 8(1), 1-73.
+              Cohen, K. L., ... & Cohen, K. L. (1999). Robust principal component analysis for
+              functional data. Test, 8(1), 1-73.
         """
         super().__init__(n_components=n_components)
         self.k_min_var_explained = k_min_var_explained

@@ -45,7 +45,7 @@ class OGK(RobustCovariance):
 
         References:
             - Maronna, R. A., & Zamar, R. H. (2002). Robust estimates of location and dispersion for
-            high-dimensional datasets. Technometrics, 44(4), 307-317.
+              high-dimensional datasets. Technometrics, 44(4), 307-317.
 
         """
         super().__init__(store_precision=store_precision, assume_centered=assume_centered)
@@ -56,10 +56,6 @@ class OGK(RobustCovariance):
         self.reweighting_beta = reweighting_beta
 
     def calculate_covariance(self, X) -> np.ndarray:
-        """
-        Calculate location and covariance with the algorithm described in Maronna, R. A., &
-        Zamar, R. H. (2002). Covariance is returned, location is overwritten.
-        """
         p = X.shape[1]
         Z = np.copy(X)
         DE = []

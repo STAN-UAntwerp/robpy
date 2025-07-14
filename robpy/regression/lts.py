@@ -70,14 +70,15 @@ class FastLTSRegression(RobustRegression):
         Fit the model to the data.
 
         Args:
-            X (np.ndarray | pd.DataFrame): Training features.
-            y (np.ndarray | pd.DataFrame): Training labels.
-            initial_weights (Optional[np.ndarray], optional): Optionally pass fixed initial weights,
-                            in case of n_initial_subsets > 1, this means all models start
-                            from the same initial weights.
-                            There is therefore no benefit from setting n_initial_subsets > 1
-                            Defaults to None.
-            verbosity (int, optional): [description]. Defaults to logging.INFO.
+            X (np.ndarray | pd.DataFrame):
+                Training features.
+            y (np.ndarray | pd.Series):
+                Training labels.
+            initial_weights (np.ndarray | None, optional):
+                Optionally pass fixed initial weights, in case of n_initial_subsets > 1, this means
+                all models start from the same initial weights. There is therefore no benefit from
+                setting n_initial_subsets > 1. Defaults to None.
+            verbosity (int, optional): description. Defaults to logging.INFO.
 
         Returns:
             The fitted FastLTS object.
@@ -311,7 +312,7 @@ def get_correction_factor(p: int, n: int, alpha: float) -> float:
 
     References:
      - Pison, G., Van Aelst, S., & Willems, G. (2002). Small sample corrections for LTS and MCD.
-            Metrika, 55(1), 111-123.
+       Metrika, 55(1), 111-123.
 
      - https://github.com/cran/robustbase/blob/c4b9d21cfc4beb64653bb2ffba9e549e2dbb98ed/R/ltsReg.R
     """
@@ -366,7 +367,7 @@ def get_correction_factor_reweighting(p: int, n: int, alpha: float) -> float:
 
     References:
      - Pison, G., Van Aelst, S., & Willems, G. (2002). Small sample corrections for LTS and MCD.
-            Metrika, 55(1), 111-123.
+       Metrika, 55(1), 111-123.
 
      - https://github.com/cran/robustbase/blob/c4b9d21cfc4beb64653bb2ffba9e549e2dbb98ed/R/ltsReg.R
     """

@@ -41,8 +41,8 @@ class RobustPCA(_BasePCA):
 
         Returns
         -------
-        X_new : array-like of shape (n_samples, n_components)
-            Projection of X in the first principal components, where `n_samples`
+        X_new : np.ndarray of shape (n_samples, n_components)
+            Projection of X on the first principal components, where `n_samples`
             is the number of samples and `n_components` is the number of components.
         """
         if self.location_ is None:
@@ -70,7 +70,7 @@ class RobustPCA(_BasePCA):
 
         Args:
             X (np.ndarray): Data  matrix (n x p).
-            figsize (tuple[int, int], optional): Size of the plot. Defaults to (10, 4).
+            figsize (tuple[int, int], optional): Size of the plot. Defaults to (4, 4).
             return_distances (bool, optional):
                 Whether to return the distances and cutoff values. Defaults to False.
         """

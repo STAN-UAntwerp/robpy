@@ -63,21 +63,21 @@ def load_telephone(*, as_frame=False):
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
-        Dictionary-like object, with the following attributes.
+        Dictionary-like object, with the following attributes:
 
-        data : {ndarray, dataframe} of shape (24, 2)
+        * data : {ndarray, dataframe} of shape (24, 2)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        feature_names: list
+        * feature_names: list
             The names of the dataset columns.
-        DESCR: str
+        * DESCR: str
             The full description of the dataset.
-        filename: str
+        * filename: str
             The path to the location of the data.
 
     Examples
     --------
-    Fitting a robust regression
+    Fitting a robust regression:
 
     >>> from robpy.datasets import load_telephone
     >>> from robpy.regression import MMRegression
@@ -125,22 +125,22 @@ def load_stars(*, as_frame=False):
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
-        Dictionary-like object, with the following attributes.
+        Dictionary-like object, with the following attributes:
 
-        data : {ndarray, dataframe} of shape (47, 2)
+        * data : {ndarray, dataframe} of shape (47, 2)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        feature_names: list
+        * feature_names: list
             The names of the dataset columns.
-        DESCR: str
+        * DESCR: str
             The full description of the dataset.
-        filename: str
+        * filename: str
             The path to the location of the data.
 
 
     Examples
     --------
-    Fitting a robust covariance estimator
+    Fitting a robust covariance estimator:
 
     >>> from robpy.datasets import load_stars
     >>> from robpy.covariance import FastMCD
@@ -185,22 +185,22 @@ def load_animals(*, as_frame=False):
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
-        Dictionary-like object, with the following attributes.
+        Dictionary-like object, with the following attributes:
 
-        data : {ndarray, dataframe} of shape (65, 2)
+        * data : {ndarray, dataframe} of shape (65, 2)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        feature_names: list
+        * feature_names: list
             The names of the dataset columns.
-        DESCR: str
+        * DESCR: str
             The full description of the dataset.
-        filename: str
+        * filename: str
             The path to the location of the data.
 
 
     Examples
     --------
-    Fitting a robust covariance estimator
+    Fitting a robust covariance estimator:
 
     >>> from robpy.datasets import load_animals
     >>> from robpy.covariance import FastMCD
@@ -246,24 +246,24 @@ def load_topgear(*, as_frame=False):
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
-        Dictionary-like object, with the following attributes.
+        Dictionary-like object, with the following attributes:
 
-        data : {ndarray, dataframe} of shape (297, 32)
+        * data : {ndarray, dataframe} of shape (297, 32)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        feature_names: list
+        * feature_names: list
             The names of the dataset columns.
-        categorical_features: list
+        * categorical_features: list
             The names of the categorical features.
-        DESCR: str
+        * DESCR: str
             The full description of the dataset.
-        filename: str
+        * filename: str
             The path to the location of the data.
 
 
     Examples
     --------
-    Fitting a robust regression estimator
+    Fitting a robust regression estimator:
 
     >>> from robpy.datasets import load_topgear
     >>> from robpy.regression import FastLTSRegression
@@ -366,16 +366,16 @@ def load_glass(*, as_frame=False):
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
-        Dictionary-like object, with the following attributes.
+        Dictionary-like object, with the following attributes:
 
-        data : {ndarray, dataframe} of shape (65, 2)
+        * data : {ndarray, dataframe} of shape (65, 2)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        feature_names: list
+        * feature_names: list
             The names of the dataset columns.
-        DESCR: str
+        * DESCR: str
             The full description of the dataset.
-        filename: str
+        * filename: str
             The path to the location of the data.
     """
     data_file_name = "glass.csv"

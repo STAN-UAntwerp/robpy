@@ -35,7 +35,7 @@ class DDC(OutlierMixin):
     ):
         """
         Implementation of the Detecting Deviating Cells (DDC) algorithm. Based on the R
-        implementation in the package celLWise.
+        implementation in the package cellWise.
 
         Args:
             chi2_quantile (float, optional): Quantile of the chi-squared distribution to use as
@@ -48,7 +48,7 @@ class DDC(OutlierMixin):
 
         References:
             - Rousseeuw, P. J., & Bossche, W. V. D. (2018). Detecting deviating data cells.
-            Technometrics, 60(2), 135-145.
+              Technometrics, 60(2), 135-145.
 
         """
         self.chi2_quantile = chi2_quantile
@@ -118,8 +118,8 @@ class DDC(OutlierMixin):
 
         References:
             - Hubert, M., Rousseeuw, P. J., & Bossche, W. V. D. (2019). MacroPCA: An All-in-one PCA
-            Method Allowing for Missing Values as Well as Cellwise and Rowwise Outliers.
-            Technometrics, 61(4), 459–473.
+              Method Allowing for Missing Values as Well as Cellwise and Rowwise Outliers.
+              Technometrics, 61(4), 459–473.
         """
         if not self.is_fitted_:
             raise ValueError("Model not fitted yet.")
@@ -267,7 +267,7 @@ class DDC(OutlierMixin):
                 the data to the color space.
 
         Returns:
-            Axes: the matplotlib axes with the heatmap.
+            Axes: The matplotlib axes with the heatmap.
         """
         if not self.is_fitted_:
             raise ValueError("Model not fitted yet.")

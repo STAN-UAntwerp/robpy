@@ -23,10 +23,10 @@ def stahel_donoho(
 
     References:
         - Stahel, W. A. (1981). Robuste schätzungen: infinitesimale optimalität und schätzungen von
-        kovarianzmatrizen (Doctoral dissertation, ETH Zurich).
+          kovarianzmatrizen (Doctoral dissertation, ETH Zurich).
 
         - Donoho, D. L. (1982). Breakdown properties of multivariate location estimators.
-        Technical report, Harvard University, Boston.
+          Technical report, Harvard University, Boston.
     """
     # step 1: get random directions
     D = np.hstack(

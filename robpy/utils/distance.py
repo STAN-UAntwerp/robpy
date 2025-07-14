@@ -10,11 +10,11 @@ def mahalanobis_distance(
 
     Parameters:
         data (np.ndarray or pd.DataFrame): An array-like object where each row is a data vector.
-        location (np.ndarray): the center of the data.
-        covariance (np.ndarray): the scatter estimator of the data.
+        location (np.ndarray): The center of the data.
+        covariance (np.ndarray): The scatter estimator of the data.
 
     Returns:
-        np.ndarray: an array of Mahalanobis distances for each data vector.
+        np.ndarray: An array of Mahalanobis distances for each data vector.
     """
     if isinstance(data, pd.DataFrame):
         data = data.values

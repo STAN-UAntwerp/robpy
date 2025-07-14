@@ -18,10 +18,6 @@ class RobustCovariance(EmpiricalCovariance):
         assume_centered: bool = False,
         nans_allowed: bool = False,
     ):
-        super().__init__(
-            store_precision=store_precision,
-            assume_centered=assume_centered,
-        )
         """
         Base class for robust covariance estimators.
 
@@ -33,10 +29,21 @@ class RobustCovariance(EmpiricalCovariance):
             nans_allowed (boolean, optional):
                 Attribute specifying if nans are allowed. Defaults to False.
         """
+        super().__init__(
+            store_precision=store_precision,
+            assume_centered=assume_centered,
+        )
+
         self.nans_allowed = nans_allowed
 
     def fit(self, X: np.ndarray | pd.DataFrame) -> RobustCovariance:
-        """Fit the covariance estimator."""
+        """Fit the covariance estimator.
+
+        Args:
+            X (np.ndarray | pd.DataFrame):
+                Data matrix.
+
+        """
         if isinstance(X, pd.DataFrame):
             X = X.values
         if self.nans_allowed:

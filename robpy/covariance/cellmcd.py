@@ -155,18 +155,18 @@ class CellMCD(RobustCovariance):
             second_variable_name (str, optional): Name of the second variable for the axis label,
               only relevant for plottype "bivariate". Defaults to "second variable".
             plottype (Literal string, optional):
-                 "indexplot": plots the residuals of a variable,
-                 "residuals_vs_variable": plots a variable versus its residuals,
-                 "residuals_vs_predictions": plots the predictions of a variable versus its
-                 residuals,
-                 "variable_vs_predictions": plots a variable against its predictions,
-                 "bivariate": plots two variables against each other.
+                 * "indexplot": plots the residuals of a variable.
+                 * "residuals_vs_variable": plots a variable versus its residuals.
+                 * "residuals_vs_predictions": plots the predictions of a variable versus its
+                   residuals.
+                 * "variable_vs_predictions": plots a variable against its predictions.
+                 * "bivariate": plots two variables against each other.
 
                  Defaults to "indexplot".
             figsize (tuple[int,int], optional): Size of the figure. Defaults to (8,8).
-            annotation_quantile (float, optional): The quantile used to draw an imaginary threshold
-              around the data. Only points outside these thresholds will be annotated. If None, use
-              self.quantile.
+            annotation_quantile (float | None, optional): The quantile used to draw an imaginary
+              threshold around the data. Only points outside these thresholds will be annotated. If
+              None, use self.quantile.
         """
 
         if not hasattr(self, "covariance_"):

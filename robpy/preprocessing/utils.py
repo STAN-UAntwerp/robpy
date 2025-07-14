@@ -21,9 +21,10 @@ def wrapping_transformation(
 
         \\Psi_{b, c}(z) =
         \\begin{cases}
-          z & \\text{if } \\  0 \\leq |z| < b \\\\
-          q_1 \\tanh\\left(q_2 (c - |z|)\\right) \\mathrm{sign}(z) & \\text{if } \\  b \\leq |z| \\leq c \\\\
-          0  & \\text{if } \\   c < |z|
+          z & \\text{if } \\  0 \\leq |z| < b, \\\\
+          q_1 \\tanh\\left(q_2 (c - |z|)\\right) \\mathrm{sign}(z) & \\text{if } \\  b \\leq |z|
+          \\leq c, \\\\
+          0  & \\text{if } \\   c < |z|.
         \\end{cases}
 
     Args:

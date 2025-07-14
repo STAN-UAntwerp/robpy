@@ -24,7 +24,7 @@ class OneStepM(RobustScale):
             delta (float): Consistency factor at normal model depending on b:
                     quad(np.minimum(np.abs(x**2), b**2) * norm.pdf(x), -np.inf, np.inf, args=(b)).
             min_abs_scale (float, optional): Only if MAD is larger than min_abs_scale
-                        the M estimator will be calculated. Defaults to 1e-12.
+                        the M-estimator will be calculated. Defaults to 1e-12.
 
         References:
             Rousseeuw, P. J., & Bossche, W. V. D. (2018).

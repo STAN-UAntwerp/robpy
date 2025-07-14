@@ -9,7 +9,7 @@ from statsmodels.stats.stattools import medcouple
 
 @dataclass
 class Boxplot:
-    """Container for boxplot statistics"""
+    """Container for boxplot statistics."""
 
     median: float
     q1: float

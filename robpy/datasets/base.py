@@ -368,7 +368,7 @@ def load_glass(*, as_frame=False):
     data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes:
 
-        * data : {ndarray, dataframe} of shape (65, 2)
+        * data : {ndarray, dataframe} of shape (180, 750)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
         * feature_names: list

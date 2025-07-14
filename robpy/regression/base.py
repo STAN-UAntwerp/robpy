@@ -18,6 +18,9 @@ class RobustRegression(RegressorMixin, BaseEstimator):
     def __init__(
         self,
     ):
+        """
+        Base class for robust regression estimators.
+        """
         super().__init__()
 
     def fit(self, X, y) -> RobustRegression:

@@ -25,7 +25,7 @@ class DataCleaner(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Typically used before DDC, cellMCD, transfo...
 
-        based on the R function checkDataSet in the package cellWise:
+        Based on the R function checkDataSet in the package cellWise:
         [https://rdrr.io/cran/cellWise/man/checkDataSet.html]
 
         Args:

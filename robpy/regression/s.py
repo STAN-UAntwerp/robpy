@@ -61,8 +61,8 @@ class SRegression(RobustRegression):
 
         References:
             - Rousseeuw, P. J., & Yohai, V. J. (1984). Robust Regression by Means of S-Estimators.
-              In: Franke, J., Härdle, W., Martin, D. (eds) Robust and Nonlinear Time Series Analysis.
-              Lecture Notes in Statistics, vol 26. Springer, New York, NY.
+              In: Franke, J., Härdle, W., Martin, D. (eds) Robust and Nonlinear Time Series
+              Analysis. Lecture Notes in Statistics, vol 26. Springer, New York, NY.
             - Salibian-Barrera, M., & Yohai, V. J. (2006).
               A Fast Algorithm for S-Regression Estimates.
               Journal of Computational and Graphical Statistics, 15(2), 414–427.

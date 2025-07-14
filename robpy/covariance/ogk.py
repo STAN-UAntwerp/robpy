@@ -19,7 +19,7 @@ class OGK(RobustCovariance):
         reweighting_beta: float = 0.9
     ):
         """
-        Implementation of the Orthogonalized Gnanadesikan-Kettenring estimator for location
+        Implementation of the Orthogonalized Gnanadesikan-Kettenring estimator for location and
         dispersion proposed in Maronna, R. A., & Zamar, R. H. (2002).
 
         Args:

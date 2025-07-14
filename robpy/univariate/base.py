@@ -17,8 +17,7 @@ class RobustScale(ABC):
 
         Args:
             can_handle_nan (bool, optional):
-                Attribute specifying if the robust scaler can handles nans.
-                Defaults to False.
+                Attribute specifying if the robust scaler can handle nans. Defaults to False.
         """
         self.can_handle_nan = can_handle_nan
 

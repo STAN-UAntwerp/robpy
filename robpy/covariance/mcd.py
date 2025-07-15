@@ -50,7 +50,7 @@ class FastMCD(RobustCovariance):
               If an integer between n/2 and n is passed, it is interpreted as an absolute value.
               If a float between 0.5 and 1 is passed, it is interpreted as a proportion of n
               (the training set size).
-              If None, it is set to (n+p+1) / 2.
+              If None or below [(n+p+1)/2], it is set to [(n+p+1)/2].
               Defaults to None.
             n_initial_subsets (int, optional):
               Number of initial random subsets of size p+1.
@@ -193,15 +193,16 @@ class FastMCD(RobustCovariance):
         return self._get_subset(indices=idx, X=X, n_c_steps=subset.n_c_steps + 1)
 
     def _get_h(self, X: np.ndarray) -> int:
+        n, p = X.shape
         if self.alpha is None:
-            return int((X.shape[0] + X.shape[1] + 1) / 2)
-        elif isinstance(self.alpha, int) and (X.shape[0] / 2 <= self.alpha <= X.shape[0]):
-            return self.alpha
+            return int((n + p + 1) / 2)
+        elif isinstance(self.alpha, int) and (n / 2 <= self.alpha <= n):
+            return np.max([self.alpha, int((n + p + 1) / 2)])
         elif (isinstance(self.alpha, float) and (0.5 <= self.alpha <= 1)) or self.alpha == 1:
-            return int(self.alpha * X.shape[0])
+            return np.max([int(self.alpha * n), int((n + p + 1) / 2)])
         else:
             raise ValueError(
-                f"alpha must be an integer between n/2 ({X.shape[0] // 2}) and n ({X.shape[0]}) or"
+                f"alpha must be an integer between n/2 and n or"
                 f" a float between 0.5 and 1, but received {self.alpha}."
             )
 
@@ -271,11 +272,11 @@ class DetMCD(RobustCovariance):
 
         Args:
             alpha (float | int | None, optional):
-                size of the h subset.
+                Size of the h subset.
                 If an integer between n/2 and n is passed, it is interpreted as an absolute value.
-                If a float between 0.5 and 1 is passed, it is interpreted as a proportion
-                of n (the training set size).
-                If None, it is set to (n+p+1) / 2.
+                If a float between 0.5 and 1 is passed, it is interpreted as a proportion of n
+                (the training set size).
+                If None or below [(n+p+1)/2], it is set to [(n+p+1)/2].
                 Defaults to None.
             tolerance (float, optional):
                 Minimum difference in determinant between two iterations to stop the C-step.
@@ -421,15 +422,16 @@ class DetMCD(RobustCovariance):
     # TODO: de functies hieronder moeten nog naar ergens anders.
 
     def _get_h(self, X: np.ndarray) -> int:
+        n, p = X.shape
         if self.alpha is None:
-            return int((X.shape[0] + X.shape[1] + 1) / 2)
-        elif isinstance(self.alpha, int) and (X.shape[0] / 2 <= self.alpha <= X.shape[0]):
-            return self.alpha
+            return int((n + p + 1) / 2)
+        elif isinstance(self.alpha, int) and (n / 2 <= self.alpha <= n):
+            return np.max([self.alpha, int((n + p + 1) / 2)])
         elif (isinstance(self.alpha, float) and (0.5 <= self.alpha <= 1)) or self.alpha == 1:
-            return int(self.alpha * X.shape[0])
+            return np.max([int(self.alpha * n), int((n + p + 1) / 2)])
         else:
             raise ValueError(
-                f"alpha must be an integer between n/2 ({X.shape[0] // 2}) and n ({X.shape[0]}) or"
+                f"alpha must be an integer between n/2 and n or"
                 f" a float between 0.5 and 1, but received {self.alpha}."
             )
 

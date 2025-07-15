@@ -88,8 +88,10 @@ class FastLTSRegression(RobustRegression):
         X, y = _convert_input_to_array(X, y)
         y = y.reshape(-1, 1)
         if self.alpha < 0.5 or self.alpha > 1:
-            raise ValueError(f"alpha must be between 0.5 and 1, but received {self.alpha}")
-        h = int(X.shape[0] * self.alpha)
+            raise ValueError(
+                f"alpha must be between 0.5 and 1 (inclusive), but received {self.alpha}."
+            )
+        h = np.max([int(X.shape[0] * self.alpha), int((X.shape[0] + X.shape[1] + 1) / 2)])
         self.logger.info(
             f"Applying {self.n_initial_c_steps} initial c-steps "
             f"on {self.n_initial_subsets} initial subsets"

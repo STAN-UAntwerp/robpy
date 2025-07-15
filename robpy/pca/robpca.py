@@ -28,8 +28,8 @@ class ROBPCA(RobustPCA):
             k_min_var_explained (float, optional): Minimum variance explained by the components.
                 Only used if n_components is None. Defaults to 0.8.
             alpha (float, optional): Coverage parameter, determines the robustness and efficiency
-                trade off of the estimator.
-                Smaller alpha gives more robust but less accurate estimates. Defaults to 0.75.
+                trade off of the estimator. Smaller alpha gives more robust but less accurate
+                estimates. Must be a number between 0.5 and 1. Defaults to 0.75.
             final_MCD_step (bool, optional): Whether to apply the final MCD step to get maximally
                 robust estimates. If False, the eigenvectors after projection onto V1 (subspace
                 determined by points with OD < cutoff) are used as the final estimates.
@@ -58,7 +58,19 @@ class ROBPCA(RobustPCA):
         loadings = pca.components_.T
         # step 2: stahel donoho outlyingness --> h subset
         outlyingness = stahel_donoho(X, random_seed=self.random_seed)
-        h_index = np.argsort(outlyingness)[: int(self.alpha * X.shape[0])]
+
+        if not (isinstance(self.alpha, (int, float)) and 0.5 <= self.alpha <= 1):
+            raise ValueError(
+                f"alpha must be between 0.5 and 1 (inclusive), but received {self.alpha}."
+            )
+        elif self.n_components is not None:
+            h = np.max(
+                [int(self.alpha * X.shape[0]), int((X.shape[0] + self.n_components + 1) / 2)]
+            )
+        else:
+            h = np.max([int(self.alpha * X.shape[0]), int((X.shape[0] + 10 + 1) / 2)])
+
+        h_index = np.argsort(outlyingness)[:h]
         h_cov = np.cov(X[h_index], rowvar=False)
         # step 3: project on k-dimensional subspace
         eigvals_h, eigvecs_h = np.linalg.eigh(h_cov)

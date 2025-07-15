@@ -15,7 +15,7 @@ class UnivariateMCD(RobustScale):
               If an integer between n/2 and n is passed, it is interpreted as an absolute value.
               If a float  between 0.5 and 1 is passed, it is interpreted as a proportion
               of n (the training set size).
-              If None, it is set to floor(n/2) + 1.
+              If None or below [n/2] + 1, it is set to [n/2] + 1.
               Defaults to None.
             consistency_correction (boolean, optional):
               Whether the estimates should be consistent at the normal model.
@@ -75,11 +75,11 @@ class UnivariateMCD(RobustScale):
         if self.alpha is None:
             self.h_size = n // 2 + 1
         elif isinstance(self.alpha, int) and (n / 2 <= self.alpha <= n):
-            self.h_size = self.alpha
+            self.h_size = np.max([self.alpha, n // 2 + 1])
         elif (isinstance(self.alpha, float) and (0.5 <= self.alpha <= 1)) or self.alpha == 1:
-            self.h_size = int(self.h_size * n)
+            self.h_size = np.max([int(self.alpha * n), n // 2 + 1])
         else:
             raise ValueError(
-                f"alpha must be an integer between n/2 and n or a float between 0.5 and 1 "
-                f"but received {self.alpha}"
+                f"alpha must be an integer between n/2 and n or a float between 0.5 and 1, "
+                f"but received {self.alpha}."
             )

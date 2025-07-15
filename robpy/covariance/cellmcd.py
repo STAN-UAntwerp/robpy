@@ -235,7 +235,7 @@ class CellMCD(RobustCovariance):
                 ax,
                 self.quantile,
             )
-            title = f"{variable_name} versus {second_variable_name}"
+            title = f"{second_variable_name} versus {variable_name}"
 
         ax.scatter(x=x, y=y)
         ax.set(xlabel=xlabel, ylabel=ylabel, title=title)

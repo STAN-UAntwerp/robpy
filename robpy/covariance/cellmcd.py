@@ -72,7 +72,6 @@ class CellMCD(RobustCovariance):
         self.verbosity = verbosity
 
     def calculate_covariance(self, X: np.ndarray) -> np.ndarray:
-
         # check that alpha creates a h-subset larger than [n/2]+1
         n = X.shape[0]
         if 0.5 <= self.alpha <= 1:

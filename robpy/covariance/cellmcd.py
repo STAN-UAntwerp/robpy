@@ -72,6 +72,14 @@ class CellMCD(RobustCovariance):
         self.verbosity = verbosity
 
     def calculate_covariance(self, X: np.ndarray) -> np.ndarray:
+
+        # check that alpha creates a h-subset larger than [n/2]+1
+        n = X.shape[0]
+        if 0.5 <= self.alpha <= 1:
+            self.alpha = np.max([self.alpha, (int(n / 2) + 1.0) / n])
+        else:
+            raise ValueError(f"alpha must a float between 0.5 and 1, but received {self.alpha}.")
+
         # Step 0: robustly standardize the data
         mads = median_abs_deviation(X, nan_policy="omit", axis=0)
         if np.min(mads) < 1e-8:

@@ -26,7 +26,7 @@ class InitialDDCW(RobustCovariance):
         Parameters:
             alpha (float, optional):
                 Percentage indicating how much cells must remain unflagged in each column.
-                Defaults to 0.75.
+                Must lie within 0.5 to 1.0. Defaults to 0.75.
             min_eigenvalue (float, optional):
                 Lower bound on the minimum eigenvalue of the covariance estimator
                 on the standardized data. Should be at least 1e-6.
@@ -42,6 +42,12 @@ class InitialDDCW(RobustCovariance):
 
     def calculate_covariance(self, X: np.ndarray):
         n, p = X.shape
+
+        # check that alpha creates a h-subset larger than [n/2]+1
+        if 0.5 <= self.alpha <= 1:
+            self.alpha = np.max([self.alpha, (int(n / 2) + 1.0) / n])
+        else:
+            raise ValueError(f"alpha must a float between 0.5 and 1, but received {self.alpha}.")
 
         # DDC with constraint -> imputed and rescaled Zimp:
         ddc = DDC(chi2_quantile=0.9, scale_estimator=OneStepWrapping()).fit(pd.DataFrame(X))
@@ -69,9 +75,9 @@ class InitialDDCW(RobustCovariance):
         Zimp_proj_scaler = RobustScaler(scale_estimator=OneStepWrapping()).fit(
             Zimp_proj, ignore_nan=True
         )
-        Zimp_proj_scaler.scales_[
-            Zimp_proj_scaler.scales_ < self.min_eigenvalue
-        ] = self.min_eigenvalue
+        Zimp_proj_scaler.scales_[Zimp_proj_scaler.scales_ < self.min_eigenvalue] = (
+            self.min_eigenvalue
+        )
         Zimp_proj_wrapped_cov = np.cov(
             wrapping_transformation(
                 Zimp_proj,
@@ -101,9 +107,9 @@ class InitialDDCW(RobustCovariance):
         Zimp_proj_scaler = RobustScaler(scale_estimator=OneStepWrapping()).fit(
             Zimp_proj, ignore_nan=True
         )
-        Zimp_proj_scaler.scales_[
-            Zimp_proj_scaler.scales_ < self.min_eigenvalue
-        ] = self.min_eigenvalue
+        Zimp_proj_scaler.scales_[Zimp_proj_scaler.scales_ < self.min_eigenvalue] = (
+            self.min_eigenvalue
+        )
         Zimp_proj_wrapped_cov = np.cov(
             wrapping_transformation(
                 Zimp_proj,

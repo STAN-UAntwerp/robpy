@@ -40,7 +40,7 @@ class CellMCD(RobustCovariance):
         Args:
             alpha (float, optional):
                 Percentage indicating how much cells must remain unflagged in each column.
-                Defaults to 0.75.
+                Must lie within 0.5 to 1.0. Defaults to 0.75.
             quantile (float, optional):
                 Cutoff value to flag cells.
                 Defaults to 0.99.

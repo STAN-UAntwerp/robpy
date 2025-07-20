@@ -24,7 +24,7 @@ class SRegression(RobustRegression):
         random_state: int = 101,
     ):
         """
-        Fast S-regression, initially described in Rousseeuw, P. J., &
+        S-regression, proposed by Rousseeuw, P. J., &
         Yohai, V. J. (1984). This code is an implementation of the Fast S algorithm described in
         Salibian-Barrera, M., & Yohai, V. J. (2006).
 

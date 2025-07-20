@@ -12,7 +12,7 @@ class Tau(RobustScale):
         consistency_correction: bool = True,
     ):
         """
-        Implementation of tau estimator of scale of Maronna, R. A., & Zamar, R. H. (2002).
+        Implementation of tau estimator of scale of Yohai, V.J. & Zamar, R.H. (1988).
 
         Args:
             c1 (float, optional):
@@ -24,8 +24,9 @@ class Tau(RobustScale):
                 Defaults to True.
 
         References:
-            - Maronna, R. A., & Zamar, R. H. (2002). Robust estimates of location and dispersion for
-              high-dimensional datasets. Technometrics, 44(4), 307-317.
+            - Yohai, V.J. & Zamar, R.H. (1988). High breakdown estimates of regression by means of
+              the minimization of an efficient scale. Journal of the American Statistical
+              Association, 83(402), 406-413.
         """
         super().__init__()
         self.c1 = c1

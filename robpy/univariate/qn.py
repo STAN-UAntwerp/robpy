@@ -12,7 +12,8 @@ class Qn(RobustScale):
         finite_correction: bool = True,
     ):
         """
-        Implementation of Qn estimator of Croux, C., & Rousseeuw, P. J. (1992).
+        The Qn estimator of Rousseeuw, P.J. & Croux, C. (1993) as implemented in the
+        :math:`O(n \\log n)` algorithm of Croux, C. & Rousseeuw, P.J. (1992).
 
         Args:
             location_func (LocationOrScaleEstimator, optional):
@@ -27,8 +28,8 @@ class Qn(RobustScale):
             - Croux, C., & Rousseeuw, P. J. (1992). Time-efficient algorithms for two highly robust
               estimators of scale. In Computational Statistics: Volume 1: Proceedings of the 10th
               Symposium on Computational Statistics (pp. 411-428). Heidelberg: Physica-Verlag HD.
-            - Johnson, D. B., & Mizoguchi, T. (1978). Selecting the K th Element in X+Y and
-              X_1+X_2+⋯+X_m. SIAM Journal on Computing, 7(2), 147-153.
+            - Rousseeuw P.J., & Croux, C. (1993). Alternatives to the Median Absolute Deviation.
+              Journal of the American Statistical Association, 88(424), 1273–1283
         """
         super().__init__()
         self.location_func = location_func

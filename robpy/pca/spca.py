@@ -14,7 +14,7 @@ class PCALocantore(RobustPCA):
         n_components: int | None = None,
         k_min_var_explained: float = 0.8,
     ):
-        """Spherical PCA.
+        """Spherical PCA, as introduced in Locantore et al. (1999).
 
         Args:
             n_components (int | None, optional):

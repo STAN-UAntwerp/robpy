@@ -11,7 +11,6 @@ class WrappingCovariance(RobustCovariance):
         c: float = 4.0,
         q1: float = 1.540793,
         q2: float = 0.8622731,
-        rescale: bool = True,
         store_precision: bool = True,
         assume_centered: bool = False,
     ):
@@ -33,11 +32,12 @@ class WrappingCovariance(RobustCovariance):
 
         The data is first scaled using the median and the MAD before applying the transformation.
 
-        The (standard) covariance is subsequently estimated on the rescaled data:
+        Next, the robust covariance of X is computed from the classical covariance on the
+        transformed data:
 
         .. math::
 
-            Cov(X) = Cov(Median(X) + MAD(X) * \\Psi_{b, c}(X - Median(X) / MAD(X)))
+            Cov(Median(X) + MAD(X) * \\Psi_{b, c}(X - Median(X) / MAD(X)))
 
         Args:
             b (float, optional):
@@ -48,10 +48,6 @@ class WrappingCovariance(RobustCovariance):
                 Transformation parameter (see formula). Defaults to 1.540793.
             q2 (float, optional):
                 Transformation parameter (see formula). Defaults to 0.8622731.
-            rescale (bool, optional):
-                Whether to rescale the wrapped data such that the robust location and
-                scale of the transformed data are the same as the original data.
-                Defaults to True.
             store_precision (bool, optional):
                 Whether to store the precision matrix. Defaults to True.
             assume_centered (bool, optional):
@@ -67,7 +63,6 @@ class WrappingCovariance(RobustCovariance):
         self.c = c
         self.q1 = q1
         self.q2 = q2
-        self.rescale = rescale
 
     def calculate_covariance(self, X: np.ndarray) -> np.ndarray:
         """
@@ -80,7 +75,7 @@ class WrappingCovariance(RobustCovariance):
             np.ndarray: Robust covariance matrix of X.
         """
         X_transformed = wrapping_transformation(
-            X, b=self.b, c=self.c, q1=self.q1, q2=self.q2, rescale=self.rescale
+            X, b=self.b, c=self.c, q1=self.q1, q2=self.q2, rescale=True
         )
         self.correlation_ = np.corrcoef(X_transformed, rowvar=False)
         return np.cov(X_transformed, rowvar=False)

@@ -41,16 +41,16 @@ class FastMCD(RobustCovariance):
         random_seed: int | None = None,
     ):
         """
-        Fast MCD estimator based on the algorithm proposed in Rousseeuw, P. J., & Driessen, K. V.
+        Fast MCD estimator based on the algorithm proposed in Rousseeuw, P. J., & Van Driessen, K.
         (1999).
 
         Args:
             alpha (float | int | None, optional):
               Size of the h subset.
-              If an integer between n/2 and n is passed, it is interpreted as an absolute value.
+              If an integer between n/2 and n is passed, it is interpreted as h.
               If a float between 0.5 and 1 is passed, it is interpreted as a proportion of n
               (the training set size).
-              If None or below [(n+p+1)/2], it is set to [(n+p+1)/2].
+              If None or an integer below [(n+p+1)/2], h is set to [(n+p+1)/2].
               Defaults to None.
             n_initial_subsets (int, optional):
               Number of initial random subsets of size p+1.
@@ -78,7 +78,7 @@ class FastMCD(RobustCovariance):
               Can be used to provide a random seed. Defaults to None.
 
         References:
-            - Rousseeuw, P. J., & Driessen, K. V. (1999). A fast algorithm for the minimum
+            - Rousseeuw, P. J., & Van Driessen, K. (1999). A fast algorithm for the minimum
               covariance determinant estimator. Technometrics, 41(3), 212-223.
 
         """
@@ -273,10 +273,10 @@ class DetMCD(RobustCovariance):
         Args:
             alpha (float | int | None, optional):
                 Size of the h subset.
-                If an integer between n/2 and n is passed, it is interpreted as an absolute value.
+                If an integer between n/2 and n is passed, it is interpreted as h.
                 If a float between 0.5 and 1 is passed, it is interpreted as a proportion of n
                 (the training set size).
-                If None or below [(n+p+1)/2], it is set to [(n+p+1)/2].
+                If None or an integer below [(n+p+1)/2], h is set to [(n+p+1)/2].
                 Defaults to None.
             tolerance (float, optional):
                 Minimum difference in determinant between two iterations to stop the C-step.

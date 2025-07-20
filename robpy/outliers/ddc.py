@@ -47,7 +47,7 @@ class DDC(OutlierMixin):
               initial data with. Defaults to CellwiseOneStepM().
 
         References:
-            - Rousseeuw, P. J., & Bossche, W. V. D. (2018). Detecting deviating data cells.
+            - Rousseeuw, P. J., & Van den Bossche, W. (2018). Detecting deviating data cells.
               Technometrics, 60(2), 135-145.
 
         """
@@ -115,11 +115,6 @@ class DDC(OutlierMixin):
             - If rowwise is True: A 1D array of shape (n_samples,) with rowwise outliers.
             - If rowwise is False: A matrix of shape (n_samples, n_features) with cellwise outliers
               and an array containing the standardized residuals of the cells.
-
-        References:
-            - Hubert, M., Rousseeuw, P. J., & Bossche, W. V. D. (2019). MacroPCA: An All-in-one PCA
-              Method Allowing for Missing Values as Well as Cellwise and Rowwise Outliers.
-              Technometrics, 61(4), 459–473.
         """
         if not self.is_fitted_:
             raise ValueError("Model not fitted yet.")

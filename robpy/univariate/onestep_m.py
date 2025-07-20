@@ -27,7 +27,7 @@ class OneStepM(RobustScale):
                         the M-estimator will be calculated. Defaults to 1e-12.
 
         References:
-            Rousseeuw, P. J., & Bossche, W. V. D. (2018).
+            Rousseeuw, P. J., & Van Den Bossche, W. (2018).
             Detecting deviating data cells. Technometrics, 60(2), 135-145.
         """
         super().__init__()
@@ -84,11 +84,11 @@ class CellwiseOneStepM(OneStepM):
     def __init__(self):
         """
         Implementation of the single step M estimator (robLoc and robScale) proposed in
-        Rousseeuw, P. J., & Bossche, W. V. D. (2018). In this paper, the location rho function is
+        Rousseeuw, P. J., & Van Den Bossche, W. (2018). In this paper, the location rho function is
         set to `TukeyBiWeight(c=3)` and the scale rho function to `Huber(b=2.5)`.
 
         References:
-            - Rousseeuw, P. J., & Bossche, W. V. D. (2018). Detecting deviating data cells.
+            - Rousseeuw, P. J., & Van Den Bossche, W.  (2018). Detecting deviating data cells.
               Technometrics, 60(2), 135-145.
         """
         super().__init__(loc_rho=TukeyBisquare(c=3), scale_rho=Huber(b=2.5), delta=0.845)

@@ -5,17 +5,16 @@ Animals dataset
 
 **Data Set Characteristics:**
 
-- Number of Instances: 65
+- Number of Instances: 28
 - Number of Attributes: 2 numeric
 - Attribute Information:
     * body: body weight in kg.
-    * brain: brain weight in g
+    * brain: brain weight in g.
 
-- Source: https://rdrr.io/cran/robustbase/man/Animals2.html
+- Source: https://rdrr.io/cran/MASS/man/Animals.html
 **Data Set Description:**
 
-Dataset with average brain and body weights for 62 species of land mammals and three others.
-Combination of the Animals and mammals datasets in MASS (r package).
+Average brain and body weights for 28 species of land animals.
 
 **References**
 - Venables, W. N. and Ripley, B. D. (2002) Modern Applied Statistics with S-PLUS. Fourth Edition. Springer.

@@ -33,13 +33,13 @@ class FastLTSRegression(RobustRegression):
         Args:
             alpha (float, optional):
                 Percentage of the data to consider as subset for calculating the trimmed squared
-                error. Must be between 0.5 and 1, with 1 being equal to the classic LS regression.
+                error. Must be between 0.5 and 1, with 1 corresponding to the classic LS regression.
                 Defaults to 0.5.
             n_initial_subset (int, optional):
-                Number of initial subsets to apply C-steps on (cfr `m` in original R
+                Number of initial subsets to apply C-steps to (cfr `m` in original R
                 implementation). Defaults to 500.
             n_initial_c_steps (int, optional):
-                Number of c-steps to apply on n_initial_subsets before final c-steps until
+                Number of c-steps to apply to n_initial_subsets before final c-steps until
                 convergence. Defaults to 2.
             n_best_models (int, optional):
                 Number of best models after initial c-steps to consider until convergence. Defaults
@@ -82,6 +82,10 @@ class FastLTSRegression(RobustRegression):
 
         Returns:
             The fitted FastLTS object.
+
+        Reference:
+            - Rousseeuw P.J. (1984). Least Median of Squares Regression. Journal of the American
+              Statistical Association, 79(388), 871–880.
         """
         self.logger.setLevel(verbosity)
 

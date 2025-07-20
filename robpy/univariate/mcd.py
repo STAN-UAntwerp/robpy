@@ -7,7 +7,8 @@ from scipy.stats import chi2, gamma
 class UnivariateMCD(RobustScale):
     def __init__(self, alpha: float | int | None = None, consistency_correction: bool = True):
         """
-        Implementation of the univariate MCD of Hubert, M., & Debruyne, M. (2010).
+        Implementation of the :math:`O(n \\log n)` algorithm for the univariate MCD on pages 171-172
+        of Rousseeuw, P.J., & Leroy, A. (1987).
 
         Args:
             alpha (float | int | None, optional):
@@ -22,8 +23,8 @@ class UnivariateMCD(RobustScale):
               Defaults to True.
 
         References:
-            - Hubert, M., & Debruyne, M. (2010). Minimum covariance determinant.
-              Wiley interdisciplinary reviews: Computational statistics, 2(1), 36-43.
+            - Rousseeuw, P.J., & Leroy, A. (1987). Robust Regression and Outlier Detection.
+              John Wiley & Sons, New York.
         """
         super().__init__()
         self.alpha = alpha

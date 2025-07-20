@@ -10,7 +10,7 @@ def wrapping_transformation(
     c: float = 4.0,
     q1: float = 1.540793,
     q2: float = 0.8622731,
-    rescale: bool = False,
+    rescale: bool = True,
     location_estimator: Callable[[np.ndarray, int], np.ndarray] = np.median,
     scale_estimator: Callable[[np.ndarray, int], np.ndarray] = median_abs_deviation,
 ) -> np.ndarray:
@@ -41,7 +41,7 @@ def wrapping_transformation(
         rescale (bool, optional):
             Whether to rescale the wrapped data such that the robust location and
             scale of the transformed data are the same as the original data.
-            Defaults to False.
+            Defaults to True.
         location_estimator (Callable[[np.ndarray, int], np.ndarray], optional):
             Function to estimate the location of the data, should accept an array like input as
             first value and a named argument axis. Defaults to np.median.

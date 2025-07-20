@@ -48,8 +48,8 @@ class RobustRegression(RegressorMixin, BaseEstimator):
         return_data: bool = False,
     ) -> None | tuple[np.ndarray, np.ndarray, np.ndarray, float, float]:
         """
-        Creates a diagnostic plot where the robust residuals are plotted against the robust
-        mahalanobis distances of the training data.
+        Creates a diagnostic plot where the robust residuals of the target are plotted against the
+        robust Mahalanobis distances of the features.
 
         Args:
             X (array like of shape (n_samples, n_features)):
@@ -72,6 +72,12 @@ class RobustRegression(RegressorMixin, BaseEstimator):
             return_data (bool, optional):
                 Whether to return the residuals, the standardized residuals and the distances.
                 Defaults to False.
+        References:
+            - Rousseeuw P.J., Hubert M. (2018). Anomaly detection by robust statistics.
+              Wiley Interdisciplinary Reviews: Data Mining and Knowledge Discovery,
+              8(2), 1–14.
+            - Rousseeuw P.J., van Zomeren B.C. (1990). Unmasking multivariate outliers and leverage
+              points. Journal of the American Statistical Association,  85(411), 633–651.
         """
 
         residuals = y.reshape(-1, 1) - self.predict(X).reshape(-1, 1)

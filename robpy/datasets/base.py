@@ -164,12 +164,12 @@ def load_stars(*, as_frame=False):
 
 
 def load_animals(*, as_frame=False):
-    """Load and return the Animals2 dataset from robustbase (R) (covariance / regression).
+    """Load and return the Animals dataset from MASS (R) (covariance / regression).
 
     The animals dataset is a bivariate dataset used for demonstrating robust covariance estimators.
 
     =================   ==============
-    Samples                         65
+    Samples                         28
     Dimensionality                   2
     Features            real, positive
     =================   ==============
@@ -187,7 +187,7 @@ def load_animals(*, as_frame=False):
     data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes:
 
-        * data : {ndarray, dataframe} of shape (65, 2)
+        * data : {ndarray, dataframe} of shape (28, 2)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
         * feature_names: list

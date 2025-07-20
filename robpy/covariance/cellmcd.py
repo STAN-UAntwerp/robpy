@@ -39,7 +39,7 @@ class CellMCD(RobustCovariance):
 
         Args:
             alpha (float, optional):
-                Percentage indicating how much cells must remain unflagged in each column.
+                Percentage indicating how many cells must remain unflagged in each column.
                 Must lie within 0.5 to 1.0. Defaults to 0.75.
             quantile (float, optional):
                 Cutoff value to flag cells.
@@ -162,10 +162,11 @@ class CellMCD(RobustCovariance):
             second_variable_name (str, optional): Name of the second variable for the axis label,
               only relevant for plottype "bivariate". Defaults to "second variable".
             plottype (Literal string, optional):
-                 * "indexplot": plots the residuals of a variable.
-                 * "residuals_vs_variable": plots a variable versus its residuals.
-                 * "residuals_vs_predictions": plots the predictions of a variable versus its
-                   residuals.
+                 * "indexplot": plots the residuals of a variable versus the case numbers.
+                 * "residuals_vs_variable": plots the residuals of a variable versus the variable
+                   itself.
+                 * "residuals_vs_predictions": plots the residuals of a variable versus the
+                   predictions of that variable.
                  * "variable_vs_predictions": plots a variable against its predictions.
                  * "bivariate": plots two variables against each other.
 

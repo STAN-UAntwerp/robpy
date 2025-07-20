@@ -9,12 +9,15 @@ def stahel_donoho(
     random_seed: int | None = None,
 ) -> np.ndarray:
     """
-    Calculate the degree of outlyingness for multivariate points.
-    Based on the algorithm proposed by Stahel, W. A. (1981) and Donoho, D. L. (1982).
+    Calculate a degree of outlyingness for multivariate points.
+    Based on the principle proposed by Stahel, W. A. (1981) and Donoho, D. L. (1982).
 
     Args:
-        X (np.ndarray): Data matrix of shape (n_obs, n_features)
-        n_points (int, optional): Number of points to determine the hyperplane. Defaults to 2.
+        X (np.ndarray): Data matrix of shape (n_obs, n_features).
+        n_points (int, optional): Number of points to determine the direction to project on.
+            Defaults to 2. For n_points = 2, each projection is on a line passing through 2 data
+            points, as in Hubert et al. (2005). If not, each projection is on the direction
+            orthogonal to a hyperplane passing through n_points data points.
         n_dir (int, optional): Number of random directions to consider. Defaults to 250.
         random_seed (int | None, optional): Can be used to provide a random seed. Defaults to None.
 
@@ -22,10 +25,12 @@ def stahel_donoho(
         np.ndarray: Single column of outlyingness values.
 
     References:
-        - Stahel, W. A. (1981). Robuste schätzungen: infinitesimale optimalität und schätzungen von
-          kovarianzmatrizen (Doctoral dissertation, ETH Zurich).
         - Donoho, D. L. (1982). Breakdown properties of multivariate location estimators.
           Technical report, Harvard University, Boston.
+        - Hubert, M., Rousseeuw, P. J., & Vanden Branden, K. (2005). ROBPCA: a new approach to
+          robust principal component analysis. Technometrics, 47(1), 64-79.
+        - Stahel, W. A. (1981). Robuste schätzungen: infinitesimale optimalität und schätzungen von
+          kovarianzmatrizen (Doctoral dissertation, ETH Zurich).
     """
     # step 1: get random directions
     D = np.hstack(

@@ -28,8 +28,8 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
         Args:
             method (Literal str, optional): Method used for the power transformation.
                 Can be "boxcox" for Box-Cox, "yeojohnson" for Yeo-Johnson, or "auto"
-                for best objective solution. Box-Cox can only be used for strictly
-                positive features. Defaults to "auto".
+                for the solution with the lowest objective function. Box-Cox can only be used for
+                strictly positive features. Defaults to "auto".
             standardize (boolean, optional): Whether to standardize the features before and after
                 the power transformation. Defaults to True.
             quantile (float, optional): Quantile used to calculate the weights. Defaults to 0.99.

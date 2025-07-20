@@ -10,7 +10,6 @@ from tqdm.auto import tqdm
 from sklearn.linear_model import LinearRegression
 
 from robpy.regression.base import RobustRegression, _convert_input_to_array
-from robpy.utils.logging import get_logger
 
 
 class FastLTSRegression(RobustRegression):

@@ -3,7 +3,6 @@ import logging
 
 from robpy.univariate.base import RobustScale
 from scipy.stats import chi2, gamma
-from robpy.utils.logging import get_logger
 
 
 class UnivariateMCD(RobustScale):

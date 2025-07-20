@@ -1,8 +1,10 @@
+import logging
 import numpy as np
 import pandas as pd
 
 from robpy.covariance.base import RobustCovariance
 from robpy.utils.distance import mahalanobis_distance
+from robpy.utils.logging import get_logger
 from robpy.covariance.utils.alter_covariance import truncated_covariance, covariance_to_correlation
 from robpy.preprocessing.scaling import RobustScaler
 from robpy.univariate.onestep_m import OneStepWrapping
@@ -17,6 +19,7 @@ class InitialDDCW(RobustCovariance):
         *,
         alpha: float = 0.75,
         min_eigenvalue: float = 1e-4,
+        verbosity: int = logging.WARNING,
     ):
         """
         Calculates the initial robust scatter and location estimates for the CellMCD, described
@@ -39,12 +42,19 @@ class InitialDDCW(RobustCovariance):
         super().__init__(store_precision=True, assume_centered=False, nans_allowed=True)
         self.alpha = alpha
         self.min_eigenvalue = min_eigenvalue
+        self.logger = get_logger("InitialDDCW", level=verbosity)
+        self.verbosity = verbosity
 
     def calculate_covariance(self, X: np.ndarray):
         n, p = X.shape
 
         # check that alpha creates a h-subset larger than [n/2]+1
         if 0.5 <= self.alpha <= 1:
+            if self.alpha < (int(n / 2) + 1.0) / n:
+                self.logger.warning(
+                    f"h = alpha*n is too small and therefore set to [n/2] + 1"
+                    f" ({(int(n / 2) + 1.0) / n})."
+                )
             self.alpha = np.max([self.alpha, (int(n / 2) + 1.0) / n])
         else:
             raise ValueError(f"alpha must a float between 0.5 and 1, but received {self.alpha}.")
@@ -75,9 +85,9 @@ class InitialDDCW(RobustCovariance):
         Zimp_proj_scaler = RobustScaler(scale_estimator=OneStepWrapping()).fit(
             Zimp_proj, ignore_nan=True
         )
-        Zimp_proj_scaler.scales_[
-            Zimp_proj_scaler.scales_ < self.min_eigenvalue
-        ] = self.min_eigenvalue
+        Zimp_proj_scaler.scales_[Zimp_proj_scaler.scales_ < self.min_eigenvalue] = (
+            self.min_eigenvalue
+        )
         Zimp_proj_wrapped_cov = np.cov(
             wrapping_transformation(
                 Zimp_proj,
@@ -107,9 +117,9 @@ class InitialDDCW(RobustCovariance):
         Zimp_proj_scaler = RobustScaler(scale_estimator=OneStepWrapping()).fit(
             Zimp_proj, ignore_nan=True
         )
-        Zimp_proj_scaler.scales_[
-            Zimp_proj_scaler.scales_ < self.min_eigenvalue
-        ] = self.min_eigenvalue
+        Zimp_proj_scaler.scales_[Zimp_proj_scaler.scales_ < self.min_eigenvalue] = (
+            self.min_eigenvalue
+        )
         Zimp_proj_wrapped_cov = np.cov(
             wrapping_transformation(
                 Zimp_proj,

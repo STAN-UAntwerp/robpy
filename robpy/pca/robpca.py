@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import numpy as np
+import logging
 
 from sklearn.decomposition import PCA
 from robpy.pca.base import RobustPCA, get_od_cutoff
 from robpy.utils.outlyingness import stahel_donoho
+from robpy.utils.logging import get_logger
 from robpy.covariance import FastMCD
 
 
@@ -17,6 +19,7 @@ class ROBPCA(RobustPCA):
         alpha: float = 0.75,
         final_MCD_step: bool = True,
         random_seed: int | None = None,
+        verbosity: int = logging.WARNING,
     ):
         """Implementation of ROBPCA algorithm as described in
         Hubert, M., Rousseeuw, P. J., & Vanden Branden, K. (2005).
@@ -45,6 +48,8 @@ class ROBPCA(RobustPCA):
         self.alpha = alpha
         self.final_MCD_step = final_MCD_step
         self.random_seed = random_seed
+        self.logger = get_logger("ROBPCA", level=verbosity)
+        self.verbosity = verbosity
 
     def fit(self, X: np.ndarray) -> ROBPCA:
         # step 1: singular value decomposition = applying standard PCA
@@ -60,10 +65,20 @@ class ROBPCA(RobustPCA):
                 f"alpha must be between 0.5 and 1 (inclusive), but received {self.alpha}."
             )
         elif self.n_components is not None:
+            if int(self.alpha * X.shape[0]) < int((X.shape[0] + self.n_components + 1) / 2):
+                self.logger.warning(
+                    f"h is too small and therefore set to [(n+k+1)/2]"
+                    f" ({int((X.shape[0] + self.n_components + 1) / 2)})."
+                )
             h = np.max(
                 [int(self.alpha * X.shape[0]), int((X.shape[0] + self.n_components + 1) / 2)]
             )
         else:
+            if int(self.alpha * X.shape[0]) < int((X.shape[0] + 10 + 1) / 2):
+                self.logger.warning(
+                    f"h is too small and therefore set to [(n+10+1)/2]"
+                    f" ({int((X.shape[0] + 10 + 1) / 2)})."
+                )
             h = np.max([int(self.alpha * X.shape[0]), int((X.shape[0] + 10 + 1) / 2)])
 
         h_index = np.argsort(outlyingness)[:h]

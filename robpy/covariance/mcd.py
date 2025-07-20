@@ -197,8 +197,17 @@ class FastMCD(RobustCovariance):
         if self.alpha is None:
             return int((n + p + 1) / 2)
         elif isinstance(self.alpha, int) and (n / 2 <= self.alpha <= n):
+            if self.alpha < int((n + p + 1) / 2):
+                self.logger.warning(
+                    f"h is too small and therefore set to [(n+p+1)/2] ({int((n + p + 1) / 2)})."
+                )
             return np.max([self.alpha, int((n + p + 1) / 2)])
         elif (isinstance(self.alpha, float) and (0.5 <= self.alpha <= 1)) or self.alpha == 1:
+            if int(self.alpha * n) < int((n + p + 1) / 2):
+                self.logger.warning(
+                    f"h = alpha*n is too small and therefore set to [(n+p+1)/2]"
+                    f" ({int((n + p + 1) / 2)})."
+                )
             return np.max([int(self.alpha * n), int((n + p + 1) / 2)])
         else:
             raise ValueError(
@@ -426,8 +435,17 @@ class DetMCD(RobustCovariance):
         if self.alpha is None:
             return int((n + p + 1) / 2)
         elif isinstance(self.alpha, int) and (n / 2 <= self.alpha <= n):
+            if self.alpha < int((n + p + 1) / 2):
+                self.logger.warning(
+                    f"h is too small and therefore set to [(n+p+1)/2] ({int((n + p + 1) / 2)})."
+                )
             return np.max([self.alpha, int((n + p + 1) / 2)])
         elif (isinstance(self.alpha, float) and (0.5 <= self.alpha <= 1)) or self.alpha == 1:
+            if int(self.alpha * n) < int((n + p + 1) / 2):
+                self.logger.warning(
+                    f"h = alpha*n is too small and therefore set to [(n+p+1)/2]"
+                    f" ({int((n + p + 1) / 2)})."
+                )
             return np.max([int(self.alpha * n), int((n + p + 1) / 2)])
         else:
             raise ValueError(

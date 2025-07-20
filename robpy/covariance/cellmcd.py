@@ -75,6 +75,11 @@ class CellMCD(RobustCovariance):
         # check that alpha creates a h-subset larger than [n/2]+1
         n = X.shape[0]
         if 0.5 <= self.alpha <= 1:
+            if self.alpha < (int(n / 2) + 1.0) / n:
+                self.logger.warning(
+                    f"h = alpha*n is too small and therefore set to [n/2] + 1"
+                    f" ({(int(n / 2) + 1.0) / n})."
+                )
             self.alpha = np.max([self.alpha, (int(n / 2) + 1.0) / n])
         else:
             raise ValueError(f"alpha must a float between 0.5 and 1, but received {self.alpha}.")

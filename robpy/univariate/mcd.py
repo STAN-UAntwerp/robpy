@@ -1,7 +1,9 @@
 import numpy as np
+import logging
 
 from robpy.univariate.base import RobustScale
 from scipy.stats import chi2, gamma
+from robpy.utils.logging import get_logger
 
 
 class UnivariateMCD(RobustScale):
@@ -29,6 +31,7 @@ class UnivariateMCD(RobustScale):
         super().__init__()
         self.alpha = alpha
         self.consistency_correction = consistency_correction
+        self.logger = logging.getLogger("UnivariateMCD")
 
     def _calculate(self, X: np.ndarray):
         self._set_h_size(X)
@@ -76,8 +79,16 @@ class UnivariateMCD(RobustScale):
         if self.alpha is None:
             self.h_size = n // 2 + 1
         elif isinstance(self.alpha, int) and (n / 2 <= self.alpha <= n):
+            if self.alpha < n // 2 + 1:
+                self.logger.warning(
+                    f"h = alpha*n is too small and therefore set to [n/2] + 1" f" ({n // 2 + 1})."
+                )
             self.h_size = np.max([self.alpha, n // 2 + 1])
         elif (isinstance(self.alpha, float) and (0.5 <= self.alpha <= 1)) or self.alpha == 1:
+            if int(self.alpha * n) < n // 2 + 1:
+                self.logger.warning(
+                    f"h = alpha*n is too small and therefore set to [n/2] + 1" f" ({n // 2 + 1})."
+                )
             self.h_size = np.max([int(self.alpha * n), n // 2 + 1])
         else:
             raise ValueError(

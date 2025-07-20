@@ -10,6 +10,7 @@ from tqdm.auto import tqdm
 from sklearn.linear_model import LinearRegression
 
 from robpy.regression.base import RobustRegression, _convert_input_to_array
+from robpy.utils.logging import get_logger
 
 
 class FastLTSRegression(RobustRegression):
@@ -94,6 +95,11 @@ class FastLTSRegression(RobustRegression):
         if self.alpha < 0.5 or self.alpha > 1:
             raise ValueError(
                 f"alpha must be between 0.5 and 1 (inclusive), but received {self.alpha}."
+            )
+        if int(X.shape[0] * self.alpha) < int((X.shape[0] + X.shape[1] + 1) / 2):
+            self.logger.warning(
+                f"h = alpha*n is too small and therefore set to [(n+p+1)/2]"
+                f" ({int((X.shape[0] + X.shape[1] + 1) / 2)})."
             )
         h = np.max([int(X.shape[0] * self.alpha), int((X.shape[0] + X.shape[1] + 1) / 2)])
         self.logger.info(

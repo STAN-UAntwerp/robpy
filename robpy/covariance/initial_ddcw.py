@@ -1,8 +1,10 @@
+import logging
 import numpy as np
 import pandas as pd
 
 from robpy.covariance.base import RobustCovariance
 from robpy.utils.distance import mahalanobis_distance
+from robpy.utils.logging import get_logger
 from robpy.covariance.utils.alter_covariance import truncated_covariance, covariance_to_correlation
 from robpy.preprocessing.scaling import RobustScaler
 from robpy.univariate.onestep_m import OneStepWrapping
@@ -17,40 +19,45 @@ class InitialDDCW(RobustCovariance):
         *,
         alpha: float = 0.75,
         min_eigenvalue: float = 1e-4,
+        verbosity: int = logging.WARNING,
     ):
         """
-        Calculates the initial robust scatter and location estimates for the CellMCD. Described
-        in the Supplementary Material to Raymaekers and Rousseeuw 2023.
-
-        code based on cellWise:::DDCWcov in R
+        Calculates the initial robust scatter and location estimates for the CellMCD, described
+        in the Supplementary Material to Raymaekers, J., & Rousseeuw, P. J. (2024). The code is
+        based on the function cellWise:::DDCWcov in R.
 
         Parameters:
             alpha (float, optional):
                 Percentage indicating how much cells must remain unflagged in each column.
-                Defaults to 0.75.
+                Must lie within 0.5 to 1.0. Defaults to 0.75.
             min_eigenvalue (float, optional):
                 Lower bound on the minimum eigenvalue of the covariance estimator
                 on the standardized data. Should be at least 1e-6.
                 Defaults to 1e-4.
 
         References:
-            - Raymaekers and Rousseeuw, The Cellwise Minimum Covariance Determinant Estimator, 2023,
-        Journal of the American Statistical Association.
+            - Raymaekers, J., & Rousseeuw, P. J. (2024). The cellwise minimum covariance determinant
+              estimator. Journal of the American Statistical Association, 119(548), 2610-2621.
         """
         super().__init__(store_precision=True, assume_centered=False, nans_allowed=True)
         self.alpha = alpha
         self.min_eigenvalue = min_eigenvalue
+        self.logger = get_logger("InitialDDCW", level=verbosity)
+        self.verbosity = verbosity
 
     def calculate_covariance(self, X: np.ndarray):
-        """Calculates the initial cellwise robust estimates of location and scatter using an
-        adaptation of DDC.
-
-        Arguments:
-            X (np.ndarray): scaled data set
-
-        [based on cellWise:::DDCWcov]"""
-
         n, p = X.shape
+
+        # check that alpha creates a h-subset larger than [n/2]+1
+        if 0.5 <= self.alpha <= 1:
+            if self.alpha < (int(n / 2) + 1.0) / n:
+                self.logger.warning(
+                    f"h = alpha*n is too small and therefore set to [n/2] + 1"
+                    f" ({(int(n / 2) + 1.0) / n})."
+                )
+            self.alpha = np.max([self.alpha, (int(n / 2) + 1.0) / n])
+        else:
+            raise ValueError(f"alpha must a float between 0.5 and 1, but received {self.alpha}.")
 
         # DDC with constraint -> imputed and rescaled Zimp:
         ddc = DDC(chi2_quantile=0.9, scale_estimator=OneStepWrapping()).fit(pd.DataFrame(X))

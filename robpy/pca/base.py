@@ -9,21 +9,21 @@ from robpy.univariate import UnivariateMCD
 
 class RobustPCA(_BasePCA):
     def __init__(self, *, n_components: int | None = None):
-        """Base class for robust PCA estimators
+        """Base class for robust PCA estimators.
 
         Args:
             n_components (int | None, optional):
-                Number of components to select. If None, it is set during fit to min (X.shape)
+                Number of components to select. If None, it is set during fit.
 
         """
         self.n_components = n_components
 
     @abstractmethod
     def fit(self, X: np.ndarray):
-        """Fit the robust PCA model to the data
+        """Fit the robust PCA model to the data.
 
         Args:
-            X (np.ndarray): Data to fit the model to
+            X (np.ndarray): Data to fit the model to.
         """
         pass
 
@@ -41,9 +41,9 @@ class RobustPCA(_BasePCA):
 
         Returns
         -------
-        X_new : array-like of shape (n_samples, n_components)
-            Projection of X in the first principal components, where `n_samples`
-            is the number of samples and `n_components` is the number of the components.
+        X_new : np.ndarray of shape (n_samples, n_components)
+            Projection of X on the first principal components, where `n_samples`
+            is the number of samples and `n_components` is the number of components.
         """
         if self.location_ is None:
             self.location_ = np.mean(X, axis=0)
@@ -53,10 +53,10 @@ class RobustPCA(_BasePCA):
         """Project the data onto the subspace spanned by the principal components.
 
         Args:
-            X (np.ndarray): Data to project
+            X (np.ndarray): Data to project.
 
         Returns:
-            np.ndarray: Projected data
+            np.ndarray: Projected data.
         """
         return self.transform(X) @ self.components_.T
 
@@ -66,11 +66,11 @@ class RobustPCA(_BasePCA):
         figsize: tuple[int, int] = (4, 4),
         return_distances: bool = False,
     ) -> None | tuple[np.ndarray, np.ndarray, float, float]:
-        """Plot Orthogonal distances vs Score distances to identify different types of outliers
+        """Plot Orthogonal distances vs Score distances to identify different types of outliers.
 
         Args:
-            X (np.ndarray): Data  matrix (n x p)
-            figsize (tuple[int, int], optional): Size of the plot. Defaults to (10, 4).
+            X (np.ndarray): Data  matrix (n x p).
+            figsize (tuple[int, int], optional): Size of the plot. Defaults to (4, 4).
             return_distances (bool, optional):
                 Whether to return the distances and cutoff values. Defaults to False.
         """

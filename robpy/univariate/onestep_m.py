@@ -16,24 +16,19 @@ class OneStepM(RobustScale):
         min_abs_scale: float = 1e-12,
     ):
         """
-        Implementation of the single-step M-estimator for location and scale
+        Implementation of the single-step M-estimator for location and scale.
 
         Args:
-            loc_rho: rho function for scale estimation (e.g. Huber(b=1.5))
-            scale_rho: rho function for scale estimation (e.g. Huber(b=2.5))
-            delta (float, optional): Consistency factor at normal model depending on b:
-                    quad(np.minimum(np.abs(x**2), b**2) * norm.pdf(x), -np.inf, np.inf, args=(b))
-            min_abs_scale (float, optional): Only if mad is larger than min_abs_scale
-                        the M estimator will be calculated.
-                        Defaults to 1e-12.
+            loc_rho (BaseRho): Rho function for scale estimation (e.g. Huber(b=1.5)).
+            scale_rho (BaseRho): Rho function for scale estimation (e.g. Huber(b=2.5)).
+            delta (float): Consistency factor at normal model depending on b:
+                    quad(np.minimum(np.abs(x**2), b**2) * norm.pdf(x), -np.inf, np.inf, args=(b)).
+            min_abs_scale (float, optional): Only if MAD is larger than min_abs_scale
+                        the M-estimator will be calculated. Defaults to 1e-12.
 
         References:
-            Rousseeuw, P. J., & Bossche, W. V. D. (2018).
+            Rousseeuw, P. J., & Van Den Bossche, W. (2018).
             Detecting deviating data cells. Technometrics, 60(2), 135-145.
-            --> loc_rho = TukeyBiWeight(c=3) and scale_rho = Huber(b=2.5)
-
-            See also r code: https://rdrr.io/cran/cellWise/man/estLocScale.html
-
         """
         super().__init__()
         self.loc_rho = loc_rho
@@ -45,7 +40,7 @@ class OneStepM(RobustScale):
         """
         Args:
             X (np.ndarray):
-                univariate data
+                Univariate data.
         """
         if np.isnan(X).any():
             raise ValueError("Input data contains NaN values")
@@ -78,10 +73,9 @@ class OneStepM(RobustScale):
 class HuberOneStepM(OneStepM):
     def __init__(self):
         """
-        Implementation of Huber M-estimator with 1 step: location and scale
-
-        [analoguous to estLocScale {cellWise}: type ="hubhub"
-        https://github.com/cran/cellWise/blob/master/src/LocScaleEstimators.cpp]
+        Implementation of Huber M-estimator with 1 step: location and scale. Analogous to the
+        R function estLocScale in the package cellWise using type = `hubhub`.
+        (cfr. https://github.com/cran/cellWise/blob/master/src/LocScaleEstimators.cpp)
         """
         super().__init__(loc_rho=Huber(b=1.5), scale_rho=Huber(b=1.5), delta=0.7784655)
 
@@ -90,11 +84,11 @@ class CellwiseOneStepM(OneStepM):
     def __init__(self):
         """
         Implementation of the single step M estimator (robLoc and robScale) proposed in
-        Rousseeuw, P. J., & Bossche, W. V. D. (2018). In this paper, the location rho function is
-        set to `TukeyBiWeight(c=3)` and the scale rho function to `Huber(b=2.5)`
+        Rousseeuw, P. J., & Van Den Bossche, W. (2018). In this paper, the location rho function is
+        set to `TukeyBiWeight(c=3)` and the scale rho function to `Huber(b=2.5)`.
 
         References:
-            - Rousseeuw, P. J., & Bossche, W. V. D. (2018). Detecting deviating data cells.
+            - Rousseeuw, P. J., & Van Den Bossche, W.  (2018). Detecting deviating data cells.
               Technometrics, 60(2), 135-145.
         """
         super().__init__(loc_rho=TukeyBisquare(c=3), scale_rho=Huber(b=2.5), delta=0.845)
@@ -103,8 +97,8 @@ class CellwiseOneStepM(OneStepM):
 class OneStepWrapping(RobustScale):
     def __init__(self):
         """
-        [analoguous to estLocScale {cellWise}: type ="wrap"
-        https://github.com/cran/cellWise/blob/master/src/LocScaleEstimators.cpp]
+        Analogous to the R function estLocScale in the package cellWise using type = `wrap`.
+        (cfr. https://github.com/cran/cellWise/blob/master/src/LocScaleEstimators.cpp)
         """
         super().__init__()
 

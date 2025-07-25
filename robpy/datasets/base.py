@@ -10,17 +10,22 @@ DESCR_FOLDER = pathlib.Path(__file__).parent / "descr"
 def _load_data_and_descr(
     data_file_name: str, descr_file_name: str, as_frame: bool, feature_names: list[str]
 ) -> tuple[pd.DataFrame | np.ndarray, str]:
-    """Helper function to load data and description files.
+    """
+    Helper function to load data and description files.
 
     Args:
-        data_file_name (str): filename of the .csv file (must end in .csv)
-        descr_file_name (str): filename of the .rst file (must end in .rst)
-        as_frame (bool): whether data should be stored as a pandas DataFrame.
+        data_file_name (str):
+            Filename of the .csv file (must end in .csv).
+        descr_file_name (str):
+            Filename of the .rst file (must end in .rst).
+        as_frame (bool):
+            Whether data should be stored as a pandas DataFrame.
             If False, it will be stored as a numpy array.
-        feature_names (list[str]): Columns to be selected, all other columns are ignored
+        feature_names (list[str]):
+            Columns to be selected, all other columns are ignored.
 
     Returns:
-        tuple[pd.DataFrame | np.ndarray, str]: The data matrix/dataframe and the description string
+        tuple[pd.DataFrame | np.ndarray, str]: The data matrix/dataframe and the description string.
     """
 
     df = pd.read_csv(DATA_FOLDER / data_file_name)
@@ -39,7 +44,7 @@ def _load_data_and_descr(
 def load_telephone(*, as_frame=False):
     """Load and return the telephone dataset (regression with outliers).
 
-    The telephone dataset is well-known univariate regression problem with outliers.
+    The telephone dataset is a well-known univariate regression problem with outliers.
 
     =================   ==============
     Samples                         24
@@ -58,21 +63,21 @@ def load_telephone(*, as_frame=False):
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
-        Dictionary-like object, with the following attributes.
+        Dictionary-like object, with the following attributes:
 
-        data : {ndarray, dataframe} of shape (24, 2)
+        * data : {ndarray, dataframe} of shape (24, 2)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        feature_names: list
+        * feature_names: list
             The names of the dataset columns.
-        DESCR: str
+        * DESCR: str
             The full description of the dataset.
-        filename: str
+        * filename: str
             The path to the location of the data.
 
     Examples
     --------
-    Fitting a robust regression
+    Fitting a robust regression:
 
     >>> from robpy.datasets import load_telephone
     >>> from robpy.regression import MMRegression
@@ -120,22 +125,22 @@ def load_stars(*, as_frame=False):
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
-        Dictionary-like object, with the following attributes.
+        Dictionary-like object, with the following attributes:
 
-        data : {ndarray, dataframe} of shape (47, 2)
+        * data : {ndarray, dataframe} of shape (47, 2)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        feature_names: list
+        * feature_names: list
             The names of the dataset columns.
-        DESCR: str
+        * DESCR: str
             The full description of the dataset.
-        filename: str
+        * filename: str
             The path to the location of the data.
 
 
     Examples
     --------
-    Fitting a robust covariance estimator
+    Fitting a robust covariance estimator:
 
     >>> from robpy.datasets import load_stars
     >>> from robpy.covariance import FastMCD
@@ -159,12 +164,12 @@ def load_stars(*, as_frame=False):
 
 
 def load_animals(*, as_frame=False):
-    """Load and return the Animals2 dataset from robustbase (R) (covariance / regression).
+    """Load and return the Animals dataset from MASS (R) (covariance / regression).
 
     The animals dataset is a bivariate dataset used for demonstrating robust covariance estimators.
 
     =================   ==============
-    Samples                         65
+    Samples                         28
     Dimensionality                   2
     Features            real, positive
     =================   ==============
@@ -180,22 +185,22 @@ def load_animals(*, as_frame=False):
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
-        Dictionary-like object, with the following attributes.
+        Dictionary-like object, with the following attributes:
 
-        data : {ndarray, dataframe} of shape (65, 2)
+        * data : {ndarray, dataframe} of shape (28, 2)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        feature_names: list
+        * feature_names: list
             The names of the dataset columns.
-        DESCR: str
+        * DESCR: str
             The full description of the dataset.
-        filename: str
+        * filename: str
             The path to the location of the data.
 
 
     Examples
     --------
-    Fitting a robust covariance estimator
+    Fitting a robust covariance estimator:
 
     >>> from robpy.datasets import load_animals
     >>> from robpy.covariance import FastMCD
@@ -241,24 +246,24 @@ def load_topgear(*, as_frame=False):
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
-        Dictionary-like object, with the following attributes.
+        Dictionary-like object, with the following attributes:
 
-        data : {ndarray, dataframe} of shape (297, 32)
+        * data : {ndarray, dataframe} of shape (297, 32)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        feature_names: list
+        * feature_names: list
             The names of the dataset columns.
-        categorical_features: list
+        * categorical_features: list
             The names of the categorical features.
-        DESCR: str
+        * DESCR: str
             The full description of the dataset.
-        filename: str
+        * filename: str
             The path to the location of the data.
 
 
     Examples
     --------
-    Fitting a robust regression estimator
+    Fitting a robust regression estimator:
 
     >>> from robpy.datasets import load_topgear
     >>> from robpy.regression import FastLTSRegression
@@ -342,7 +347,7 @@ def load_topgear(*, as_frame=False):
 def load_glass(*, as_frame=False):
     """Load and return the glass dataset from cellWise (R) (outlier detection).
 
-    The glass dataset is a high dimensional dataset used for demonstrating outlier detectors.
+    The glass dataset is a high dimensional dataset used for demonstrating outlier detection.
 
     =================   ==============
     Samples                        180
@@ -361,16 +366,16 @@ def load_glass(*, as_frame=False):
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
-        Dictionary-like object, with the following attributes.
+        Dictionary-like object, with the following attributes:
 
-        data : {ndarray, dataframe} of shape (65, 2)
+        * data : {ndarray, dataframe} of shape (180, 750)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        feature_names: list
+        * feature_names: list
             The names of the dataset columns.
-        DESCR: str
+        * DESCR: str
             The full description of the dataset.
-        filename: str
+        * filename: str
             The path to the location of the data.
     """
     data_file_name = "glass.csv"

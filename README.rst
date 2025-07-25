@@ -9,5 +9,6 @@ The project is currently maintained by the same team and distributed under MIT l
 
 Documentation is available at https://robpy.readthedocs.io/en/latest/
 
-
+The structure and inner workings of the package are described in 
+Leyder, S., Raymaekers, J., Rousseeuw, P. J., Servotte, T., & Verdonck, T. (2024). RobPy: a Python Package for Robust Statistical Methods. arXiv preprint arXiv:2411.01954. 
 

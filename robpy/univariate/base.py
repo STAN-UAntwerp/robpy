@@ -13,13 +13,11 @@ class LocationOrScaleEstimator(Protocol):
 
 class RobustScale(ABC):
     def __init__(self, *, can_handle_nan: bool = False):
-        """Base class for robust univariate scale estimators
+        """Base class for robust univariate scale estimators.
 
         Args:
             can_handle_nan (bool, optional):
-                Attribute specifying if the robust scaler can handles nans.
-                Defaults to False.
-
+                Attribute specifying if the robust scaler can handle nans. Defaults to False.
         """
         self.can_handle_nan = can_handle_nan
 

@@ -1,4 +1,5 @@
 import numpy as np
+import logging
 
 from robpy.univariate.base import RobustScale
 from scipy.stats import chi2, gamma
@@ -7,26 +8,29 @@ from scipy.stats import chi2, gamma
 class UnivariateMCD(RobustScale):
     def __init__(self, alpha: float | int | None = None, consistency_correction: bool = True):
         """
-        Implementation of univariate MCD (Hubert & Debruyne, 2009)
+        Implementation of the :math:`O(n \\log n)` algorithm for the univariate MCD on pages 171-172
+        of Rousseeuw, P.J., & Leroy, A. (1987).
 
         Args:
-            alpha (float or int, optional): size of the h subset.
+            alpha (float | int | None, optional):
+              Size of the h subset.
               If an integer between n/2 and n is passed, it is interpreted as an absolute value.
-              If a float  between 0.5 and 1 is passed, it is interpreted as a proportation
+              If a float  between 0.5 and 1 is passed, it is interpreted as a proportion
               of n (the training set size).
-              If None, it is set to floor(n/2) + 1.
+              If None or below [n/2] + 1, it is set to [n/2] + 1.
               Defaults to None.
             consistency_correction (boolean, optional):
-              whether the estimates should be consistent at the normal model.
+              Whether the estimates should be consistent at the normal model.
               Defaults to True.
 
         References:
-            Hubert, M., & Debruyne, M. (2010). Minimum covariance determinant.
-              Wiley interdisciplinary reviews: Computational statistics, 2(1), 36-43.
+            - Rousseeuw, P.J., & Leroy, A. (1987). Robust Regression and Outlier Detection.
+              John Wiley & Sons, New York.
         """
         super().__init__()
         self.alpha = alpha
         self.consistency_correction = consistency_correction
+        self.logger = logging.getLogger("UnivariateMCD")
 
     def _calculate(self, X: np.ndarray):
         self._set_h_size(X)
@@ -74,11 +78,19 @@ class UnivariateMCD(RobustScale):
         if self.alpha is None:
             self.h_size = n // 2 + 1
         elif isinstance(self.alpha, int) and (n / 2 <= self.alpha <= n):
-            self.h_size = self.alpha
+            if self.alpha < n // 2 + 1:
+                self.logger.warning(
+                    f"h = alpha*n is too small and therefore set to [n/2] + 1" f" ({n // 2 + 1})."
+                )
+            self.h_size = np.max([self.alpha, n // 2 + 1])
         elif (isinstance(self.alpha, float) and (0.5 <= self.alpha <= 1)) or self.alpha == 1:
-            self.h_size = int(self.h_size * n)
+            if int(self.alpha * n) < n // 2 + 1:
+                self.logger.warning(
+                    f"h = alpha*n is too small and therefore set to [n/2] + 1" f" ({n // 2 + 1})."
+                )
+            self.h_size = np.max([int(self.alpha * n), n // 2 + 1])
         else:
             raise ValueError(
-                f"alpha must be an integer between n/2 and n or a float between 0.5 and 1 "
-                f"but received {self.alpha}"
+                f"alpha must be an integer between n/2 and n or a float between 0.5 and 1, "
+                f"but received {self.alpha}."
             )

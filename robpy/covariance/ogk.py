@@ -18,29 +18,34 @@ class OGK(RobustCovariance):
         reweighting: bool = False,
         reweighting_beta: float = 0.9
     ):
-        """Implementation of the Orthogonalized Gnanadesikan-Kettenring estimator for location
-        dispersion proposed in Maronna, R. A., & Zamar, R. H. (2002)
+        """
+        Implementation of the Orthogonalized Gnanadesikan-Kettenring estimator for location and
+        dispersion proposed in Maronna, R. A., & Zamar, R. H. (2002).
 
         Args:
-            store_precision (boolean, optional): whether to store the precision matrix
-            assume_centered (boolean, optional): whether the data is already centered
-            location_estimator (LocationOrScaleEstimator, optional): function to estimate the
-                location of the data, should accept an array like input as first value and a named
-                argument axis
-            scale_estimator (LocationOrScaleEstimator, optional): function to estimate the scale
-                of the data, should accept an array like input as first value and a named argument
-                axis
-            n_iterations (int, optional): number of iteration for orthogonalization step
-            reweighting (boolean, optional): whether to apply reweighting at the end
-                (i.e. calculating regular location and covariance after filtering outliers based on
-                Mahalanobis distance using OGK estimates)
-            reweighting_beta (float, optional): quantile of chi2 distribution to use as cutoff for
-                reweighting
+            store_precision (boolean, optional):
+                Whether to store the precision matrix. Defaults to True.
+            assume_centered (boolean, optional):
+                Whether the data is already centered. Defaults to False.
+            location_estimator (LocationOrScaleEstimator, optional):
+                Function to estimate the location of the data, should accept an array like input as
+                first value and a named argument axis. Defaults to np.median.
+            scale_estimator (LocationOrScaleEstimator, optional):
+                Function to estimate the scale of the data, should accept an array like input as
+                first value and a named argument axis. Defaults to median_abs_deviation.
+            n_iterations (int, optional):
+                Number of iterations for the orthogonalization step. Defaults to 2.
+            reweighting (boolean, optional):
+                Whether to apply reweighting at the end (i.e. calculating regular location and
+                covariance after filtering outliers based on Mahalanobis distance using OGK
+                estimates). Defaults to False.
+            reweighting_beta (float, optional):
+                Quantile of chi-squared distribution to use as cutoff for the reweighting. Defaults
+                to 0.9.
 
         References:
-            Maronna, R. A., & Zamar, R. H. (2002).
-            Robust Estimates of Location and Dispersion for High-Dimensional Datasets.
-            Technometrics, 44(4), 307–317. http://www.jstor.org/stable/1271538
+            - Maronna, R. A., & Zamar, R. H. (2002). Robust estimates of location and dispersion for
+              high-dimensional datasets. Technometrics, 44(4), 307-317.
 
         """
         super().__init__(store_precision=store_precision, assume_centered=assume_centered)
@@ -51,9 +56,6 @@ class OGK(RobustCovariance):
         self.reweighting_beta = reweighting_beta
 
     def calculate_covariance(self, X) -> np.ndarray:
-        """Calculate location and covariance with the algorithm described in Maronna & Zamar (2002).
-        Covariance is returned, location is overwritten.
-        """
         p = X.shape[1]
         Z = np.copy(X)
         DE = []

@@ -5,7 +5,11 @@ from robpy.univariate import Qn
 
 
 class KendallTau(RobustCovariance):
-    """Estimate the covariance matrix using Kendall's tau correlation."""
+    def __init__(
+        self,
+    ):
+        """Estimate a covariance matrix using Kendall's tau pairwise correlation."""
+        super().__init__()
 
     def calculate_covariance(self, X) -> np.ndarray:
         p = X.shape[1]

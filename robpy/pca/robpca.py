@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import numpy as np
+import logging
 
 from sklearn.decomposition import PCA
 from robpy.pca.base import RobustPCA, get_od_cutoff
 from robpy.utils.outlyingness import stahel_donoho
+from robpy.utils.logging import get_logger
 from robpy.covariance import FastMCD
 
 
@@ -17,37 +19,37 @@ class ROBPCA(RobustPCA):
         alpha: float = 0.75,
         final_MCD_step: bool = True,
         random_seed: int | None = None,
+        verbosity: int = logging.WARNING,
     ):
         """Implementation of ROBPCA algorithm as described in
-        Hubert, Rousseeuw & Vanden Branden (2005) and Hubert, Rousseeuw & Verdonck (2009)
-
+        Hubert, M., Rousseeuw, P. J., & Vanden Branden, K. (2005).
 
         Args:
             n_components (int | None, optional):
-                Number of components to select. If None, it is set during fit to min (X.shape)
-            k_min_var_explained (float, optional): minimum variance explained by the n_components
-                Only used if n_components is None
-            alpha (float, optional): coverage parameter, determines the robustness and efficiency
-                trade off of the estimator.
-                Smaller alpha gives more robust but less accurate estimates
-            final_MCD_step (bool, optional): whether to apply the final MCD step to get maximally
+                Number of components to select. If None, it is set during fit. Defaults to None.
+            k_min_var_explained (float, optional): Minimum variance explained by the components.
+                Only used if n_components is None. Defaults to 0.8.
+            alpha (float, optional): Coverage parameter, determines the robustness and efficiency
+                trade off of the estimator. Smaller alpha gives more robust but less accurate
+                estimates. Must be a number between 0.5 and 1. Defaults to 0.75.
+            final_MCD_step (bool, optional): Whether to apply the final MCD step to get maximally
                 robust estimates. If False, the eigenvectors after projection onto V1 (subspace
                 determined by points with OD < cutoff) are used as the final estimates.
                 Defaults to True.
             random_seed (int | None, optional):
-                Can be used to provide a random seed.
+                Can be used to provide a random seed. Defaults to None.
 
         References:
-            - Hubert, Rousseeuw & Vanden Branden (2005),
-              ROBPCA: A new approach to robust principal component analysis
-            - Hubert, Rousseeuw & Verdonck (2009) Robust PCA for skewed data and its outlier map
-
+            - Hubert, M., Rousseeuw, P. J., & Vanden Branden, K. (2005). ROBPCA: a new approach to
+              robust principal component analysis. Technometrics, 47(1), 64-79.
         """
         super().__init__(n_components=n_components)
         self.k_min_var_explained = k_min_var_explained
         self.alpha = alpha
         self.final_MCD_step = final_MCD_step
         self.random_seed = random_seed
+        self.logger = get_logger("ROBPCA", level=verbosity)
+        self.verbosity = verbosity
 
     def fit(self, X: np.ndarray) -> ROBPCA:
         # step 1: singular value decomposition = applying standard PCA
@@ -57,7 +59,29 @@ class ROBPCA(RobustPCA):
         loadings = pca.components_.T
         # step 2: stahel donoho outlyingness --> h subset
         outlyingness = stahel_donoho(X, random_seed=self.random_seed)
-        h_index = np.argsort(outlyingness)[: int(self.alpha * X.shape[0])]
+
+        if not (isinstance(self.alpha, (int, float)) and 0.5 <= self.alpha <= 1):
+            raise ValueError(
+                f"alpha must be between 0.5 and 1 (inclusive), but received {self.alpha}."
+            )
+        elif self.n_components is not None:
+            if int(self.alpha * X.shape[0]) < int((X.shape[0] + self.n_components + 1) / 2):
+                self.logger.warning(
+                    f"h is too small and therefore set to [(n+k+1)/2]"
+                    f" ({int((X.shape[0] + self.n_components + 1) / 2)})."
+                )
+            h = np.max(
+                [int(self.alpha * X.shape[0]), int((X.shape[0] + self.n_components + 1) / 2)]
+            )
+        else:
+            if int(self.alpha * X.shape[0]) < int((X.shape[0] + 10 + 1) / 2):
+                self.logger.warning(
+                    f"h is too small and therefore set to [(n+10+1)/2]"
+                    f" ({int((X.shape[0] + 10 + 1) / 2)})."
+                )
+            h = np.max([int(self.alpha * X.shape[0]), int((X.shape[0] + 10 + 1) / 2)])
+
+        h_index = np.argsort(outlyingness)[:h]
         h_cov = np.cov(X[h_index], rowvar=False)
         # step 3: project on k-dimensional subspace
         eigvals_h, eigvecs_h = np.linalg.eigh(h_cov)

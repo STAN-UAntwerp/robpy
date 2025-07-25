@@ -34,31 +34,31 @@ class CellMCD(RobustCovariance):
         verbosity: int = logging.WARNING,
     ):
         """
-        Cell MCD estimator based on the algorithm proposed in Raymaekers and Rousseeuw (2023).
-
+        Cell MCD estimator based on the algorithm proposed in Raymaekers, J., & Rousseeuw, P. J.
+        (2024).
 
         Args:
             alpha (float, optional):
-                Percentage indicating how much cells must remain unflagged in each column.
-                Defaults to 0.75.
+                Percentage indicating how many cells must remain unflagged in each column.
+                Must lie within 0.5 to 1.0. Defaults to 0.75.
             quantile (float, optional):
                 Cutoff value to flag cells.
                 Defaults to 0.99.
             crit (float, optional):
                 Stop iterating when successive covariance matrices of the standardized data
                 differ by less than crit.
-                Defaults to 1e-4
+                Defaults to 1e-4.
             max_c_steps (int, optional):
                 Maximum number of C-steps used in the algorithm.
                 Defaults to 100.
-            min_eigenvalue: (float, optional):
+            min_eigenvalue (float, optional):
                 Lower bound on the minimum eigenvalue of the covariance estimator
                 on the standardized data. Should be at least 1e-6.
                 Defaults to 1e-4.
 
         References:
-            - Raymaekers and Rousseeuw, The Cellwise Minimum Covariance Determinant Estimator, 2023,
-              Journal of the American Statistical Association.
+            - Raymaekers, J., & Rousseeuw, P. J. (2024). The cellwise minimum covariance determinant
+              estimator. Journal of the American Statistical Association, 119(548), 2610-2621.
         """
         if min_eigenvalue < 1e-6:
             raise ValueError("The lower bound on the eigenvalues should be at least 1e-6.")
@@ -72,6 +72,18 @@ class CellMCD(RobustCovariance):
         self.verbosity = verbosity
 
     def calculate_covariance(self, X: np.ndarray) -> np.ndarray:
+        # check that alpha creates a h-subset larger than [n/2]+1
+        n = X.shape[0]
+        if 0.5 <= self.alpha <= 1:
+            if self.alpha < (int(n / 2) + 1.0) / n:
+                self.logger.warning(
+                    f"h = alpha*n is too small and therefore set to [n/2] + 1"
+                    f" ({(int(n / 2) + 1.0) / n})."
+                )
+            self.alpha = np.max([self.alpha, (int(n / 2) + 1.0) / n])
+        else:
+            raise ValueError(f"alpha must a float between 0.5 and 1, but received {self.alpha}.")
+
         # Step 0: robustly standardize the data
         mads = median_abs_deviation(X, nan_policy="omit", axis=0)
         if np.min(mads) < 1e-8:
@@ -142,31 +154,32 @@ class CellMCD(RobustCovariance):
         annotation_quantile: float | None = None,
     ):
         """
-        Function to plot the results of a cellMCD analysis: 5 types of diagnostic plots.
+        Function to plot the results of a cell MCD analysis: 5 types of diagnostic plots.
 
         Arguments:
-            plottype (Literal string, optional):
-                 "indexplot": plots the residuals of a variable,
-                 "residuals_vs_variable": plots a variable versus its residuals,
-                 "residuals_vs_predictions": plots the predictions of a variable versus its
-                 residuals,
-                 "variable_vs_predictions": plots a variable against its predictions,
-                 "bivariate": plots two variables against each other,
-
-                 Defaults to "indexplot".
             variable (int): Index of the variable under consideration.
             variable_name (str, optional): Name of the variable of interest for the axis label.
               Defaults to "variable".
-            second_variable (int): Index of the second variable under consideration,
+            row_names (list of strings, optional): Row names of the observations if you want
+              the outliers annoted with their name.
+            second_variable (int, optional): Index of the second variable under consideration,
               only needed for plottype "bivariate".
             second_variable_name (str, optional): Name of the second variable for the axis label,
               only relevant for plottype "bivariate". Defaults to "second variable".
-            row_names (list of strings, optional): Row_names of the observations if you want
-              the outliers annoted with their name.
+            plottype (Literal string, optional):
+                 * "indexplot": plots the residuals of a variable versus the case numbers.
+                 * "residuals_vs_variable": plots the residuals of a variable versus the variable
+                   itself.
+                 * "residuals_vs_predictions": plots the residuals of a variable versus the
+                   predictions of that variable.
+                 * "variable_vs_predictions": plots a variable against its predictions.
+                 * "bivariate": plots two variables against each other.
+
+                 Defaults to "indexplot".
             figsize (tuple[int,int], optional): Size of the figure. Defaults to (8,8).
-            annotation_quantile (float, optional):
-                the quantile used to draw an imaginary threhsold around the data.
-                Only points outside these thresholds will be annotated. If None, use self.quantile
+            annotation_quantile (float | None, optional): The quantile used to draw an imaginary
+              threshold around the data. Only points outside these thresholds will be annotated. If
+              None, use self.quantile.
         """
 
         if not hasattr(self, "covariance_"):
@@ -235,7 +248,7 @@ class CellMCD(RobustCovariance):
                 ax,
                 self.quantile,
             )
-            title = f"{variable_name} versus {second_variable_name}"
+            title = f"{second_variable_name} versus {variable_name}"
 
         ax.scatter(x=x, y=y)
         ax.set(xlabel=xlabel, ylabel=ylabel, title=title)
@@ -270,7 +283,7 @@ class CellMCD(RobustCovariance):
     def _make_predictions(
         self, X: np.ndarray, sigma: np.ndarray, sigma_inv: np.ndarray, mu: np.ndarray, W: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Calculate the predictions of the cells given the other clean cells in the same row"""
+        """Calculate the predictions of the cells given the other clean cells in the same row."""
 
         n, p = X.shape
         predictions = np.zeros([n, p])
@@ -459,7 +472,7 @@ class CellMCD(RobustCovariance):
         mu: np.ndarray,
         j,
     ):
-        """Calculates the  delta's from equation (20) for the column j (without q_j)"""
+        """Calculates the  delta's from equation (20) for the column j (without q_j)."""
 
         n = X.shape[0]
         delta = np.full(n, np.inf)
@@ -548,7 +561,7 @@ class CellMCD(RobustCovariance):
         sigma: np.ndarray,
         sigma_inv: np.ndarray,
     ):
-        """Predict the observed values when there are both observed and missing values"""
+        """Predict the observed values when there are both observed and missing values."""
 
         if len(observed_col_idx) == 1:  # only 1 observed value
             for index in row_idx_w:

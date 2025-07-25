@@ -10,25 +10,6 @@ from robpy.utils.rho import BaseRho, TukeyBisquare
 
 
 class SRegression(RobustRegression):
-    """Fast S algorithm similar to lmrob.S on robustbase
-    (https://search.r-project.org/CRAN/refmans/robustbase/html/lmrob.S.html).
-    S-estimation was initially described in
-
-    Rousseeuw, P. J., and Yohai, V. J. (1984), "Robust Regression by Means of S-Estimators,"
-    in Robust and Nonlinear Time Series,
-    eds. J. Franke, W. Hardie, and D. Martin, Lecture Notes in Statistics, 26, Berlin:
-    Springer-Verlag, pp. 256-272.
-
-    This code is an implementation of the Fast S algorithm described in
-
-    Salibian-Barrera, M., & Yohai, V. J. (2006).
-    A Fast Algorithm for S-Regression Estimates.
-    Journal of Computational and Graphical Statistics, 15(2), 414–427.
-    http://www.jstor.org/stable/27594186
-
-
-    """
-
     def __init__(
         self,
         rho: BaseRho = TukeyBisquare(c=1.547),
@@ -42,11 +23,14 @@ class SRegression(RobustRegression):
         scale_tolerance: float = 1e-10,
         random_state: int = 101,
     ):
-        """Fast S estimator.
+        """
+        S-regression, proposed by Rousseeuw, P. J., &
+        Yohai, V. J. (1984). This code is an implementation of the Fast S algorithm described in
+        Salibian-Barrera, M., & Yohai, V. J. (2006).
 
         Args:
             rho (BaseRho, optional):
-                score function to use on the residuals. Defaults to bisquare.
+                Score function to use on the residuals. Defaults to TukeyBisquare(c=1.547).
             n_initial_subsets (int, optional):
                 Number of initial subsets to sample (`N` in the original paper).
                 Defaults to 500.
@@ -58,18 +42,30 @@ class SRegression(RobustRegression):
                 (`t` in the original paper).
                 Defaults to 5.
             max_scale_iterations (int, optional):
-                number of iterative steps to derive M-scale estimates (`r` in the original paper).
+                Number of iterative steps to derive M-scale estimates (`r` in the original paper).
+                Defaults to 2.
             b (float, optional):
-                constant on the RHS of the M scale equation
+                constant on the RHS of the M scale equation. Defaults to 0.5.
             fit_intercept (bool, optional):
-                Whether an intercept should be included in the linear regression
+                Whether an intercept should be included in the linear regression. Defaults to True.
             relative_tolerance (float, optional):
-                Determines the stopping criterium for the i-steps untill convergence
-                (diff in beta norm should be higher then
-                relative_tolerance * max(relative_tolerance, beta_norm))
+                Determines the stopping criterium for the i-steps until convergence
+                (difference in beta norm should be higher than
+                relative_tolerance * max(relative_tolerance, beta_norm)). Defaults to 1e-7.
             scale_tolerance (float, optional):
                 If the difference between 2 subsequent scale estimates is below this threshold,
                 the iterations are stopped and it is assumed the scale estimate converged.
+                Defaults to 1e-10.
+            random_state (int, optional):
+                Can be used to provide a random state. Defaults to 101.
+
+        References:
+            - Rousseeuw, P. J., & Yohai, V. J. (1984). Robust Regression by Means of S-Estimators.
+              In: Franke, J., Härdle, W., Martin, D. (eds) Robust and Nonlinear Time Series
+              Analysis. Lecture Notes in Statistics, vol 26. Springer, New York, NY.
+            - Salibian-Barrera, M., & Yohai, V. J. (2006).
+              A Fast Algorithm for S-Regression Estimates.
+              Journal of Computational and Graphical Statistics, 15(2), 414–427.
         """
         self.rho = rho
         self.n_initial_subsets = n_initial_subsets

@@ -33,23 +33,22 @@ class DDC(OutlierMixin):
         min_correlation: float = 0.5,
         scale_estimator: RobustScale = CellwiseOneStepM(),
     ):
-        """Implementation of the Detecting Deviating Cells (DDC) algorithm.
+        """
+        Implementation of the Detecting Deviating Cells (DDC) algorithm. Based on the R
+        implementation in the package cellWise.
 
         Args:
             chi2_quantile (float, optional): Quantile of the chi-squared distribution to use as
               threshold for univariate outlier detection in step 2.
               Default is 0.99.
             min_correlation (float, optional): Minimum correlation between variables to consider
-              them
+              them. Default is 0.5.
             scale_estimator (RobustScale, optional) : robust scale estimator to scale the
               initial data with. Defaults to CellwiseOneStepM().
 
         References:
-            Rousseeuw, P. J., & Bossche, W. V. D. (2018). Detecting Deviating Data Cells.
-            Technometrics, 60(2), 135–145. https://doi.org/10.1080/00401706.2017.1340909
-
-            R Implementation:
-            https://www.rdocumentation.org/packages/cellWise/versions/2.5.3/topics/DDC
+            - Rousseeuw, P. J., & Van den Bossche, W. (2018). Detecting deviating data cells.
+              Technometrics, 60(2), 135-145.
 
         """
         self.chi2_quantile = chi2_quantile
@@ -108,19 +107,14 @@ class DDC(OutlierMixin):
                 Defaults to False.
 
         Raises:
-            ValueError: Model not fitted
-            ValueError: Data shape mismatch
+            ValueError: Model not fitted.
+            ValueError: Data shape mismatch.
 
         Returns:
             Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
             - If rowwise is True: A 1D array of shape (n_samples,) with rowwise outliers.
             - If rowwise is False: A matrix of shape (n_samples, n_features) with cellwise outliers
               and an array containing the standardized residuals of the cells.
-
-        References:
-            Hubert, M., Rousseeuw, P. J., & Bossche, W. V. D. (2019). MacroPCA: An All-in-one PCA
-            Method Allowing for Missing Values as Well as Cellwise and Rowwise Outliers.
-            Technometrics, 61(4), 459–473. https://doi.org/10.1080/00401706.2018.1562989
         """
         if not self.is_fitted_:
             raise ValueError("Model not fitted yet.")
@@ -150,11 +144,11 @@ class DDC(OutlierMixin):
     def _cellwise_outliers(
         self, Z: pd.DataFrame, predictions: np.ndarray, fit: bool = False
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Get cellwise outliers boolean indicator matrix
+        """Get cellwise outliers boolean indicator matrix.
 
         Args:
-            Z (pd.DataFrame): Standardize input data
-            predictions (np.ndarray): Predicted standardized values (deshrinked)
+            Z (pd.DataFrame): Standardized input data.
+            predictions (np.ndarray): Predicted standardized values (deshrinked).
             fit (bool, optional): Whether to fit the scale estimator. Defaults to False.
 
         Returns:
@@ -244,7 +238,8 @@ class DDC(OutlierMixin):
         vmax_clip: float = float(np.sqrt(stats.chi2.ppf(0.999, df=1))),
         cmap: str | matplotlib.colors.Colormap = "custom",
     ) -> Axes:
-        """Visualize the standardized residuals of the DDC model as a heatmap.
+        """
+        Visualize the standardized residuals of the DDC model as a heatmap.
 
         Args:
             X (pd.DataFrame): The data used to predict the residuals.
@@ -267,7 +262,7 @@ class DDC(OutlierMixin):
                 the data to the color space.
 
         Returns:
-            Axes: the matplotlib axes with the heatmap
+            Axes: The matplotlib axes with the heatmap.
         """
         if not self.is_fitted_:
             raise ValueError("Model not fitted yet.")
@@ -335,7 +330,7 @@ class DDC(OutlierMixin):
             verbose (bool, optional): Whether to print progress. Defaults to False.
 
         Returns:
-            np.ndarray: correlation matrix (shape = (X.shape[1], X.shape[1]))
+            np.ndarray: correlation matrix (shape = (X.shape[1], X.shape[1])).
         """
         correlation = np.ones((X.shape[1], X.shape[1]))
         for i in range(X.shape[1]):

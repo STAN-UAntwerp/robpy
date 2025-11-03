@@ -9,6 +9,20 @@ from sklearn.covariance import EmpiricalCovariance
 from sklearn.exceptions import NotFittedError
 from robpy.utils.distance import mahalanobis_distance
 
+try:
+    from sklearn.utils.validation import validate_data
+    _HAS_PUBLIC_VALIDATE_DATA = True
+except ImportError:
+    _HAS_PUBLIC_VALIDATE_DATA = False
+
+def _safe_validate_data(estimator, X, **kwargs):
+    """Version-safe data validation wrapper."""
+    if _HAS_PUBLIC_VALIDATE_DATA:
+        return validate_data(estimator, X, **kwargs)
+    else:
+        if "ensure_all_finite" in kwargs:
+            kwargs["force_all_finite"] = kwargs.pop("ensure_all_finite")
+        return estimator._validate_data(X, **kwargs)
 
 class RobustCovariance(EmpiricalCovariance):
     def __init__(
@@ -49,7 +63,13 @@ class RobustCovariance(EmpiricalCovariance):
         if self.nans_allowed:
             self.n_features_in_ = X.shape[1]
         else:
-            X = self._validate_data(X)  # this sets n_features_in_ also
+            X = _safe_validate_data(
+                self,
+                X,
+                reset=True,
+                ensure_2d=True,
+                ensure_all_finite=not self.nans_allowed,
+            )
 
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])

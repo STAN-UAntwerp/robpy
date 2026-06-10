@@ -11,9 +11,11 @@ from robpy.utils.distance import mahalanobis_distance
 
 try:
     from sklearn.utils.validation import validate_data
+
     _HAS_PUBLIC_VALIDATE_DATA = True
 except ImportError:
     _HAS_PUBLIC_VALIDATE_DATA = False
+
 
 def _safe_validate_data(estimator, X, **kwargs):
     """Version-safe data validation wrapper."""
@@ -23,6 +25,7 @@ def _safe_validate_data(estimator, X, **kwargs):
         if "ensure_all_finite" in kwargs:
             kwargs["force_all_finite"] = kwargs.pop("ensure_all_finite")
         return estimator._validate_data(X, **kwargs)
+
 
 class RobustCovariance(EmpiricalCovariance):
     def __init__(

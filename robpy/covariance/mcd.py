@@ -144,6 +144,8 @@ class FastMCD(RobustCovariance):
             self.logger.debug("Applying consistency correction to the raw covariance estimate")
             scale = self._correct_covariance(X, best_subset)
         if self.reweighting:
+            self.location_raw_ = self.location_
+            self.scale_raw_ = scale
             self.logger.debug("Applying reweighting to the raw covariance estimate")
             distances = mahalanobis_distance(X, best_subset.location, scale)
             self._mask = distances < np.sqrt(chi2.ppf(0.975, X.shape[1]))
@@ -197,27 +199,31 @@ class FastMCD(RobustCovariance):
         n, p = X.shape
         if self.alpha is None:
             return int((n + p + 1) / 2)
-        elif isinstance(self.alpha, int) and (n / 2 <= self.alpha <= n):
+        elif isinstance(self.alpha, int) and 2 <= self.alpha <= n:
             if self.alpha < int((n + p + 1) / 2):
                 warnings.warn(
-                    f"h is too small and therefore set to [(n+p+1)/2] ({int((n + p + 1) / 2)}).",
+                    f"h is too small and should be set to [(n+p+1)/2] ({int((n + p + 1) / 2)})"
+                    f" or larger, unless you specifically want to emphasize a within-cluster "
+                    f" covariance structure.",
                     category=UserWarning,
                     stacklevel=2,
                 )
-            return np.max([self.alpha, int((n + p + 1) / 2)])
-        elif (isinstance(self.alpha, float) and (0.5 <= self.alpha <= 1)) or self.alpha == 1:
+            return self.alpha
+        elif (isinstance(self.alpha, float) and (0 <= self.alpha <= 1)) or self.alpha == 1:
             if int(self.alpha * n) < int((n + p + 1) / 2):
                 warnings.warn(
-                    f"h = alpha*n is too small and therefore set to [(n+p+1)/2]"
-                    f" ({int((n + p + 1) / 2)}).",
+                    f"h = alpha*n is too small and should be set to [(n+p+1)/2]"
+                    f" ({int((n + p + 1) / 2)})  or larger, unless you specifically want to"
+                    f" emphasize a within-cluster covariance structure.",
                     category=UserWarning,
                     stacklevel=2,
                 )
-            return np.max([int(self.alpha * n), int((n + p + 1) / 2)])
+            return int(self.alpha * n)
         else:
             raise ValueError(
                 f"alpha must be an integer between n/2 and n or"
-                f" a float between 0.5 and 1, but received {self.alpha}."
+                f" a float between 0.5 and 1, but received {self.alpha}"
+                f" (or smaller for a within-cluster covariance structure)."
             )
 
     def _partition_data(self, X: np.ndarray) -> list[np.ndarray]:
@@ -355,6 +361,8 @@ class DetMCD(RobustCovariance):
             self.logger.debug("Applying consistency correction to the raw covariance estimate")
             scale = self._correct_covariance(X, best_subset)
         if self.reweighting:
+            self.location_raw_ = self.location_
+            self.scale_raw_ = scale
             self.logger.debug("Applying reweighting to the raw covariance estimate")
             distances = mahalanobis_distance(X, best_subset.location, scale)
             self._mask = distances < np.sqrt(chi2.ppf(0.975, X.shape[1]))
@@ -439,27 +447,31 @@ class DetMCD(RobustCovariance):
         n, p = X.shape
         if self.alpha is None:
             return int((n + p + 1) / 2)
-        elif isinstance(self.alpha, int) and (n / 2 <= self.alpha <= n):
+        elif isinstance(self.alpha, int) and 2 <= self.alpha <= n:
             if self.alpha < int((n + p + 1) / 2):
                 warnings.warn(
-                    f"h is too small and therefore set to [(n+p+1)/2] ({int((n + p + 1) / 2)}).",
+                    f"h is too small and should be set to [(n+p+1)/2] ({int((n + p + 1) / 2)})"
+                    f" or larger, unless you specifically want to emphasize a within-cluster "
+                    f" covariance structure.",
                     category=UserWarning,
                     stacklevel=2,
                 )
-            return np.max([self.alpha, int((n + p + 1) / 2)])
-        elif (isinstance(self.alpha, float) and (0.5 <= self.alpha <= 1)) or self.alpha == 1:
+            return self.alpha
+        elif (isinstance(self.alpha, float) and (0 <= self.alpha <= 1)) or self.alpha == 1:
             if int(self.alpha * n) < int((n + p + 1) / 2):
                 warnings.warn(
-                    f"h = alpha*n is too small and therefore set to [(n+p+1)/2]"
-                    f" ({int((n + p + 1) / 2)}).",
+                    f"h = alpha*n is too small and should be set to [(n+p+1)/2]"
+                    f" ({int((n + p + 1) / 2)})  or larger, unless you specifically want to"
+                    f" emphasize a within-cluster covariance structure.",
                     category=UserWarning,
                     stacklevel=2,
                 )
-            return np.max([int(self.alpha * n), int((n + p + 1) / 2)])
+            return int(self.alpha * n)
         else:
             raise ValueError(
                 f"alpha must be an integer between n/2 and n or"
-                f" a float between 0.5 and 1, but received {self.alpha}."
+                f" a float between 0.5 and 1, but received {self.alpha}"
+                f" (or smaller for a within-cluster covariance structure)."
             )
 
     def _get_subset(

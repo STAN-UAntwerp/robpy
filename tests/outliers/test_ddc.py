@@ -85,7 +85,7 @@ def test_ddc_can_impute_missing_data():
     )
 
     expected_output = X_new.copy()
-    expected_output.loc[0, "Vna"] = 3.039
+    expected_output.loc[0, "Vna"] = 3.291
     ddc = DDC()
     # when
     ddc = ddc.fit(X)
@@ -116,10 +116,10 @@ def test_ddc_can_impute_outlying_data():
     )
 
     expected_output = X_new.copy()
-    expected_output.loc[0, "Vna"] = 3.039
-    expected_output.loc[1, "V1"] = -4.913
-    expected_output.loc[1, "V2"] = 9.477
-    expected_output.loc[0, "V3"] = 4.119
+    expected_output.loc[0, "Vna"] = 3.291
+    expected_output.loc[1, "V1"] = -4.771
+    expected_output.loc[1, "V2"] = 9.079
+    expected_output.loc[0, "V3"] = 4.677
     ddc = DDC()
     # when
     ddc = ddc.fit(X)

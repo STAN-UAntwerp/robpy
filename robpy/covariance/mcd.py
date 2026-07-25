@@ -15,6 +15,61 @@ from robpy.covariance.ogk import OGK
 from robpy.univariate.tau import Tau
 
 
+def _mcd_finite_sample_factor(p: int, n: int, alpha: float, reweighted: bool) -> float:
+    """Small-sample correction factor for the MCD covariance.
+
+    Port of ``.MCDcnp2`` (raw) and ``.MCDcnp2.rew`` (reweighted) from the R package rrcov, based
+    on Pison, Van Aelst & Willems (2002). The simulated-value overrides for ``alpha == 0.5`` are
+    not reproduced (the interpolation formula is used instead).
+
+    References:
+        - Pison, G., Van Aelst, S., & Willems, G. (2002). Small sample corrections for LTS and MCD.
+          Metrika, 55(1-2), 111-123.
+    """
+    if p > 2:
+        if reweighted:
+            coeff875 = np.array(
+                [[-0.544482443573914, -0.343791072183285], [1.25994483222292, 1.25159004257133]]
+            )
+            coeff500 = np.array(
+                [[-1.02842572724793, -0.26800273450853], [1.67659883081926, 1.35968562893582]]
+            )
+        else:
+            coeff875 = np.array(
+                [[-0.455179464070565, -0.294241208320834], [1.11192541278794, 1.09649329149811]]
+            )
+            coeff500 = np.array(
+                [[-1.42764571687802, -1.06141115981725], [1.26263336932151, 1.28907991440387]]
+            )
+        third = np.array([2.0, 3.0])
+        y500 = np.log(-coeff500[0] / p ** coeff500[1])
+        y875 = np.log(-coeff875[0] / p ** coeff875[1])
+        A = np.column_stack([np.ones(2), -np.log(third * p**2)])
+        c500 = np.linalg.solve(A, y500)
+        c875 = np.linalg.solve(A, y875)
+        fp500 = 1 - np.exp(c500[0]) / n ** c500[1]
+        fp875 = 1 - np.exp(c875[0]) / n ** c875[1]
+    elif p == 2:
+        if reweighted:
+            fp500 = 1 - np.exp(3.11101712909049) / n**1.91401056721863
+            fp875 = 1 - np.exp(0.79473550581058) / n**1.10081930350091
+        else:
+            fp500 = 1 - np.exp(0.673292623522027) / n**0.691365864961895
+            fp875 = 1 - np.exp(0.446537815635445) / n**1.06690782995919
+    else:  # p == 1
+        if reweighted:
+            fp500 = 1 - np.exp(1.11098143415027) / n**1.5182890270453
+            fp875 = 1 - np.exp(-0.66046776772861) / n**0.88939595831888
+        else:
+            fp500 = 1 - np.exp(0.262024211897096) / n**0.604756680630497
+            fp875 = 1 - np.exp(-0.351584646688712) / n**1.01646567502486
+    if alpha <= 0.875:
+        fp_alpha = fp500 + (fp875 - fp500) / 0.375 * (alpha - 0.5)
+    else:
+        fp_alpha = fp875 + (1 - fp875) / 0.125 * (alpha - 0.875)
+    return 1.0 / fp_alpha
+
+
 @dataclass
 class HSubset:
     indices: np.ndarray
@@ -278,6 +333,7 @@ class DetMCD(RobustCovariance):
         tolerance: float = 1e-8,
         correct_covariance: bool = True,
         reweighting: bool = True,
+        finite_sample_correction: bool = False,
         verbosity: int = logging.WARNING,
     ):
         """
@@ -301,11 +357,19 @@ class DetMCD(RobustCovariance):
             reweighting (bool, optional):
                 Whether to apply reweighting to the raw covariance estimate.
                 Defaults to True.
+            finite_sample_correction (bool, optional):
+                Whether to apply the small-sample correction factors of Pison, Van Aelst & Willems
+                (2002), as used by ``rrcov::CovMcd(..., use.correction = TRUE)``. This scales the
+                covariance to be less biased for small ``n`` and is required to reproduce rrcov's
+                results (e.g. in the final rotation step of
+                :class:`~robpy.pca.cellpca.CellPCA`). Defaults to False.
 
         References:
             - Hubert, M., Rousseeuw, P. J., & Verdonck, T. (2012). A deterministic algorithm for
               robust location and scatter. Journal of Computational and Graphical Statistics, 21(3),
               618-637.
+            - Pison, G., Van Aelst, S., & Willems, G. (2002). Small sample corrections for LTS and
+              MCD. Metrika, 55(1-2), 111-123.
 
         """
         super().__init__()
@@ -313,10 +377,11 @@ class DetMCD(RobustCovariance):
         self.tolerance = tolerance
         self.correct_covariance = correct_covariance
         self.reweighting = reweighting
+        self.finite_sample_correction = finite_sample_correction
         self.logger = get_logger("DetMCD", level=verbosity)
         self.verbosity = verbosity
 
-    def calculate_covariance(self, X: np.ndarray) -> np.ndarray:
+    def calculate_covariance(self, X: np.ndarray) -> np.ndarray:  # noqa: C901
         if self.alpha == 1 or self.alpha == X.shape[0]:
             self.logger.warning(f"Default covariance is returned as alpha is {self.alpha}.")
             self.location_ = X.mean(0)
@@ -351,9 +416,14 @@ class DetMCD(RobustCovariance):
         # Step 5: post processing
         self.location_ = best_subset.location
         scale = best_subset.scale
+        alpha_frac = self._get_h(X) / X.shape[0]
         if self.correct_covariance:
             self.logger.debug("Applying consistency correction to the raw covariance estimate")
             scale = self._correct_covariance(X, best_subset)
+            if self.finite_sample_correction:
+                scale = scale * _mcd_finite_sample_factor(
+                    X.shape[1], X.shape[0], alpha_frac, reweighted=False
+                )
         if self.reweighting:
             self.logger.debug("Applying reweighting to the raw covariance estimate")
             distances = mahalanobis_distance(X, best_subset.location, scale)
@@ -368,6 +438,10 @@ class DetMCD(RobustCovariance):
                     gamma.cdf((chi2.ppf(0.975, X.shape[1]) / 2), X.shape[1] / 2 + 1) / 0.975
                 )
                 scale *= factor
+                if self.finite_sample_correction:
+                    scale = scale * _mcd_finite_sample_factor(
+                        X.shape[1], X.shape[0], alpha_frac, reweighted=True
+                    )
 
         return scale
 

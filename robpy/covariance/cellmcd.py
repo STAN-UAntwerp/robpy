@@ -573,12 +573,13 @@ class CellMCD(RobustCovariance):
             for obs in observed_col_idx:
                 other_observations = observed_col_idx[observed_col_idx != obs]
                 sigma_others_inv = inverse_submatrix(sigma, sigma_inv, other_observations)
+                # the matrix products below yield 1x1 matrices, so take the scalar out of them
                 conditional_variance_others = (
                     sigma[obs, obs]
                     - sigma[np.ix_([obs], other_observations)]
                     @ sigma_others_inv
                     @ sigma[np.ix_(other_observations, [obs])]
-                )
+                ).item()
 
                 for index in row_idx_w:
                     predictions[index, obs] = (
@@ -586,7 +587,7 @@ class CellMCD(RobustCovariance):
                         + (X[np.ix_([index], other_observations)] - mu[other_observations])
                         @ sigma_others_inv
                         @ sigma[np.ix_(other_observations, [obs])]
-                    )
+                    ).item()
                     conditional_variances[index, obs] = conditional_variance_others
 
         return predictions, conditional_variances

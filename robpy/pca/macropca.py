@@ -145,12 +145,37 @@ class MacroPCA(RobustPCA):
             tol (float, optional): convergence tolerance of the imputation loop. Defaults to 0.005.
             tolprob (float, optional): quantile used by DDC to flag cells. Defaults to 0.99.
 
+        Attributes:
+            components_ (np.ndarray): loadings of shape (n_features_kept, n_components_). They
+                act on the *standardized* data, i.e. on ``X / scaleX_``.
+            location_ (np.ndarray): robust center, in the **original** units of the data.
+            explained_variance_ (np.ndarray): eigenvalues of the scores, in the standardized
+                space; they match the output of :meth:`transform`.
+            n_components_ (int): number of components actually retained, which can be smaller
+                than ``n_components`` when the data are rank deficient.
+            scaleX_ (np.ndarray): column scales used to standardize the data (all ones when
+                ``scale=False``).
+            scores_ (np.ndarray): scores of the NA-imputed data; equals
+                ``transform(X_NA_imputed_)``.
+            full_scores_ (np.ndarray): scores of the fully imputed data ``full_imputed_``, used
+                to initialize :class:`~robpy.pca.cellpca.CellPCA`.
+            X_NA_imputed_, cell_imputed_, full_imputed_ (np.ndarray): imputed versions of the
+                data, in the original units.
+            columns_kept_ (np.ndarray): positional indices of the columns of the input data that
+                survived the :class:`~robpy.preprocessing.data_cleaner.DataCleaner` step. All
+                other fitted attributes refer to these columns only, and :meth:`transform`
+                accepts new data with either the original or the retained columns.
+
         Notes:
             This port reuses robpy's :class:`~robpy.outliers.ddc.DDC`, whose prediction step
             differs slightly from cellWise's C++ DDC, so the flagged/imputed cells - and therefore
             the loadings and eigenvalues - can differ modestly from the R implementation. The
             results are close but not bit-identical; see :class:`~robpy.pca.cellpca.CellPCA` for a
             quantitative comparison.
+
+            ``DataCleaner`` may also drop *rows* (those with too many missing values), in which
+            case the rowwise attributes (``scores_``, the imputed matrices) have fewer rows than
+            the input data.
 
         References:
             - Hubert, M., Rousseeuw, P. J., & Van den Bossche, W. (2019). MacroPCA: an all-in-one
@@ -171,7 +196,9 @@ class MacroPCA(RobustPCA):
         cutoff1 = np.sqrt(chi2.ppf(0.99, 1))
         # --- checkDataSet ---
         X_df = X if isinstance(X, pd.DataFrame) else pd.DataFrame(np.asarray(X, dtype=float))
+        self.n_features_in_ = X_df.shape[1]
         cleaned = DataCleaner(min_n_rows=3).fit_transform(X_df)
+        self.columns_kept_ = X_df.columns.get_indexer(cleaned.columns)
         X = np.asarray(cleaned, dtype=float)
         n, d = X.shape
 
@@ -365,7 +392,7 @@ class MacroPCA(RobustPCA):
         center = center * scaleX
 
         # --- store results ---
-        self.n_components = k
+        self.n_components_ = k
         self.components_ = loadings
         self.location_ = center
         self.explained_variance_ = eigenvalues
@@ -376,3 +403,9 @@ class MacroPCA(RobustPCA):
         self.scores_ = (Xnai - center / scaleX) @ loadings
         self.full_scores_ = (Xfi - center / scaleX) @ loadings
         return self
+
+    @property
+    def _column_scales(self) -> np.ndarray:
+        """Column scales used during the fit, so that :meth:`~robpy.pca.base.RobustPCA.transform`
+        and :meth:`~robpy.pca.base.RobustPCA.project` can accept data in the original units."""
+        return self.scaleX_

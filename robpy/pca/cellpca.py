@@ -231,7 +231,35 @@ class CellPCA(RobustPCA):
                 (``True``), leave them unchanged (``False``) or use a given vector of scales.
                 Defaults to False.
 
+        Attributes:
+            components_ (np.ndarray): loadings of shape (n_features_kept, n_components_). They
+                act on the *standardized* data, i.e. on ``X / colscale_``.
+            location_ (np.ndarray): robust center, in the **original** units of the data.
+            explained_variance_ (np.ndarray): variances of the scores, in the standardized space;
+                they match the output of :meth:`~robpy.pca.base.RobustPCA.transform`. With
+                ``v_est=True`` these are the eigenvalues of the robust score covariance and are
+                decreasing; with ``v_est=False`` the loadings are not rotated to the principal
+                axes, so these are the rowwise-weighted variances of the score columns and need
+                not be decreasing.
+            n_components_ (int): number of components retained (equal to ``n_components``).
+            colscale_ (np.ndarray | None): column scales used to standardize the data, or None
+                when ``scale=False``.
+            scores_ (np.ndarray): robust IRLS scores ``U``. These are *not* the same as
+                ``transform(X)``: the latter simply projects the observed data and equals
+                ``distances()["U_orig"]``, while ``scores_`` downweights outlying cells.
+            fitted_, imputed_, cell_residuals_, residuals_scaled_ (np.ndarray): fitted values,
+                imputed values and (standardized) cellwise residuals, in the **standardized**
+                space; multiply by ``colscale_`` to return to the original units.
+            columns_kept_ (np.ndarray): positional indices of the columns of the input data that
+                survived the :class:`~robpy.preprocessing.data_cleaner.DataCleaner` step. All
+                other fitted attributes refer to these columns only, and
+                :meth:`~robpy.pca.base.RobustPCA.transform` accepts new data with either the
+                original or the retained columns.
+
         Notes:
+            ``DataCleaner`` may also drop *rows* (those with too many missing values), in which
+            case the rowwise attributes have fewer rows than the input data.
+
             Fidelity relative to the original R implementation (validated on the octane and glass
             data sets):
 
@@ -272,7 +300,9 @@ class CellPCA(RobustPCA):
         mu0: np.ndarray | None = None,
     ) -> "CellPCA":
         X_df = X if isinstance(X, pd.DataFrame) else pd.DataFrame(np.asarray(X, dtype=float))
+        self.n_features_in_ = X_df.shape[1]
         cleaned = DataCleaner(min_n_rows=3).fit_transform(X_df)
+        self.columns_kept_ = X_df.columns.get_indexer(cleaned.columns)
         X = np.asarray(cleaned, dtype=float)
         n, p = X.shape
         k = int(self.n_components)
@@ -393,6 +423,15 @@ class CellPCA(RobustPCA):
             V = V * colsigns
             U = U * colsigns
 
+        if eigenvalues is None:
+            # Without the v_est rotation the loadings are not the principal axes of the scores,
+            # so report the rowwise-weighted variances of the score columns instead. They play
+            # the same role in the score distances but need not be decreasing.
+            total_weight = weights_r.sum()
+            weights = weights_r if total_weight > 0 else np.ones(n)
+            weights = weights / weights.sum()
+            eigenvalues = (weights[:, None] * (U - weights @ U) ** 2).sum(axis=0)
+
         Xfit = mu + U @ V.T
         Ximp = Xfit + weights_c * (X - Xfit)
 
@@ -406,9 +445,10 @@ class CellPCA(RobustPCA):
         rowres_std = rowres / scale_2_end
 
         # --- store results ---
-        self.n_components = k
+        self.n_components_ = k
         self.components_ = V
-        self.location_ = mu
+        # mu lives in the standardized space; location_ is exposed in the original units
+        self.location_ = mu if colscale is None else mu * colscale
         self.scores_ = U
         self.explained_variance_ = eigenvalues
         self.fitted_ = Xfit
@@ -429,6 +469,17 @@ class CellPCA(RobustPCA):
         self._X_internal = X
         return self
 
+    @property
+    def _column_scales(self) -> np.ndarray | float:
+        """Column scales used during the fit, so that :meth:`~robpy.pca.base.RobustPCA.transform`
+        and :meth:`~robpy.pca.base.RobustPCA.project` can accept data in the original units."""
+        return 1.0 if self.colscale_ is None else self.colscale_
+
+    @property
+    def _location_scaled(self) -> np.ndarray:
+        """The center in the standardized space the IRLS machinery operates in."""
+        return self.location_ if self.colscale_ is None else self.location_ / self.colscale_
+
     def predict(self, X: np.ndarray | pd.DataFrame, nu: float | None = None) -> dict:
         """Project new observations onto the fitted cellPCA model (out-of-sample).
 
@@ -441,16 +492,17 @@ class CellPCA(RobustPCA):
 
         Returns:
             dict: with keys ``U`` (scores), ``Xfit`` (fitted values), ``Ximp`` (imputed values),
-            ``weights_c``, ``weights_r`` and ``W``.
+            ``weights_c``, ``weights_r`` and ``W``. As for the corresponding fitted attributes,
+            ``Xfit`` and ``Ximp`` are expressed in the standardized space.
         """
-        X = np.asarray(X.values if isinstance(X, pd.DataFrame) else X, dtype=float)
+        X = self._prepare_input(X)
         if self.colscale_ is not None:
             X = X / self.colscale_
         nu = self.nu if nu is None else nu
         return _cellpca_predict(
             X,
             self.components_,
-            self.location_,
+            self._location_scaled,
             self.scale_1_,
             self.scale_2_,
             self.b_1,
@@ -477,11 +529,11 @@ class CellPCA(RobustPCA):
         rng = np.random.default_rng(random_state)
         idx = rng.integers(0, n, size=n_clean)
         E = rng.standard_normal((n_clean, p)) * scale_1
-        X_clean = X0[idx] + E + self.location_
+        X_clean = X0[idx] + E + self._location_scaled
         pred = _cellpca_predict(
             X_clean,
             self.components_,
-            self.location_,
+            self._location_scaled,
             self.scale_1_,
             self.scale_2_,
             self.b_1,
@@ -501,9 +553,11 @@ class CellPCA(RobustPCA):
         Returns a dict with the observed-to-imputed (``d1``), imputed-to-fitted (``d2``) and
         observed-to-projection (``d4``) distances, together with the score distances of the fitted
         (``sd_fit``) and observed (``sd_x``) points and the observed-data scores ``U_orig``.
+        All quantities refer to the standardized space; ``U_orig`` equals
+        :meth:`~robpy.pca.base.RobustPCA.transform` applied to the training data.
         """
         X = self._X_internal
-        V, mu = self.components_, self.location_
+        V, mu = self.components_, self._location_scaled
         eig = self.explained_variance_
         U_orig = (X - mu) @ V
         sd_x = np.sqrt(np.sum(U_orig**2 / eig, axis=1))
@@ -586,18 +640,18 @@ class CellPCA(RobustPCA):
         OD = np.sqrt(np.nansum(R**2, axis=1))
         dist = self.distances()
         SD = dist["sd_x"]
-        cutoff_sd = np.sqrt(chi2.ppf(crit, self.n_components))
+        cutoff_sd = np.sqrt(chi2.ppf(crit, self.n_components_))
         # OD cutoff from a simulated clean sample (reuse the row-residual machinery)
         n, p = R.shape
         rng = np.random.default_rng(0)
         X0 = self.scores_ @ self.components_.T
         idx = rng.integers(0, n, size=1000)
         E = rng.standard_normal((1000, p)) * self.scale_1_end_
-        Xc = X0[idx] + E + self.location_
+        Xc = X0[idx] + E + self._location_scaled
         pred = _cellpca_predict(
             Xc,
             self.components_,
-            self.location_,
+            self._location_scaled,
             self.scale_1_,
             self.scale_2_,
             self.b_1,
@@ -651,7 +705,7 @@ class CellPCA(RobustPCA):
             label="predicted",
             zorder=3,
         )
-        ax.axvline(np.sqrt(chi2.ppf(crit, self.n_components)), color="red", lw=1.5)
+        ax.axvline(np.sqrt(chi2.ppf(crit, self.n_components_)), color="red", lw=1.5)
         ax.set_xlabel("score distance")
         ax.set_ylabel("orthogonal distance")
         ax.legend(loc="upper left")
@@ -720,12 +774,6 @@ class CellPCA(RobustPCA):
         else:
             rot = _rotate_v(U_new, V, mu, U, 0.5)
         return rot["U"], rot["V"], rot["mu"], rot["eigenvalues"]
-
-    def transform(self, X: np.ndarray) -> np.ndarray:
-        X = np.asarray(X, dtype=float)
-        if self.colscale_ is not None:
-            X = X / self.colscale_
-        return (X - self.location_) @ self.components_
 
 
 def _rotate_v(U, V, mu, Utot, alpha):

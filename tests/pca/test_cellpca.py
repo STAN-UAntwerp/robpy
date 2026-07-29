@@ -1,5 +1,6 @@
 import matplotlib
 import numpy as np
+import pandas as pd
 import pytest
 from pathlib import Path
 
@@ -79,6 +80,82 @@ def test_predict_is_consistent_on_training_data(octane_fit, octane_ref):
 def test_transform_matches_scores_projection(octane_fit, octane_ref):
     scores = octane_fit.transform(octane_ref["X"])
     assert scores.shape == (39, 2)
+    # transform projects the observed data, which is what distances() calls U_orig
+    np.testing.assert_allclose(scores, octane_fit.distances()["U_orig"], atol=1e-10)
+    assert octane_fit.project(octane_ref["X"]).shape == octane_ref["X"].shape
+
+
+def test_scale_equivariance(octane_ref):
+    """Fitting on X with given column scales equals fitting on the pre-scaled data."""
+    X = octane_ref["X"]
+    rng = np.random.default_rng(1)
+    s = np.exp(rng.uniform(-1, 1, X.shape[1]))
+    scaled = CellPCA(n_components=2, scale=s).fit(X)
+    prescaled = CellPCA(n_components=2, scale=False).fit(X / s)
+    np.testing.assert_allclose(scaled.components_, prescaled.components_, atol=1e-10)
+    # location_ is exposed in the original units, so it carries the column scales
+    np.testing.assert_allclose(scaled.location_ / s, prescaled.location_, atol=1e-10)
+    np.testing.assert_allclose(scaled.transform(X), prescaled.transform(X / s), atol=1e-10)
+
+
+@pytest.mark.parametrize("scale", [True, False])
+def test_plot_outlier_map(octane_ref, scale):
+    X = octane_ref["X"]
+    model = CellPCA(n_components=2, scale=scale).fit(X)
+    sd, od, sd_cutoff, od_cutoff = model.plot_outlier_map(X, return_distances=True)
+    assert sd.shape == od.shape == (X.shape[0],)
+    assert sd_cutoff > 0 and od_cutoff > 0
+    # the orthogonal distances are expressed in the units of the original data
+    np.testing.assert_allclose(od, np.linalg.norm((X - model.location_) - model.project(X), axis=1))
+    assert np.median(od) < 10 * X.std()
+    np.testing.assert_allclose(
+        sd, np.sqrt(np.sum(model.transform(X) ** 2 / model.explained_variance_, axis=1))
+    )
+    plt.close("all")
+
+
+def test_explained_variance_without_v_est(octane_ref):
+    """Without the v_est rotation the score variances are reported, so the outlier map and the
+    distances keep working."""
+    model = CellPCA(n_components=2, v_est=False).fit(octane_ref["X"])
+    assert model.explained_variance_ is not None
+    assert model.explained_variance_.shape == (2,)
+    assert np.all(model.explained_variance_ > 0)
+    assert model.plot_outlier_map(octane_ref["X"], return_distances=True)[0].shape == (39,)
+    assert model.distances()["sd_x"].shape == (39,)
+    plt.close("all")
+
+
+def test_transform_after_dropped_columns():
+    """DataCleaner may drop columns during fit; transform must still accept the original data."""
+    rng = np.random.default_rng(0)
+    X = rng.standard_normal((60, 6))
+    X[:, 3] = 1.0  # constant column, dropped as having a bad scale
+    model = CellPCA(n_components=2).fit(X)
+    np.testing.assert_array_equal(model.columns_kept_, [0, 1, 2, 4, 5])
+    assert model.n_features_in_ == 6
+    assert model.components_.shape == (5, 2)
+    np.testing.assert_allclose(model.transform(X), model.transform(X[:, model.columns_kept_]))
+    assert model.project(X).shape == (60, 5)
+    assert model.plot_outlier_map(X, return_distances=True)[0].shape == (60,)
+    assert model.predict(X)["U"].shape == (60, 2)
+    with pytest.raises(ValueError, match="fitted on data with 6 columns"):
+        model.transform(X[:, :4])
+    plt.close("all")
+
+
+def test_transform_returns_array_for_dataframe_input(octane_fit, octane_ref):
+    scores = octane_fit.transform(pd.DataFrame(octane_ref["X"]))
+    assert isinstance(scores, np.ndarray)
+    np.testing.assert_allclose(scores, octane_fit.transform(octane_ref["X"]))
+
+
+def test_fit_does_not_mutate_hyperparameters(octane_ref):
+    model = CellPCA(n_components=2)
+    model.fit(octane_ref["X"])
+    assert model.n_components == 2
+    assert model.n_components_ == 2
+    assert model.get_params()["n_components"] == 2
 
 
 def test_up_uv_geninv_and_normal_v_shapes():

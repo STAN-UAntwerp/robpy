@@ -3,3 +3,6 @@
 **/__pycache__/*
 docs/build/*
 dist
+.DS_Store
+*.log
+CLAUDE.md

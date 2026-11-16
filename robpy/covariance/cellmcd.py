@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import logging
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 from scipy.stats import chi2, median_abs_deviation
@@ -56,6 +59,20 @@ class CellMCD(RobustCovariance):
                 on the standardized data. Should be at least 1e-6.
                 Defaults to 1e-4.
 
+        Attributes (after fit):
+            location_ (np.ndarray): Robust location estimate.
+            covariance_ (np.ndarray): Robust covariance estimate.
+            cellwise_outliers_ (np.ndarray): Boolean array of shape (n_samples, n_features), True
+                for a cell of the training data that is flagged as outlying. Missing cells are
+                False.
+            W (np.ndarray): Weight matrix of the training data, 1 for a kept cell and 0 for a
+                flagged or missing cell (so W == 0 also includes the missing cells).
+            predictions, conditional_stds, residuals, X_imputed (np.ndarray): Per-cell
+                predictions given the unflagged cells of the same row, their conditional standard
+                deviations, the standardized residuals and the imputed training data.
+
+        Use `predict` and `impute` to flag and impute cells of new data.
+
         References:
             - Raymaekers, J., & Rousseeuw, P. J. (2024). The cellwise minimum covariance determinant
               estimator. Journal of the American Statistical Association, 119(548), 2610-2621.
@@ -103,10 +120,13 @@ class CellMCD(RobustCovariance):
         initial_cov = ddcw.covariance_
         initial_cov_inv = ddcw.precision_
         X_scaled[np.abs(X_scaled) > 3] = np.nan
+        q = (
+            chi2.ppf(self.quantile, 1) - np.log(np.diag(initial_cov_inv)) + np.log(2 * np.pi)
+        )  # equation (21)
 
         # Step 3: MCD iterations (we work with X_scaled)
         location, cov, cov_inv, W = self._C_steps_until_convergence(
-            X_scaled, initial_location, initial_cov, initial_cov_inv
+            X_scaled, initial_location, initial_cov, initial_cov_inv, q
         )
         # Step 4: make prediction
         predictions, conditional_variances = self._make_predictions(
@@ -114,6 +134,7 @@ class CellMCD(RobustCovariance):
         )
 
         # Step 5: transform back
+        location_scaled, cov_scaled = location, cov
         cov = np.diag(scaler.scales_) @ cov @ np.diag(scaler.scales_)
         location = scaler.locations_ + location * scaler.scales_
         predictions = scaler.locations_ + predictions * scaler.scales_
@@ -125,7 +146,16 @@ class CellMCD(RobustCovariance):
         scaler_residuals.fit(residuals, ignore_nan=True)
         residuals = residuals / scaler_residuals.scales_
 
+        # state needed to flag and impute new data (all in the robustly scaled space)
+        self._scaler = scaler
+        self._location_scaled = location_scaled
+        self._covariance_scaled = cov_scaled
+        self._precision_scaled = cov_inv
+        self._q = q
+        self._column_order = np.argsort(np.sum(W, axis=0), kind="stable")
+
         self.W = W
+        self.cellwise_outliers_ = (W == 0) & ~np.isnan(X)
         self.location_ = location
         self.predictions = predictions
         self.conditional_stds = conditional_stds
@@ -135,6 +165,118 @@ class CellMCD(RobustCovariance):
         self.X = X
 
         return cov
+
+    def predict(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
+        """Flag the cellwise outliers in (new) data using the fitted location and covariance.
+
+        For each row, the flag pattern is found by minimizing that row's contribution to the
+        cellMCD objective while keeping the fitted location and covariance fixed. This is the
+        W-update of the C-step (without re-estimating location and covariance and without the
+        per-column constraint of at least h unflagged cells), iterated until no flag changes.
+        As during fitting, cells that lie more than 3 robust scales from the robust location
+        are always flagged, and the iterations start with all other observed cells unflagged.
+        This is the out-of-sample step of section 3.2 of Raymaekers and Rousseeuw (2026), except
+        that it starts from the same flags as fit does here instead of from the marginal rule;
+        on simulated data this reached a lower objective and reproduced the training flags more
+        closely. Each row is treated independently of the other rows. Applied to the training
+        data, the result agrees with `cellwise_outliers_` for almost all cells but not
+        necessarily all: during fitting, the per-column constraint of at least h unflagged
+        cells applies and the flags evolve together with location and covariance.
+
+        Args:
+            X (np.ndarray | pd.DataFrame): Data of shape (n_samples, n_features), with the same
+                features as the data used in fit. May contain missing values (nan).
+
+        Returns:
+            np.ndarray: Boolean array of shape (n_samples, n_features), True for a flagged cell.
+                Missing cells are not flagged (False), as in `cellwise_outliers_`.
+
+        References:
+            - Raymaekers, J., & Rousseeuw, P. J. (2026). Least trimmed squares regression with
+              missing values and cellwise outliers. arXiv:2603.04632.
+        """
+        X = self._check_new_data(X)
+        W = self._flag_cells(self._scaler.transform(X))
+        return (W == 0) & ~np.isnan(X)
+
+    def impute(self, X: np.ndarray | pd.DataFrame) -> np.ndarray | pd.DataFrame:
+        """Impute the flagged and the missing cells of (new) data.
+
+        Cells are flagged as in `predict`. Flagged and missing cells are replaced by their
+        conditional expectation given the unflagged cells of the same row, under the fitted
+        location and covariance. All other cells are returned unchanged.
+
+        Args:
+            X (np.ndarray | pd.DataFrame): Data of shape (n_samples, n_features), with the same
+                features as the data used in fit. May contain missing values (nan).
+
+        Returns:
+            np.ndarray | pd.DataFrame: The imputed data, of the same type as X.
+        """
+        X_input = X
+        X = self._check_new_data(X)
+        X_scaled = self._scaler.transform(X)
+        W = self._flag_cells(X_scaled)
+        predictions, _ = self._make_predictions(
+            X_scaled, self._covariance_scaled, self._precision_scaled, self._location_scaled, W
+        )
+        predictions = self._scaler.locations_ + predictions * self._scaler.scales_
+        X_imputed = np.where(W == 0, predictions, X)
+        if isinstance(X_input, pd.DataFrame):
+            return pd.DataFrame(X_imputed, index=X_input.index, columns=X_input.columns)
+        return X_imputed
+
+    def _check_new_data(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
+        """Validate data passed to predict or impute and return it as a float array in which
+        infinite values are replaced by nan."""
+        if not hasattr(self, "_scaler"):
+            raise NotFittedError("This CellMCD instance is not fitted yet. Call fit first.")
+        X = np.array(X, dtype=float)
+        if X.ndim == 1:
+            X = X.reshape(1, -1)
+        if X.ndim != 2 or X.shape[1] != self.n_features_in_:
+            raise ValueError(
+                f"X has {X.shape[-1]} features, but CellMCD was fitted with "
+                f"{self.n_features_in_} features."
+            )
+        X[np.isinf(X)] = np.nan
+        return X
+
+    def _flag_cells(self, X_scaled: np.ndarray) -> np.ndarray:
+        """Find the flag matrix W (1 = kept, 0 = flagged or missing) for robustly scaled data,
+        keeping the fitted location and covariance fixed.
+
+        Changing a single w_ij from 0 to 1 changes row i's contribution to the objective by
+        delta_ij - q_j (equation (20)), so setting w_ij = 1 if and only if delta_ij <= q_j never
+        increases the objective. Repeating this over all columns until no flag changes therefore
+        terminates, at a pattern where no single flag change lowers the objective."""
+        X_scaled = X_scaled.copy()
+        X_scaled[np.abs(X_scaled) > 3] = np.nan  # as in fit: these cells are always flagged
+        mu, sigma, sigma_inv = (
+            self._location_scaled,
+            self._covariance_scaled,
+            self._precision_scaled,
+        )
+
+        # initialization as in fit: every observed cell (within 3 robust scales) is unflagged
+        W = np.where(np.isnan(X_scaled), 0.0, 1.0)
+
+        for _ in range(self.max_c_steps):
+            changed = False
+            for j in self._column_order:
+                delta = self._calculate_delta(X_scaled, W, sigma, sigma_inv, mu, j)
+                w_new = (delta <= self._q[j]).astype(float)
+                if np.any(w_new != W[:, j]):
+                    changed = True
+                    W[:, j] = w_new
+            if not changed:
+                break
+        else:
+            self.logger.warning(
+                f"Flagging cells did not converge within max_c_steps={self.max_c_steps} sweeps."
+            )
+
+        return W
 
     def cell_MCD_plot(
         self,
@@ -330,7 +472,7 @@ class CellMCD(RobustCovariance):
 
             else:  # all missings in the w-pattern
                 predictions, conditional_variances = self._predict_all_missing(
-                    predictions, conditional_variances, row_idx_w, mu, sigma_inv
+                    predictions, conditional_variances, row_idx_w, mu, sigma
                 )
 
         return predictions, conditional_variances
@@ -341,6 +483,7 @@ class CellMCD(RobustCovariance):
         initial_location: np.array,
         initial_cov: np.ndarray,
         initial_cov_inv: np.ndarray,
+        q: np.ndarray,
     ):
         """Perform C-steps (update W, location and covariance) until convergence.
 
@@ -349,6 +492,7 @@ class CellMCD(RobustCovariance):
         - initial_location (np.array): initial location estimate
         - initial_cov (np.ndarray): initial covariance estimate
         - initial_cov_inv (np.ndarray): inverse of the initial covariance estimate
+        - q (np.ndarray): per-column penalties for flagging a cell, equation (21)
         """
         n, p = X_scaled.shape
 
@@ -357,9 +501,6 @@ class CellMCD(RobustCovariance):
         initial_W[np.isnan(X_scaled)] = 0
         objective_values = np.full(self.max_c_steps + 1, np.nan)
         step = 0
-        q = (
-            chi2.ppf(0.99, 1) - np.log(np.diag(initial_cov_inv)) + np.log(2 * np.pi)
-        )  # equation (21)
         penalty = np.sum(q * np.sum(1 - initial_W, axis=0))
         objective_values[step] = (
             objective_function(X_scaled, initial_W, initial_location, initial_cov, initial_cov_inv)
@@ -573,21 +714,17 @@ class CellMCD(RobustCovariance):
             for obs in observed_col_idx:
                 other_observations = observed_col_idx[observed_col_idx != obs]
                 sigma_others_inv = inverse_submatrix(sigma, sigma_inv, other_observations)
+                regression_coefs = sigma_others_inv @ sigma[other_observations, obs]
                 conditional_variance_others = (
-                    sigma[obs, obs]
-                    - sigma[np.ix_([obs], other_observations)]
-                    @ sigma_others_inv
-                    @ sigma[np.ix_(other_observations, [obs])]
+                    sigma[obs, obs] - sigma[obs, other_observations] @ regression_coefs
                 )
 
-                for index in row_idx_w:
-                    predictions[index, obs] = (
-                        mu[obs]
-                        + (X[np.ix_([index], other_observations)] - mu[other_observations])
-                        @ sigma_others_inv
-                        @ sigma[np.ix_(other_observations, [obs])]
-                    )
-                    conditional_variances[index, obs] = conditional_variance_others
+                predictions[row_idx_w, obs] = (
+                    mu[obs]
+                    + (X[np.ix_(row_idx_w, other_observations)] - mu[other_observations])
+                    @ regression_coefs
+                )
+                conditional_variances[row_idx_w, obs] = conditional_variance_others
 
         return predictions, conditional_variances
 
@@ -624,12 +761,13 @@ class CellMCD(RobustCovariance):
         conditional_variances: np.ndarray,
         row_idx_w: np.array,
         mu: np.array,
-        sigma_inv: np.ndarray,
+        sigma: np.ndarray,
     ):
-        """Make predictions when all values in the w-pattern are missing."""
+        """Make predictions when all values in the w-pattern are missing: with no unflagged
+        cells to condition on, these are the marginal means and variances."""
         for index in row_idx_w:
             predictions[index, :] = mu
-            conditional_variances[index, :] = np.diag(sigma_inv)
+            conditional_variances[index, :] = np.diag(sigma)
 
         return predictions, conditional_variances
 

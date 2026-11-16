@@ -21,7 +21,7 @@ def test_ddc_correctly_flags_dummy_data():
     ddc = DDC()
     # when
     ddc = ddc.fit(X)
-    cellwise_prediction, _ = ddc.predict(X)
+    cellwise_prediction = ddc.predict(X)
     rowwise_prediction = ddc.predict(X, rowwise=True)
 
     predicted_cellwise_idx = list(zip(*np.where(cellwise_prediction)))
@@ -55,7 +55,7 @@ def test_ddc_can_predict_new_data():
     ddc = DDC()
     # when
     ddc = ddc.fit(X)
-    cellwise_prediction, _ = ddc.predict(X_new)
+    cellwise_prediction = ddc.predict(X_new)
     rowwise_prediction = ddc.predict(X_new, rowwise=True)
 
     predicted_cellwise_idx = list(zip(*np.where(cellwise_prediction)))
@@ -92,7 +92,8 @@ def test_ddc_can_impute_missing_data():
     imputed = ddc.impute(X_new, impute_outliers=False)
 
     # then
-    pd.testing.assert_frame_equal(imputed, expected_output)
+    # expected values are rounded to 3 decimals; impute itself does not round
+    pd.testing.assert_frame_equal(imputed, expected_output, check_exact=False, rtol=0, atol=5e-4)
 
 
 def test_ddc_can_impute_outlying_data():
@@ -126,4 +127,41 @@ def test_ddc_can_impute_outlying_data():
     imputed = ddc.impute(X_new, impute_outliers=True)
 
     # then
-    pd.testing.assert_frame_equal(imputed, expected_output)
+    # expected values are rounded to 3 decimals; impute itself does not round
+    pd.testing.assert_frame_equal(imputed, expected_output, check_exact=False, rtol=0, atol=5e-4)
+
+
+def test_ddc_predict_returns_array_and_standardized_residuals_are_separate():
+    # given
+    X = pd.DataFrame(
+        {
+            "V1": [1.3, np.nan, 4.5, 2.7, 20.0, 4.4, -2.1, 1.1, -5],
+            "V2": [2.3, np.nan, 5, 6, 7, 8, 4, -10, 0.5],
+            "V3": [2, np.inf, 3, -4, 5, 6, 7, -2, 8],
+            "Vna": [1, -4, 2, np.nan, 3, -np.inf, np.nan, 6, 5],
+        }
+    )
+    ddc = DDC().fit(X)
+    # when
+    flags = ddc.predict(X)
+    residuals = ddc.standardized_residuals(X)
+    # then
+    assert isinstance(flags, np.ndarray) and flags.dtype == bool
+    assert flags.shape == X.shape == residuals.shape
+    np.testing.assert_array_equal(flags, np.abs(residuals) > ddc.cutoff)
+    np.testing.assert_allclose(residuals, ddc.standardized_residuals_)
+
+
+def test_ddc_impute_does_not_round():
+    # given
+    rng = np.random.default_rng(0)
+    X = pd.DataFrame(rng.normal(size=(50, 3)) * 1e-3, columns=["a", "b", "c"])
+    X["b"] = X["a"] + 1e-4 * rng.normal(size=50)
+    X_new = X.iloc[:5].copy()
+    X_new.iloc[0, 1] = np.nan
+    ddc = DDC().fit(X)
+    # when
+    imputed = ddc.impute(X_new, impute_outliers=False)
+    # then
+    assert imputed.iloc[0, 1] != 0
+    assert abs(imputed.iloc[0, 1] - X_new.iloc[0, 0]) < 5e-4

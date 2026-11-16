@@ -111,11 +111,33 @@ class DDC(OutlierMixin):
             ValueError: Data shape mismatch.
 
         Returns:
-            Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-            - If rowwise is True: A 1D array of shape (n_samples,) with rowwise outliers.
-            - If rowwise is False: A matrix of shape (n_samples, n_features) with cellwise outliers
-              and an array containing the standardized residuals of the cells.
+            np.ndarray:
+            - If rowwise is True: A boolean array of shape (n_samples,) with rowwise outliers.
+            - If rowwise is False: A boolean array of shape (n_samples, n_features) with cellwise
+              outliers. Use `standardized_residuals` to get the standardized residuals.
         """
+        cellwise_outliers, standardized_residuals = self._predict_cells(X)
+        if rowwise:
+            return self._rowwise_outliers(standardized_residuals)
+        return cellwise_outliers
+
+    def standardized_residuals(self, X: pd.DataFrame) -> np.ndarray:
+        """Standardized residuals of the cells of (new) data, i.e. the difference between each
+        standardized cell and its prediction from the other cells of the row, divided by the
+        robust scale of the training residuals. Cells with an absolute standardized residual
+        above the cutoff are flagged by `predict`.
+
+        Args:
+            X (pd.DataFrame): Data with the same columns as the data used in fit.
+
+        Returns:
+            np.ndarray: Array of shape (n_samples, n_features); nan for missing cells. Can be
+                passed to `cellmap` to visualize new data.
+        """
+        return self._predict_cells(X)[1]
+
+    def _predict_cells(self, X: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
+        """Cellwise outlier flags and standardized residuals for (new) data."""
         if not self.is_fitted_:
             raise ValueError("Model not fitted yet.")
         if not X.shape[1] == self.cellwise_outliers_.shape[1]:
@@ -134,12 +156,7 @@ class DDC(OutlierMixin):
             index=X.index,
         )
         predictions = self._get_predicted_values(U) * self.deshrinkage_
-        cellwise_outliers, standardized_residuals = self._cellwise_outliers(Z, predictions)
-
-        if rowwise:
-            return self._rowwise_outliers(standardized_residuals)
-
-        return cellwise_outliers, standardized_residuals
+        return self._cellwise_outliers(Z, predictions)
 
     def _cellwise_outliers(
         self, Z: pd.DataFrame, predictions: np.ndarray, fit: bool = False
@@ -210,10 +227,10 @@ class DDC(OutlierMixin):
         )
         raw_predictions = self._get_predicted_values(U)
         predictions = raw_predictions * self.deshrinkage_
-        rescaled_predictions = (predictions * self.scale_ + self.location_).round(3)
+        rescaled_predictions = predictions * self.scale_ + self.location_
 
         if impute_outliers:
-            cellwise_outliers, _ = self.predict(X)
+            cellwise_outliers = self.predict(X)
             results = np.where(
                 cellwise_outliers | np.isnan(X.replace([-np.inf, np.inf], np.nan)),
                 rescaled_predictions,
@@ -245,7 +262,7 @@ class DDC(OutlierMixin):
             X (pd.DataFrame): The data used to predict the residuals.
             standardized_residuals (np.ndarray | None, optional): if X is not the original data used
                 to fit the model, the standardized residuals of the cells predicted on the new X
-                data should be passed.
+                data should be passed (see `standardized_residuals`).
             annotate (bool, optional): Whether to annotate the heatmap cells
                 with the original values. Defaults to False.
             fmt (str, optional): Format to use for annotations. Defaults to ".1f".

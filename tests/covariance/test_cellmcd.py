@@ -165,3 +165,28 @@ def test_predict_and_impute_validate_input(fitted_cellmcd):
         estimator.predict(np.zeros((3, 4)))
     with pytest.raises(ValueError):
         estimator.impute(np.zeros((3, 6)))
+
+
+def test_quantile_sets_the_flagging_penalty():
+    # given
+    _, X, _ = _contaminated_data(500, 5, seed=5)
+    # when
+    strict = CellMCD(quantile=0.999).fit(X)
+    loose = CellMCD(quantile=0.9).fit(X)
+    # then: a higher quantile means a higher penalty for flagging, hence fewer flagged cells
+    assert np.all(strict._q > loose._q)
+    assert strict.cellwise_outliers_.sum() < loose.cellwise_outliers_.sum()
+
+
+def test_fully_flagged_row_has_marginal_conditional_stds():
+    # given
+    _, X, _ = _contaminated_data(500, 5, seed=6)
+    X[0, :] = 50.0
+    # when
+    estimator = CellMCD().fit(X)
+    # then
+    assert np.all(estimator.W[0] == 0)
+    np.testing.assert_allclose(estimator.predictions[0], estimator.location_)
+    np.testing.assert_allclose(
+        estimator.conditional_stds[0], np.sqrt(np.diag(estimator.covariance_))
+    )

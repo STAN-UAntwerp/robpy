@@ -121,7 +121,7 @@ class CellMCD(RobustCovariance):
         initial_cov_inv = ddcw.precision_
         X_scaled[np.abs(X_scaled) > 3] = np.nan
         q = (
-            chi2.ppf(0.99, 1) - np.log(np.diag(initial_cov_inv)) + np.log(2 * np.pi)
+            chi2.ppf(self.quantile, 1) - np.log(np.diag(initial_cov_inv)) + np.log(2 * np.pi)
         )  # equation (21)
 
         # Step 3: MCD iterations (we work with X_scaled)
@@ -472,7 +472,7 @@ class CellMCD(RobustCovariance):
 
             else:  # all missings in the w-pattern
                 predictions, conditional_variances = self._predict_all_missing(
-                    predictions, conditional_variances, row_idx_w, mu, sigma_inv
+                    predictions, conditional_variances, row_idx_w, mu, sigma
                 )
 
         return predictions, conditional_variances
@@ -761,12 +761,13 @@ class CellMCD(RobustCovariance):
         conditional_variances: np.ndarray,
         row_idx_w: np.array,
         mu: np.array,
-        sigma_inv: np.ndarray,
+        sigma: np.ndarray,
     ):
-        """Make predictions when all values in the w-pattern are missing."""
+        """Make predictions when all values in the w-pattern are missing: with no unflagged
+        cells to condition on, these are the marginal means and variances."""
         for index in row_idx_w:
             predictions[index, :] = mu
-            conditional_variances[index, :] = np.diag(sigma_inv)
+            conditional_variances[index, :] = np.diag(sigma)
 
         return predictions, conditional_variances
 

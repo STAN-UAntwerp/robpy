@@ -51,3 +51,19 @@ def test_estimator_can_handle_different_settings(alpha, quantile, max_c_steps, m
     # then
     assert hasattr(estimator, "covariance_")
     assert np.all(np.sum(estimator.W, axis=0) > math.floor(X.shape[0] * alpha))
+
+
+def test_fit_with_missing_values_and_cellwise_outliers():
+    """Exercises the mixed flagged/unflagged prediction branch (numpy >= 2.4 regression)."""
+    # given
+    rng = np.random.default_rng(0)
+    X = rng.multivariate_normal(np.zeros(5), 0.5 * np.eye(5) + 0.5, size=200)
+    X[rng.random(X.shape) < 0.03] = np.nan
+    X[:10, 0] = 10.0
+    # when
+    estimator = CellMCD().fit(X)
+    # then
+    assert np.all(estimator.W[:10, 0] == 0)
+    assert np.all(estimator.W[np.isnan(X)] == 0)
+    assert np.all(np.isfinite(estimator.predictions))
+    assert np.all(np.isfinite(estimator.X_imputed))

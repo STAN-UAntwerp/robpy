@@ -32,6 +32,7 @@ class DDC(OutlierMixin):
         chi2_quantile: float = 0.99,
         min_correlation: float = 0.5,
         scale_estimator: RobustScale = CellwiseOneStepM(),
+        min_unique_values: int = 3,
     ):
         """
         Implementation of the Detecting Deviating Cells (DDC) algorithm. Based on the R
@@ -41,10 +42,13 @@ class DDC(OutlierMixin):
             chi2_quantile (float, optional): Quantile of the chi-squared distribution to use as
               threshold for univariate outlier detection in step 2.
               Default is 0.99.
-            min_correlation (float, optional): Minimum correlation between variables to consider
-              them. Default is 0.5.
+            min_correlation (float, optional): Minimum absolute correlation between two
+              variables for one to be used in the prediction of the other. Default is 0.5.
             scale_estimator (RobustScale, optional) : robust scale estimator to scale the
               initial data with. Defaults to CellwiseOneStepM().
+            min_unique_values (int, optional): Columns with this many or fewer distinct values
+              are considered discrete and are not supported (as ``numDiscrete`` in cellWise).
+              Defaults to 3.
 
         References:
             - Rousseeuw, P. J., & Van den Bossche, W. (2018). Detecting deviating data cells.
@@ -55,6 +59,7 @@ class DDC(OutlierMixin):
         self.cutoff = np.sqrt(chi2.ppf(chi2_quantile, df=1))
         self.min_correlation = min_correlation
         self.scale_estimator = scale_estimator
+        self.min_unique_values = min_unique_values
 
     def fit(self, X: pd.DataFrame, y=None, verbose: bool = False):
         self._check_data_conditions(X)
@@ -323,8 +328,12 @@ class DDC(OutlierMixin):
     def _check_data_conditions(self, X: pd.DataFrame):
         if X.select_dtypes(include=np.number).shape != X.shape:
             raise ValueError("Only numerical data is supported.")
-        if any(X.nunique() <= 3):
-            raise ValueError("Columns with less than 3 unique values are not supported.")
+        discrete = X.columns[X.nunique() <= self.min_unique_values]
+        if len(discrete) > 0:
+            raise ValueError(
+                f"Columns with {self.min_unique_values} or fewer unique values are not supported "
+                f"(see min_unique_values): {list(discrete)}."
+            )
 
     def _fit_scaler(self, X: pd.DataFrame):
         self.location_, self.scale_ = [], []
@@ -351,7 +360,7 @@ class DDC(OutlierMixin):
         """
         correlation = np.ones((X.shape[1], X.shape[1]))
         for i in range(X.shape[1]):
-            if verbose and i % (X.shape[1] // 10) == 0:
+            if verbose and i % max(X.shape[1] // 10, 1) == 0:
                 print(
                     f"Correlation: Processing column {i + 1} of {X.shape[1]} "
                     f"({((i + 1) / X.shape[1]):.1%})"
@@ -412,7 +421,7 @@ class DDC(OutlierMixin):
             weights = np.repeat(
                 [
                     [
-                        np.abs(r) * (np.abs(r) >= 0.5) * (idx != i)
+                        np.abs(r) * (np.abs(r) >= self.min_correlation) * (idx != i)
                         for idx, r in enumerate(self.robust_correlation_[:, i])
                     ]
                 ],

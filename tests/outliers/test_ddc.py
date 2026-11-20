@@ -1,3 +1,4 @@
+import pytest
 import pandas as pd
 import numpy as np
 from robpy.outliers import DDC
@@ -165,3 +166,47 @@ def test_ddc_impute_does_not_round():
     # then
     assert imputed.iloc[0, 1] != 0
     assert abs(imputed.iloc[0, 1] - X_new.iloc[0, 0]) < 5e-4
+
+
+def test_ddc_min_unique_values():
+    # given: a column with 4 distinct values
+    rng = np.random.default_rng(1)
+    X = pd.DataFrame(rng.normal(size=(200, 3)), columns=list("abc"))
+    X["d"] = np.tile([0.0, 1.0, 2.0, 3.0], 50)
+    # then
+    DDC().fit(X)
+    with pytest.raises(ValueError, match=r"4 or fewer unique values.*\['d'\]"):
+        DDC(min_unique_values=4).fit(X)
+
+
+def test_ddc_min_correlation_is_used_in_the_prediction_weights():
+    # given: corr(a, b) about 0.4, corr(a, c) about 0.9, corr(a, e) about 0.6
+    rng = np.random.default_rng(3)
+    z = rng.normal(size=(1000, 4))
+    a = z[:, 0]
+    X = pd.DataFrame(
+        {
+            "a": a,
+            "b": 0.4 * a + 0.92 * z[:, 1],
+            "c": 0.9 * a + 0.44 * z[:, 2],
+            "e": 0.6 * a + 0.8 * z[:, 3],
+        }
+    )
+    # when
+    default = DDC().fit(X)
+    low = DDC(min_correlation=0.3).fit(X)
+    high = DDC(min_correlation=0.7).fit(X)
+    too_high = DDC(min_correlation=0.95).fit(X)
+    # then
+    # "b" has no correlation above 0.5, but it is predicted with min_correlation 0.3
+    assert np.all(default.raw_predictions_[:, 1] == 0)
+    assert not np.all(low.raw_predictions_[:, 1] == 0)
+    # with min_correlation 0.7, "a" is predicted from "c" alone, with weight 1 ("e" is not used)
+    Z = high._standardize(X)
+    U = Z.where(np.abs(Z) <= high.cutoff)
+    rows = U["c"].notna().to_numpy()
+    np.testing.assert_allclose(
+        high.raw_predictions_[rows, 0], high.slopes_[2, 0] * U.loc[rows, "c"].to_numpy()
+    )
+    # with a threshold above every correlation, nothing is predicted
+    assert np.all(too_high.raw_predictions_ == 0)

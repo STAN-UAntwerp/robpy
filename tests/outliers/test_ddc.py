@@ -1,5 +1,5 @@
-import pytest
 import pandas as pd
+import pytest
 import numpy as np
 from robpy.outliers import DDC
 
@@ -168,6 +168,138 @@ def test_ddc_impute_does_not_round():
     assert abs(imputed.iloc[0, 1] - X_new.iloc[0, 0]) < 5e-4
 
 
+def _correlated_data_with_missing_values() -> pd.DataFrame:
+    rng = np.random.default_rng(0)
+    X = pd.DataFrame(
+        rng.multivariate_normal(np.zeros(5), 0.6 + 0.4 * np.eye(5), 200), columns=list("abcde")
+    )
+    X = X.mask(rng.random(X.shape) < 0.05)
+    X.iloc[:10, 2] += 6
+    return X
+
+
+def test_ddc_without_predictor_columns_reproduces_previous_release():
+    # given
+    X = _correlated_data_with_missing_values()
+    # when
+    ddc = DDC().fit(X)
+    ddc_none = DDC(predictor_columns=None).fit(X)
+    # then: identical to each other and to robpy 0.1.1
+    np.testing.assert_array_equal(ddc.cellwise_outliers_, ddc_none.cellwise_outliers_)
+    np.testing.assert_array_equal(ddc.standardized_residuals_, ddc_none.standardized_residuals_)
+    pd.testing.assert_frame_equal(ddc.impute(X), ddc_none.impute(X))
+    assert list(np.flatnonzero(ddc.cellwise_outliers_)) == [2, 7, 12, 22, 27, 32, 42, 47, 48, 238]
+    np.testing.assert_allclose(
+        np.nansum(np.abs(ddc.standardized_residuals_), axis=0),
+        [139.92175573, 141.52023596, 172.12778683, 137.65354092, 138.46528682],
+    )
+    np.testing.assert_allclose(
+        ddc.impute(X).to_numpy().sum(axis=0),
+        [6.40006943, 33.06766711, 11.46481702, 40.0621155, 13.41122149],
+    )
+    assert not ddc.row_outliers_.any()
+
+
+def _data_with_binary_treatment(seed: int = 1) -> tuple[pd.DataFrame, np.ndarray]:
+    """Column "a" depends on the binary column "d"; 5% of the cells of "a" get a 3 sd shift."""
+    rng = np.random.default_rng(seed)
+    n = 2000
+    d = rng.binomial(1, 0.5, n).astype(float)
+    a = 1.5 * (d - 0.5) + 0.6 * rng.normal(size=n)
+    X = pd.DataFrame({"a": a, "b": a + rng.normal(size=n), "c": rng.normal(size=n), "d": d})
+    bad = rng.random(n) < 0.05
+    X.loc[bad, "a"] += 3 * X["a"].std() * rng.choice([-1, 1], bad.sum())
+    return X, bad
+
+
+def test_ddc_rejects_binary_column_unless_it_is_a_predictor():
+    # given
+    X, _ = _data_with_binary_treatment()
+    # then
+    with pytest.raises(ValueError, match=r"3 or fewer unique values.*\['d'\]"):
+        DDC().fit(X)
+    # when
+    ddc = DDC(predictor_columns=["d"]).fit(X)
+    flags = ddc.predict(X)
+    # then
+    d = X.columns.get_loc("d")
+    assert flags.shape == X.shape
+    assert not flags[:, d].any() and not ddc.cellwise_outliers_[:, d].any()
+    assert np.isnan(ddc.standardized_residuals(X)[:, d]).all()
+    assert np.isnan(ddc.standardized_residuals_[:, d]).all()
+    pd.testing.assert_series_equal(ddc.impute(X)["d"], X["d"])
+    assert np.array_equal(ddc.predictor_mask_, [False, False, False, True])
+    # a single label works as well
+    np.testing.assert_array_equal(
+        DDC(predictor_columns="d").fit(X).cellwise_outliers_, ddc.cellwise_outliers_
+    )
+
+
+def test_ddc_predictor_column_improves_detection():
+    # given
+    X, bad = _data_with_binary_treatment()
+    # when
+    with_d = DDC(predictor_columns=["d"], predictor_min_correlation=0.3).fit(X)
+    without_d = DDC().fit(X.drop(columns="d"))
+    flags_with = with_d.cellwise_outliers_[:, 0]
+    flags_without = without_d.cellwise_outliers_[:, 0]
+    # then (recall 1.00 with and 0.83 without "d")
+    assert flags_with[bad].mean() > flags_without[bad].mean()
+    assert flags_with[~bad].mean() < 0.01
+    # "d" is used in the prediction of "a" only, and not predicted itself
+    assert not np.isnan(with_d.slopes_[3, 0])
+    assert np.isnan(with_d.slopes_[:, 3]).all()
+    assert np.all(with_d.raw_predictions_[:, 3] == 0)
+
+
+def test_ddc_predictor_min_correlation_defaults_to_min_correlation():
+    # given: corr(a, d) is about 0.65 (robust estimate), between the two thresholds
+    X, _ = _data_with_binary_treatment()
+    # when
+    default = DDC(predictor_columns=["d"], min_correlation=0.7).fit(X)
+    lower = DDC(predictor_columns=["d"], min_correlation=0.7, predictor_min_correlation=0.3).fit(X)
+    # then
+    assert np.isnan(default.slopes_[3, 0])
+    assert not np.isnan(lower.slopes_[3, 0])
+
+
+def test_ddc_with_predictor_columns_predicts_new_rows():
+    # given
+    X, _ = _data_with_binary_treatment()
+    train, test = X.iloc[:1500], X.iloc[1500:]
+    # when
+    ddc = DDC(predictor_columns=["d"], predictor_min_correlation=0.3).fit(train)
+    flags = ddc.predict(test)
+    imputed = ddc.impute(test)
+    rows = ddc.predict(test, rowwise=True)
+    # then
+    assert flags.shape == test.shape and rows.shape == (len(test),)
+    assert not flags[:, 3].any()
+    pd.testing.assert_series_equal(imputed["d"], test["d"])
+    assert flags[:, 0].any()
+    # predictor columns must be present, at the same position and without missing values
+    with pytest.raises(ValueError, match="same columns"):
+        ddc.predict(test[["a", "b", "d", "c"]])
+    with pytest.raises(ValueError, match=r"missing values: \['d'\]"):
+        ddc.impute(test.assign(d=test["d"].where(test.index != 1600)))
+
+
+@pytest.mark.parametrize(
+    "change, predictor_columns, match",
+    [
+        (lambda X: X.assign(d=1.0), ["d"], r"constant: \['d'\]"),
+        (lambda X: X.assign(d=X["d"].where(X.index != 5)), ["d"], r"missing values: \['d'\]"),
+        (lambda X: X.assign(d=X["d"].where(X.index != 5, np.inf)), ["d"], "missing values"),
+        (lambda X: X, ["d", "e"], r"Unknown predictor columns: \['e'\]"),
+        (lambda X: X, ["a", "b", "c", "d"], "At least one column"),
+    ],
+)
+def test_ddc_predictor_column_errors(change, predictor_columns, match):
+    X, _ = _data_with_binary_treatment()
+    with pytest.raises(ValueError, match=match):
+        DDC(predictor_columns=predictor_columns).fit(change(X))
+
+
 def test_ddc_min_unique_values():
     # given: a column with 4 distinct values
     rng = np.random.default_rng(1)
@@ -202,8 +334,7 @@ def test_ddc_min_correlation_is_used_in_the_prediction_weights():
     assert np.all(default.raw_predictions_[:, 1] == 0)
     assert not np.all(low.raw_predictions_[:, 1] == 0)
     # with min_correlation 0.7, "a" is predicted from "c" alone, with weight 1 ("e" is not used)
-    Z = high._standardize(X)
-    U = Z.where(np.abs(Z) <= high.cutoff)
+    U = high._univariate_outliers(high._standardize(X))
     rows = U["c"].notna().to_numpy()
     np.testing.assert_allclose(
         high.raw_predictions_[rows, 0], high.slopes_[2, 0] * U.loc[rows, "c"].to_numpy()

@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from robpy.preprocessing.transfo import RobustPowerTransformer
 
 
@@ -160,3 +161,119 @@ def test_reweighted_lambda():
     np.testing.assert_array_almost_equal(results[1], expected_results[1], decimal=2)
     np.testing.assert_array_almost_equal(results[2], expected_results[2], decimal=2)
     np.testing.assert_array_almost_equal(results[3], expected_results[3], decimal=2)
+
+
+def _skewed_data_with_outliers():
+    """Skewed clean column and two contaminated versions (5% of the values replaced).
+
+    The reference values in the tests below are from R cellWise 2.5.7, ``transfo(x, type = "YJ")``
+    and ``transfo(x, type = "BC")`` with default arguments, on these exact data.
+    """
+    rng = np.random.default_rng(14)
+    x = rng.lognormal(0, 0.5, 2000)
+    bad = rng.random(2000) < 0.05
+    # +-8 sd outliers (some negative, so Yeo-Johnson only)
+    x_bad = np.where(bad, x.mean() + 8 * x.std() * rng.choice([-1, 1], 2000), x)
+    # outliers at +-8 sd on the log scale (positive, for Box-Cox)
+    x_bad_pos = np.where(bad, x * np.exp(4 * rng.choice([-1, 1], 2000)), x)
+    return x, x_bad, x_bad_pos
+
+
+def test_yeojohnson_lambda_is_robust_to_outliers():
+    # given
+    x, x_bad, _ = _skewed_data_with_outliers()
+    # when
+    clean = RobustPowerTransformer(method="yeojohnson").fit(x)
+    contaminated = RobustPowerTransformer(method="yeojohnson").fit(x_bad)
+    # then
+    # before the fix of the reweighting step: 0.34 and 0.05
+    assert abs(contaminated.lambda_rew - clean.lambda_rew) < 0.1
+    np.testing.assert_allclose(clean.lambda_rew, 0.3363838662, atol=0.05)
+    np.testing.assert_allclose(contaminated.lambda_rew, 0.2808344897, atol=1e-4)
+    np.testing.assert_allclose(contaminated.location_post, 0.0336316007, atol=1e-4)
+    np.testing.assert_allclose(contaminated.scale_post, 0.9056829240, atol=1e-4)
+    np.testing.assert_allclose(contaminated.transform(x_bad).max(), 3.9015491452, atol=1e-4)
+
+
+def test_boxcox_lambda_is_robust_to_outliers():
+    # given
+    x, _, x_bad_pos = _skewed_data_with_outliers()
+    # when
+    clean = RobustPowerTransformer(method="boxcox").fit(x)
+    contaminated = RobustPowerTransformer(method="boxcox").fit(x_bad_pos)
+    # then
+    # before the fix of the reweighting step: 0.012 and 0.037
+    assert abs(contaminated.lambda_rew - clean.lambda_rew) < 0.1
+    np.testing.assert_allclose(clean.lambda_rew, 0.0117986317, atol=1e-4)
+    np.testing.assert_allclose(contaminated.lambda_rew, -0.0020372342, atol=1e-4)
+    np.testing.assert_allclose(contaminated.location_post, 0.0247455303, atol=1e-4)
+    np.testing.assert_allclose(contaminated.scale_post, 0.4823700269, atol=1e-4)
+
+
+def test_lambda_range_is_widened_when_the_estimate_reaches_a_bound():
+    # given: data with lambda about 0.34 and an initial range that excludes it
+    x, _, _ = _skewed_data_with_outliers()
+    # when
+    estimator = RobustPowerTransformer(lambda_range=(0.5, 1.5)).fit(x)
+    # then
+    expected = RobustPowerTransformer().fit(x).lambda_rew
+    np.testing.assert_allclose(estimator.lambda_rew, expected, atol=1e-3)
+    np.testing.assert_allclose(estimator.inverse_transform(estimator.transform(x)), x)
+
+
+def test_lambda_range_must_contain_one():
+    with pytest.raises(ValueError, match="lambda_range"):
+        RobustPowerTransformer(lambda_range=(-0.5, 0.5)).fit(np.arange(1.0, 50.0))
+
+
+@pytest.mark.parametrize(
+    "method, x",
+    [
+        ("yeojohnson", _skewed_data_with_outliers()[1]),  # lambda < 1
+        ("yeojohnson", -_skewed_data_with_outliers()[1]),  # lambda > 1
+        ("boxcox", _skewed_data_with_outliers()[2]),  # lambda close to 0
+        ("boxcox", np.random.default_rng(4).chisquare(3, 500) ** 2),  # 0 < lambda < 1
+        ("boxcox", 1 / np.random.default_rng(5).lognormal(0, 0.5, 500) ** 0.3 + 5),  # lambda > 1
+    ],
+)
+def test_rectified_transform(method, x):
+    # given
+    classical = RobustPowerTransformer(method=method).fit(x)
+    # when
+    rectified = RobustPowerTransformer(method=method, rectified=True).fit(x)
+    y = rectified.transform(x)
+    # then
+    assert rectified.lambda_rew == classical.lambda_rew
+    assert rectified.changepoint_ is not None
+    assert not hasattr(classical, "changepoint_")
+    order = np.argsort(x)
+    assert np.all(np.diff(y[order]) >= 0)  # monotone
+    np.testing.assert_allclose(rectified.inverse_transform(y), x)
+    # equal to the classical transformation up to the change point (up to standardization)
+    y_classical = classical.transform(x)
+    y_std = (y * rectified.scale_post + rectified.location_post - classical.location_post) / (
+        classical.scale_post
+    )
+    x_std = rectified._standardize_pre(x)
+    inside = (
+        x_std <= rectified.changepoint_
+        if rectified.lambda_rew < 1
+        else (x_std >= rectified.changepoint_)
+    )
+    np.testing.assert_allclose(y_std[inside], y_classical[inside])
+    # the tail beyond the change point is less compressed
+    if rectified.lambda_rew < 1:
+        assert y_std.max() > y_classical.max()
+    else:
+        assert y_std.min() < y_classical.min()
+
+
+def test_rectified_transform_keeps_outliers_outlying():
+    # given
+    _, x_bad, _ = _skewed_data_with_outliers()
+    # when
+    classical = RobustPowerTransformer().fit(x_bad).transform(x_bad)
+    rectified = RobustPowerTransformer(rectified=True).fit(x_bad).transform(x_bad)
+    # then: the largest (+8 sd) outlier ends up further out
+    assert classical.max() < 4
+    assert rectified.max() > 6

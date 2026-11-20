@@ -32,6 +32,9 @@ class DDC(OutlierMixin):
         chi2_quantile: float = 0.99,
         min_correlation: float = 0.5,
         scale_estimator: RobustScale = CellwiseOneStepM(),
+        min_unique_values: int = 3,
+        predictor_columns: list | None = None,
+        predictor_min_correlation: float | None = None,
     ):
         """
         Implementation of the Detecting Deviating Cells (DDC) algorithm. Based on the R
@@ -41,10 +44,41 @@ class DDC(OutlierMixin):
             chi2_quantile (float, optional): Quantile of the chi-squared distribution to use as
               threshold for univariate outlier detection in step 2.
               Default is 0.99.
-            min_correlation (float, optional): Minimum correlation between variables to consider
-              them. Default is 0.5.
+            min_correlation (float, optional): Minimum absolute correlation between two
+              variables for one to be used in the prediction of the other. Default is 0.5.
             scale_estimator (RobustScale, optional) : robust scale estimator to scale the
               initial data with. Defaults to CellwiseOneStepM().
+            min_unique_values (int, optional): Columns with this many or fewer distinct values
+              are considered discrete and are not supported (as ``numDiscrete`` in cellWise),
+              except as predictor columns. Defaults to 3.
+            predictor_columns (list | None, optional): Labels of columns of X that are known to
+              be clean and only serve to predict the other (target) columns, e.g. a binary
+              treatment indicator. These columns are never flagged or imputed and may be
+              discrete, but must be numeric, non-constant and without missing values. They are
+              standardized with their mean and standard deviation instead of
+              ``scale_estimator``, are not subject to the univariate outlier detection of step
+              2, and their correlation with a target column is the Pearson correlation over the
+              cells of the target column that survive step 2. Their standardized residuals and
+              predictions are nan, and they are blank in ``cellmap``. This is an extension of
+              DDC, not part of the published algorithm or of cellWise. Defaults to None (no
+              predictor columns), which gives the original DDC.
+            predictor_min_correlation (float | None, optional): Minimum absolute correlation
+              between a predictor column and a target column for the predictor column to be
+              used in the prediction of the target column. A discrete predictor is typically
+              less correlated with a continuous variable than continuous variables are among
+              each other, so a lower value than ``min_correlation`` can be appropriate.
+              Defaults to None, which uses ``min_correlation``.
+
+        Attributes:
+            cellwise_outliers_ (np.ndarray): Boolean array (n_samples, n_features), True for
+              flagged cells.
+            standardized_residuals_ (np.ndarray): Standardized residuals of the cells of the
+              training data.
+            row_outliers_ (np.ndarray): Boolean array (n_samples,), True for flagged rows.
+            robust_correlation_ (np.ndarray): Robust correlation matrix of the variables (nan
+              for pairs of predictor columns, which are not needed).
+            predictor_mask_ (np.ndarray): Boolean array (n_features,), True for the predictor
+              columns.
 
         References:
             - Rousseeuw, P. J., & Van den Bossche, W. (2018). Detecting deviating data cells.
@@ -55,19 +89,19 @@ class DDC(OutlierMixin):
         self.cutoff = np.sqrt(chi2.ppf(chi2_quantile, df=1))
         self.min_correlation = min_correlation
         self.scale_estimator = scale_estimator
+        self.min_unique_values = min_unique_values
+        self.predictor_columns = predictor_columns
+        self.predictor_min_correlation = predictor_min_correlation
 
     def fit(self, X: pd.DataFrame, y=None, verbose: bool = False):
-        self._check_data_conditions(X)
         X = X.replace([np.inf, -np.inf], np.nan)
+        self._check_data_conditions(X)
+        self.feature_names_in_ = np.asarray(X.columns, dtype=object)
         # step 1: standardization
         self._fit_scaler(X)
         Z = self._standardize(X)
         # step 2: univariate outlier detection
-        U = pd.DataFrame(
-            data=np.where(np.abs(Z) > self.cutoff, np.nan, Z),
-            columns=X.columns,
-            index=X.index,
-        )
+        U = self._univariate_outliers(Z)
         # step 3: correlation matrix and slopes
         self.robust_correlation_ = self._robust_correlation(U, verbose=verbose)
         self.slopes_ = self._get_slopes(U)
@@ -78,9 +112,13 @@ class DDC(OutlierMixin):
         # step 5: deshrinkage
         self.deshrinkage_ = np.array(
             [
-                self._robust_slope(
-                    self.raw_predictions_[~np.isnan(Z.iloc[:, i]), i],
-                    Z.to_numpy()[~np.isnan(Z.iloc[:, i]), i],
+                (
+                    np.nan
+                    if self.predictor_mask_[i]
+                    else self._robust_slope(
+                        self.raw_predictions_[~np.isnan(Z.iloc[:, i]), i],
+                        Z.to_numpy()[~np.isnan(Z.iloc[:, i]), i],
+                    )
                 )
                 for i in range(X.shape[1])
             ]
@@ -138,25 +176,45 @@ class DDC(OutlierMixin):
 
     def _predict_cells(self, X: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
         """Cellwise outlier flags and standardized residuals for (new) data."""
-        if not self.is_fitted_:
+        X = self._check_new_data(X, "Predict")
+        # step 1: standardization
+        Z = self._standardize(X)
+        U = self._univariate_outliers(Z)
+        predictions = self._get_predicted_values(U) * self.deshrinkage_
+        return self._cellwise_outliers(Z, predictions)
+
+    def _check_new_data(self, X: pd.DataFrame, method: str) -> pd.DataFrame:
+        """Check new data passed to predict / impute and replace infinite values by nan."""
+        if not getattr(self, "is_fitted_", False):
             raise ValueError("Model not fitted yet.")
         if not X.shape[1] == self.cellwise_outliers_.shape[1]:
             raise ValueError(
-                f"Predict can only be called with the same data as fit. "
+                f"{method} can only be called with the same data as fit. "
                 f"Received {X.shape[1]} columns, expected {self.cellwise_outliers_.shape[1]}"
             )
         if X.select_dtypes(include=np.number).shape != X.shape:
             raise ValueError("Only numerical data is supported.")
         X = X.replace([np.inf, -np.inf], np.nan)
-        # step 1: standardization
-        Z = self._standardize(X)
-        U = pd.DataFrame(
-            data=np.where(np.abs(Z) > self.cutoff, np.nan, Z),
-            columns=X.columns,
-            index=X.index,
+        if self.predictor_mask_.any():
+            if list(X.columns) != list(self.feature_names_in_):
+                raise ValueError(
+                    "With predictor_columns, X must have the same columns as in fit, in the "
+                    "same order."
+                )
+            missing = X.columns[self.predictor_mask_ & X.isna().any(axis=0).to_numpy()]
+            if len(missing) > 0:
+                raise ValueError(
+                    f"Predictor columns cannot contain missing values: {list(missing)}."
+                )
+        return X
+
+    def _univariate_outliers(self, Z: pd.DataFrame) -> pd.DataFrame:
+        """Step 2: set standardized cells beyond the cutoff to nan (not in predictor columns)."""
+        return pd.DataFrame(
+            data=np.where((np.abs(Z) > self.cutoff) & ~self.predictor_mask_, np.nan, Z),
+            columns=Z.columns,
+            index=Z.index,
         )
-        predictions = self._get_predicted_values(U) * self.deshrinkage_
-        return self._cellwise_outliers(Z, predictions)
 
     def _cellwise_outliers(
         self, Z: pd.DataFrame, predictions: np.ndarray, fit: bool = False
@@ -177,9 +235,13 @@ class DDC(OutlierMixin):
         if fit:
             self.residual_scales = np.array(
                 [
-                    CellwiseOneStepM()
-                    .fit(raw_residuals[:, i][~np.isnan(raw_residuals[:, i])])
-                    .scale
+                    (
+                        np.nan
+                        if self.predictor_mask_[i]
+                        else CellwiseOneStepM()
+                        .fit(raw_residuals[:, i][~np.isnan(raw_residuals[:, i])])
+                        .scale
+                    )
                     for i in range(raw_residuals.shape[1])
                 ]
             )
@@ -210,21 +272,20 @@ class DDC(OutlierMixin):
         return row_outliers
 
     def impute(self, X: pd.DataFrame, impute_outliers: bool = True) -> pd.DataFrame:
-        if not self.is_fitted_:
-            raise ValueError("Model not fitted yet.")
-        if X.shape[1] != self.cellwise_outliers_.shape[1]:
-            raise ValueError(
-                f"Impute can only be called with the same data as fit. "
-                f"Received {X.shape[1]} columns, expected {self.cellwise_outliers_.shape[1]}"
-            )
-        X = X.replace([np.inf, -np.inf], np.nan)
+        """Replace missing (and, optionally, flagged) cells by their DDC predictions.
+
+        Args:
+            X (pd.DataFrame): Data with the same columns as the data used in fit.
+            impute_outliers (bool, optional): Whether to also impute the cells flagged by
+                `predict`. Defaults to True.
+
+        Returns:
+            pd.DataFrame: X with imputed cells. Predictor columns are returned unchanged.
+        """
+        X = self._check_new_data(X, "Impute")
         Z = self._standardize(X)
         # step 2: univariate outlier detection
-        U = pd.DataFrame(
-            data=np.where(np.abs(Z) > self.cutoff, np.nan, Z),
-            columns=X.columns,
-            index=X.index,
-        )
+        U = self._univariate_outliers(Z)
         raw_predictions = self._get_predicted_values(U)
         predictions = raw_predictions * self.deshrinkage_
         rescaled_predictions = predictions * self.scale_ + self.location_
@@ -256,7 +317,8 @@ class DDC(OutlierMixin):
         cmap: str | matplotlib.colors.Colormap = "custom",
     ) -> Axes:
         """
-        Visualize the standardized residuals of the DDC model as a heatmap.
+        Visualize the standardized residuals of the DDC model as a heatmap. Predictor columns
+        (see `predictor_columns`) have no residuals and are shown blank.
 
         Args:
             X (pd.DataFrame): The data used to predict the residuals.
@@ -281,7 +343,7 @@ class DDC(OutlierMixin):
         Returns:
             Axes: The matplotlib axes with the heatmap.
         """
-        if not self.is_fitted_:
+        if not getattr(self, "is_fitted_", False):
             raise ValueError("Model not fitted yet.")
         if cmap == "custom":
             cmap = get_custom_cmap(vmax_clip)
@@ -323,13 +385,46 @@ class DDC(OutlierMixin):
     def _check_data_conditions(self, X: pd.DataFrame):
         if X.select_dtypes(include=np.number).shape != X.shape:
             raise ValueError("Only numerical data is supported.")
-        if any(X.nunique() <= 3):
-            raise ValueError("Columns with less than 3 unique values are not supported.")
+        self.predictor_mask_ = self._get_predictor_mask(X)
+        if self.predictor_mask_.all():
+            raise ValueError("At least one column must not be a predictor column.")
+        predictors = X.loc[:, self.predictor_mask_]
+        with_nan = predictors.columns[predictors.isna().any(axis=0)]
+        if len(with_nan) > 0:
+            raise ValueError(f"Predictor columns cannot contain missing values: {list(with_nan)}.")
+        constant = predictors.columns[predictors.nunique() <= 1]
+        if len(constant) > 0:
+            raise ValueError(f"Predictor columns cannot be constant: {list(constant)}.")
+        targets = X.loc[:, ~self.predictor_mask_]
+        discrete = targets.columns[targets.nunique() <= self.min_unique_values]
+        if len(discrete) > 0:
+            raise ValueError(
+                f"Columns with {self.min_unique_values} or fewer unique values are not supported "
+                f"(see min_unique_values), except as predictor columns: {list(discrete)}."
+            )
+
+    def _get_predictor_mask(self, X: pd.DataFrame) -> np.ndarray:
+        """Boolean array (n_features,) marking the predictor columns."""
+        names = self.predictor_columns
+        if names is None:
+            return np.zeros(X.shape[1], dtype=bool)
+        if isinstance(names, str) or not np.iterable(names):
+            names = [names]
+        unknown = [name for name in names if name not in X.columns]
+        if unknown:
+            raise ValueError(f"Unknown predictor columns: {unknown}.")
+        return np.asarray(X.columns.isin(names))
 
     def _fit_scaler(self, X: pd.DataFrame):
         self.location_, self.scale_ = [], []
         for i in range(X.shape[1]):
-            est = self.scale_estimator.fit(X.iloc[:, i].to_numpy()[~np.isnan(X.iloc[:, i])])
+            x = X.iloc[:, i].to_numpy()
+            if self.predictor_mask_[i]:
+                # predictor columns are clean and may be discrete: classical standardization
+                self.location_.append(np.mean(x))
+                self.scale_.append(np.std(x, ddof=1))
+                continue
+            est = self.scale_estimator.fit(x[~np.isnan(x)])
             self.location_.append(est.location)
             self.scale_.append(est.scale)
 
@@ -351,16 +446,27 @@ class DDC(OutlierMixin):
         """
         correlation = np.ones((X.shape[1], X.shape[1]))
         for i in range(X.shape[1]):
-            if verbose and i % (X.shape[1] // 10) == 0:
+            if verbose and i % max(X.shape[1] // 10, 1) == 0:
                 print(
                     f"Correlation: Processing column {i + 1} of {X.shape[1]} "
                     f"({((i + 1) / X.shape[1]):.1%})"
                 )
             for j in range(i + 1, X.shape[1]):
+                if self.predictor_mask_[i] and self.predictor_mask_[j]:
+                    # not needed: predictor columns are not predicted
+                    correlation[i, j] = correlation[j, i] = np.nan
+                    continue
                 xy = X.iloc[:, [i, j]].values
                 xy = xy[~(np.isnan(xy).any(axis=1)), :]
                 if xy.size == 0:
                     correlation[i, j] = correlation[j, i] = 0
+                    continue
+                if self.predictor_mask_[i] or self.predictor_mask_[j]:
+                    # a predictor column can be discrete, so its joint distribution with a target
+                    # column is not elliptical: Pearson correlation on the cells of the target
+                    # column that survived step 2 (point-biserial for a binary predictor)
+                    r = np.corrcoef(xy, rowvar=False)[0, 1] if len(xy) > 2 else np.nan
+                    correlation[i, j] = correlation[j, i] = 0 if np.isnan(r) else r
                     continue
                 x, y = xy.T
                 xy_corr = np.clip(
@@ -391,28 +497,43 @@ class DDC(OutlierMixin):
 
         return np.linalg.lstsq(x[mask].reshape(-1, 1), y[mask], rcond=None)[0][0]
 
+    def _min_correlations(self) -> np.ndarray:
+        """Per column: minimum absolute correlation for using it to predict another column."""
+        predictor_min_correlation = (
+            self.min_correlation
+            if self.predictor_min_correlation is None
+            else self.predictor_min_correlation
+        )
+        return np.where(self.predictor_mask_, predictor_min_correlation, self.min_correlation)
+
     def _get_slopes(self, X: pd.DataFrame) -> np.ndarray:
+        """slopes[i, j] is the slope for predicting column j from column i."""
         slopes = np.full((X.shape[1], X.shape[1]), np.nan)
+        min_correlations = self._min_correlations()
         for i in range(X.shape[1]):
             for j in range(X.shape[1]):
-                if i == j:
+                if i == j or self.predictor_mask_[j]:
+                    continue
+                xy_corr = self.robust_correlation_[i, j]
+                if np.abs(xy_corr) < min_correlations[i]:
                     continue
                 xy = X.iloc[:, [i, j]].values
                 xy = xy[(~np.isnan(xy).any(axis=1)), :].T
                 x, y = xy
-                xy_corr = self.robust_correlation_[i, j]
-                if np.abs(xy_corr) < self.min_correlation:
-                    continue
                 slopes[i, j] = self._robust_slope(x, y)
         return slopes
 
     def _get_predicted_values(self, X: pd.DataFrame) -> np.ndarray:
+        """Raw predictions of all cells (0 for predictor columns, which are not predicted)."""
         predictions = np.zeros(X.shape)
+        min_correlations = self._min_correlations()
         for i in range(X.shape[1]):
+            if self.predictor_mask_[i]:
+                continue
             weights = np.repeat(
                 [
                     [
-                        np.abs(r) * (np.abs(r) >= 0.5) * (idx != i)
+                        np.abs(r) * (np.abs(r) >= min_correlations[idx]) * (idx != i)
                         for idx, r in enumerate(self.robust_correlation_[:, i])
                     ]
                 ],

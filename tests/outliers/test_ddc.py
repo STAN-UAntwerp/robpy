@@ -169,9 +169,12 @@ def test_ddc_impute_does_not_round():
 
 
 def _correlated_data_with_missing_values() -> pd.DataFrame:
+    # correlation 0.6 between all columns, from a common factor: no linear algebra, so the
+    # data (and the fixture below) do not depend on the platform's LAPACK
     rng = np.random.default_rng(0)
     X = pd.DataFrame(
-        rng.multivariate_normal(np.zeros(5), 0.6 + 0.4 * np.eye(5), 200), columns=list("abcde")
+        np.sqrt(0.6) * rng.normal(size=(200, 1)) + np.sqrt(0.4) * rng.normal(size=(200, 5)),
+        columns=list("abcde"),
     )
     X = X.mask(rng.random(X.shape) < 0.05)
     X.iloc[:10, 2] += 6
@@ -184,20 +187,37 @@ def test_ddc_without_predictor_columns_reproduces_previous_release():
     # when
     ddc = DDC().fit(X)
     ddc_none = DDC(predictor_columns=None).fit(X)
-    # then: identical to each other and to robpy 0.1.1
+    # then: identical to each other and to robpy 0.1.1 (no residual lies within 0.09 of the
+    # cutoff, so the flags are not sensitive to rounding)
     np.testing.assert_array_equal(ddc.cellwise_outliers_, ddc_none.cellwise_outliers_)
     np.testing.assert_array_equal(ddc.standardized_residuals_, ddc_none.standardized_residuals_)
     pd.testing.assert_frame_equal(ddc.impute(X), ddc_none.impute(X))
-    assert list(np.flatnonzero(ddc.cellwise_outliers_)) == [2, 7, 12, 22, 27, 32, 42, 47, 48, 238]
+    assert list(np.flatnonzero(ddc.cellwise_outliers_)) == [
+        2,
+        7,
+        12,
+        17,
+        22,
+        27,
+        32,
+        37,
+        42,
+        47,
+        84,
+        151,
+        276,
+        278,
+        851,
+    ]
     np.testing.assert_allclose(
         np.nansum(np.abs(ddc.standardized_residuals_), axis=0),
-        [139.92175573, 141.52023596, 172.12778683, 137.65354092, 138.46528682],
+        [136.82692193, 134.42514583, 194.16102295, 140.7798212, 144.98588884],
     )
     np.testing.assert_allclose(
         ddc.impute(X).to_numpy().sum(axis=0),
-        [6.40006943, 33.06766711, 11.46481702, 40.0621155, 13.41122149],
+        [-12.18681419, -14.39220356, -3.0219623, -0.3492783, 20.87115259],
     )
-    assert not ddc.row_outliers_.any()
+    assert list(np.flatnonzero(ddc.row_outliers_)) == [55]
 
 
 def _data_with_binary_treatment(seed: int = 1) -> tuple[pd.DataFrame, np.ndarray]:

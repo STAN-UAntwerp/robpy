@@ -65,10 +65,14 @@ class RobustPowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimat
             changepoint_ (float | None): Change point of the rectified transformation for the
                 fitted lambda, on the scale of the (pre-standardized) data, or None when
                 lambda equals 1. Only set when ``rectified`` is True.
-            location_pre, scale_pre, location_post, scale_post (float): Standardization
-                before and after the transformation (only when ``standardize`` is True;
-                Box-Cox has no ``location_pre``). The post-standardization uses the mean and
-                standard deviation of the transformed observations with weight 1.
+            location_pre (float): Location (median) subtracted before the Yeo-Johnson
+                transformation (only when ``standardize`` is True).
+            scale_pre (float): Scale (MAD for Yeo-Johnson, median for Box-Cox) divided by
+                before the transformation (only when ``standardize`` is True).
+            location_post (float): Mean of the transformed observations with weight 1,
+                subtracted after the transformation (only when ``standardize`` is True).
+            scale_post (float): Standard deviation of the transformed observations with weight
+                1, divided by after the transformation (only when ``standardize`` is True).
 
         References:
             - Raymaekers, J., & Rousseeuw, P. J. (2024). Transforming variables to central

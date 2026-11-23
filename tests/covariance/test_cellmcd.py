@@ -3,7 +3,10 @@ import pytest
 import math
 import pandas as pd
 from sklearn.exceptions import NotFittedError
+from pathlib import Path
+
 from robpy.covariance.cellmcd import CellMCD
+from robpy.covariance.initial_ddcw import InitialDDCW
 
 
 def test_fit_sets_object_attributes():
@@ -188,5 +191,75 @@ def test_fully_flagged_row_has_marginal_conditional_stds():
     assert np.all(estimator.W[0] == 0)
     np.testing.assert_allclose(estimator.predictions[0], estimator.location_)
     np.testing.assert_allclose(
-        estimator.conditional_stds[0], np.sqrt(np.diag(estimator.covariance_))
+        estimator.conditional_stds[0], np.sqrt(np.diag(estimator.raw_covariance_))
     )
+
+
+# ------------------------------------------------------------------ reference results of cellWise
+
+REFERENCE = Path(__file__).parents[1] / "reference"
+
+
+def _reference(name: str) -> np.ndarray:
+    return pd.read_csv(REFERENCE / "expected" / f"{name}.csv").to_numpy()
+
+
+CELLMCD_CASES = {
+    # case: (input, arguments)
+    "cellmcd_default": (REFERENCE / "data" / "cellmcd.csv", {}),
+    "cellmcd_alpha05": (REFERENCE / "data" / "cellmcd.csv", dict(alpha=0.5, quantile=0.999)),
+    "cellmcd_center0": (
+        REFERENCE / "expected" / "cellmcd_center0_input.csv",
+        dict(fixed_center=True),
+    ),
+}
+
+
+@pytest.mark.parametrize("case", CELLMCD_CASES)
+def test_cellmcd_matches_cellwise(case):
+    path, kwargs = CELLMCD_CASES[case]
+    X = pd.read_csv(path).to_numpy()
+    estimator = CellMCD(**kwargs).fit(X)
+    np.testing.assert_array_equal(estimator.W, _reference(f"{case}_W"))
+    assert estimator.n_c_steps_ == _reference(f"{case}_nosteps")[0, 0]
+    np.testing.assert_allclose(
+        estimator.location_, _reference(f"{case}_location")[:, 0], rtol=1e-7, atol=1e-10
+    )
+    np.testing.assert_allclose(
+        estimator.covariance_, _reference(f"{case}_covariance"), rtol=1e-7, atol=1e-10
+    )
+    np.testing.assert_allclose(
+        estimator.raw_covariance_, _reference(f"{case}_raw_covariance"), rtol=1e-7, atol=1e-10
+    )
+    np.testing.assert_allclose(
+        estimator.predictions, _reference(f"{case}_predictions"), rtol=1e-7, atol=1e-9
+    )
+    # rows in which every cell is flagged: cellWise sets their conditional variances to the
+    # diagonal of the inverse covariance matrix, robpy to the marginal variances
+    full = np.all(estimator.W == 0, axis=1)
+    np.testing.assert_allclose(
+        estimator.conditional_stds[~full],
+        _reference(f"{case}_conditional_stds")[~full],
+        rtol=1e-7,
+    )
+    np.testing.assert_allclose(
+        estimator.residuals[~full], _reference(f"{case}_residuals")[~full], rtol=1e-7, atol=1e-8
+    )
+    np.testing.assert_allclose(
+        estimator.conditional_stds[full],
+        np.broadcast_to(np.sqrt(np.diag(estimator.raw_covariance_)), (full.sum(), X.shape[1])),
+    )
+
+
+@pytest.mark.parametrize("fixed_center", [False, True])
+def test_initial_ddcw_matches_cellwise(fixed_center):
+    suffix = "_center0" if fixed_center else ""
+    X = pd.read_csv(REFERENCE / "expected" / f"ddcw{suffix}_input.csv").to_numpy()
+    ddcw = InitialDDCW(alpha=0.75, fixed_center=fixed_center).fit(X)
+    np.testing.assert_allclose(
+        ddcw.covariance_, _reference(f"ddcw{suffix}_cov"), rtol=1e-7, atol=1e-10
+    )
+    if not fixed_center:
+        np.testing.assert_allclose(ddcw.location_, _reference("ddcw_center")[:, 0], atol=1e-10)
+    else:
+        np.testing.assert_array_equal(ddcw.location_, 0.0)

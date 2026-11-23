@@ -34,3 +34,9 @@ MM Regression
    :members: 
    :undoc-members:
    :show-inheritance:
+
+Cellwise LTS Regression
+-------------------------
+.. automodule:: robpy.regression.cell_lts
+   :members: CellLTSRegression
+   :show-inheritance:

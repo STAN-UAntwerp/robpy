@@ -188,7 +188,7 @@ def test_yeojohnson_lambda_is_robust_to_outliers():
     # then
     # before the fix of the reweighting step: 0.34 and 0.05
     assert abs(contaminated.lambda_rew - clean.lambda_rew) < 0.1
-    np.testing.assert_allclose(clean.lambda_rew, 0.3363838662, atol=0.05)
+    np.testing.assert_allclose(clean.lambda_rew, 0.3363838662, atol=1e-4)
     np.testing.assert_allclose(contaminated.lambda_rew, 0.2808344897, atol=1e-4)
     np.testing.assert_allclose(contaminated.location_post, 0.0336316007, atol=1e-4)
     np.testing.assert_allclose(contaminated.scale_post, 0.9056829240, atol=1e-4)

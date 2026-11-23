@@ -284,7 +284,7 @@ class CellMCD(RobustCovariance):
         for _ in range(self.max_c_steps):
             changed = False
             for j in self._column_order:
-                delta = self._calculate_delta(X_scaled, W, sigma, sigma_inv, mu, j)
+                delta = CellMCD._calculate_delta(X_scaled, W, sigma, sigma_inv, mu, j)
                 w_new = (delta <= self._q[j]).astype(float)
                 if np.any(w_new != W[:, j]):
                     changed = True
@@ -442,8 +442,9 @@ class CellMCD(RobustCovariance):
 
         return fig
 
+    @staticmethod
     def _make_predictions(
-        self, X: np.ndarray, sigma: np.ndarray, sigma_inv: np.ndarray, mu: np.ndarray, W: np.ndarray
+        X: np.ndarray, sigma: np.ndarray, sigma_inv: np.ndarray, mu: np.ndarray, W: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
         """Calculate the predictions of the cells given the other clean cells in the same row."""
 
@@ -461,7 +462,7 @@ class CellMCD(RobustCovariance):
                 # there are both observed and missing values
 
                 # predict the missing values
-                predictions, conditional_variances = self._predict_missing_values(
+                predictions, conditional_variances = CellMCD._predict_missing_values(
                     X,
                     predictions,
                     conditional_variances,
@@ -474,7 +475,7 @@ class CellMCD(RobustCovariance):
                 )
 
                 # predict the observed values
-                predictions, conditional_variances = self._predict_observed_values(
+                predictions, conditional_variances = CellMCD._predict_observed_values(
                     X,
                     predictions,
                     conditional_variances,
@@ -486,12 +487,12 @@ class CellMCD(RobustCovariance):
                 )
 
             elif len(missing_col_idx) == 0:  # no missings in the w-pattern
-                predictions, conditional_variances = self._predict_no_missing(
+                predictions, conditional_variances = CellMCD._predict_no_missing(
                     X, predictions, conditional_variances, row_idx_w, mu, sigma, sigma_inv
                 )
 
             else:  # all missings in the w-pattern
-                predictions, conditional_variances = self._predict_all_missing(
+                predictions, conditional_variances = CellMCD._predict_all_missing(
                     predictions, conditional_variances, row_idx_w, mu, sigma
                 )
 
@@ -577,8 +578,8 @@ class CellMCD(RobustCovariance):
 
         return W, mu, sigma
 
+    @staticmethod
     def _update_W(
-        self,
         X: np.ndarray,
         W: np.ndarray,
         mu: np.array,
@@ -593,7 +594,7 @@ class CellMCD(RobustCovariance):
         n = W.shape[0]
         ordering = np.argsort(np.sum(W, axis=0), kind="stable")
         for j in ordering:
-            delta = self._calculate_delta(X, W, sigma, sigma_inv, mu, j)
+            delta = CellMCD._calculate_delta(X, W, sigma, sigma_inv, mu, j)
             good_cells = np.where(delta <= q[j])[0]
             if len(good_cells) < h:  # cannot set less than h cells to 1
                 delta_rank = np.argsort(delta, kind="stable")
@@ -604,8 +605,8 @@ class CellMCD(RobustCovariance):
 
         return W
 
+    @staticmethod
     def _calculate_delta(
-        self,
         X: np.ndarray,
         W: np.ndarray,
         sigma: np.ndarray,
@@ -657,8 +658,8 @@ class CellMCD(RobustCovariance):
 
         return delta
 
+    @staticmethod
     def _predict_missing_values(
-        self,
         X: np.ndarray,
         predictions: np.ndarray,
         conditional_variances: np.ndarray,
@@ -691,8 +692,8 @@ class CellMCD(RobustCovariance):
 
         return predictions, conditional_variances
 
+    @staticmethod
     def _predict_observed_values(
-        self,
         X: np.ndarray,
         predictions: np.ndarray,
         conditional_variances: np.ndarray,
@@ -728,8 +729,8 @@ class CellMCD(RobustCovariance):
 
         return predictions, conditional_variances
 
+    @staticmethod
     def _predict_no_missing(
-        self,
         X: np.ndarray,
         predictions: np.ndarray,
         conditional_variances: np.ndarray,
@@ -755,8 +756,8 @@ class CellMCD(RobustCovariance):
 
         return predictions, conditional_variances
 
+    @staticmethod
     def _predict_all_missing(
-        self,
         predictions: np.ndarray,
         conditional_variances: np.ndarray,
         row_idx_w: np.array,

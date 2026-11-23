@@ -162,10 +162,12 @@ class DDC(OutlierMixin):
               for pairs of predictor columns, which are not needed).
             slopes_ (np.ndarray): ``slopes_[j, i]`` is the robust slope used to predict column i
               from column j, nan if column j is not used for column i.
-            neighbors_ (np.ndarray), neighbor_correlations_ (np.ndarray),
-              neighbor_slopes_ (np.ndarray): For each column, the neighbors used to predict it
-              (the column itself first), their robust correlations and slopes, as ``ngbrs``,
-              ``robcors`` and ``robslopes`` in cellWise (0-based column indices).
+            neighbors_ (np.ndarray): For each column, the columns used to predict it (the
+              column itself first), as ``ngbrs`` in cellWise (0-based column indices).
+            neighbor_correlations_ (np.ndarray): Their robust correlations with the column
+              (``robcors``).
+            neighbor_slopes_ (np.ndarray): Their robust slopes for predicting the column
+              (``robslopes``).
             deshrinkage_ (np.ndarray): Deshrinkage factor of each predicted column (nan for
               columns that are not predicted).
             residual_scales (np.ndarray): Scale of the raw residuals of each predicted column

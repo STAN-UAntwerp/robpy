@@ -46,3 +46,9 @@ Cellwise Multivariate Regression (cellMR)
 .. automodule:: robpy.regression.cell_mr
    :members: CellMRRegression, cellmr_tuning
    :show-inheritance:
+
+Bootstrap Inference for cellMR (cellBoot)
+--------------------------------------------
+.. automodule:: robpy.regression.cell_boot
+   :members: cellboot, CellBootResult
+   :show-inheritance:

@@ -7,3 +7,4 @@ Examples
    notebooks/topgear
    notebooks/cellmcd
    notebooks/cell_lts
+   notebooks/cell_mr

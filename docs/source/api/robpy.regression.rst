@@ -40,3 +40,9 @@ Cellwise LTS Regression
 .. automodule:: robpy.regression.cell_lts
    :members: CellLTSRegression
    :show-inheritance:
+
+Cellwise Multivariate Regression (cellMR)
+-------------------------------------------
+.. automodule:: robpy.regression.cell_mr
+   :members: CellMRRegression, cellmr_tuning
+   :show-inheritance:

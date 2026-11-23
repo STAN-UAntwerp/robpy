@@ -75,6 +75,25 @@ def regression(n: int, seed: int) -> np.ndarray:
     return np.column_stack([X, y])
 
 
+def multivariate_regression(n: int, seed: int) -> np.ndarray:
+    """Multivariate regression data (8 predictors from 2 factors, then 3 responses) with
+    cellwise outliers and missing values."""
+    rng = np.random.default_rng(seed)
+    F = rng.normal(size=(n, 2))
+    loadings = np.array(
+        [[1.0, 0.8, 0.6, 0.0, 0.2, 0.5, 0.9, 0.3], [0.0, 0.4, 0.7, 1.0, 0.9, 0.5, 0.1, 0.6]]
+    )
+    X = F @ loadings + 0.5 * rng.normal(size=(n, 8))
+    B = rng.normal(size=(8, 3)) / 2
+    Y = 1.0 + X @ B + 0.5 * rng.normal(size=(n, 3))
+    Z = np.column_stack([X, Y])
+    cells = rng.random(Z.shape) < 0.03
+    Z[cells] += rng.choice([-6.0, 6.0], cells.sum())
+    Z[: n // 20] += 4.0  # outlying rows
+    Z[rng.random(Z.shape) < 0.02] = np.nan
+    return Z
+
+
 def main():
     _write("univariate", univariate(), prefix="v")
     _write("ddc_small", contaminated(400, 8, seed=11))
@@ -82,6 +101,8 @@ def main():
     _write("cellmcd", contaminated(300, 5, seed=13))
     _write("cell_lts", regression(400, seed=14))
     _write("cell_lts_new", regression(100, seed=15))
+    _write("cell_mr", multivariate_regression(100, seed=16))
+    _write("cell_mr_new", multivariate_regression(30, seed=17))
 
 
 if __name__ == "__main__":

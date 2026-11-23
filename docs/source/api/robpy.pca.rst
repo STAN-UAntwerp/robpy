@@ -26,3 +26,9 @@ Spherical
    :members:
    :undoc-members:
    :show-inheritance:
+
+Cellwise PCA (cellPCA)
+------------------------
+.. automodule:: robpy.pca.cellpca
+   :members: CellPCA
+   :show-inheritance:

@@ -4,7 +4,7 @@ from scipy.stats import median_abs_deviation
 
 from robpy.univariate.base import RobustScale
 from robpy.utils.rho import BaseRho, Huber, TukeyBisquare
-from robpy.univariate.mcd import UnivariateMCD
+from robpy.univariate._cellwise import loc_scale_1d
 
 
 class OneStepM(RobustScale):
@@ -70,37 +70,91 @@ class OneStepM(RobustScale):
         return self
 
 
-class HuberOneStepM(OneStepM):
-    def __init__(self):
-        """
-        Implementation of Huber M-estimator with 1 step: location and scale. Analogous to the
-        R function estLocScale in the package cellWise using type = `hubhub`.
-        (cfr. https://github.com/cran/cellWise/blob/master/src/LocScaleEstimators.cpp)
-        """
-        super().__init__(loc_rho=Huber(b=1.5), scale_rho=Huber(b=1.5), delta=0.7784655)
+class _CellwiseLocScale(OneStepM):
+    """Shared implementation of the estimators that reproduce a type of ``cellWise::estLocScale``
+    exactly (see :mod:`robpy.univariate._cellwise`)."""
+
+    _type: str
+
+    def __init__(self, loc_rho: BaseRho, scale_rho: BaseRho, delta: float, center: bool = True):
+        super().__init__(loc_rho=loc_rho, scale_rho=scale_rho, delta=delta)
+        self.center = center
+
+    def _calculate(self, X: np.ndarray):
+        self.location_, self.scale_ = loc_scale_1d(X, self._type, center=self.center)
+        return self
 
 
-class CellwiseOneStepM(OneStepM):
-    def __init__(self):
+class HuberOneStepM(_CellwiseLocScale):
+    _type = "hubhub"
+
+    def __init__(self, center: bool = True):
         """
-        Implementation of the single step M estimator (robLoc and robScale) proposed in
-        Rousseeuw, P. J., & Van Den Bossche, W. (2018). In this paper, the location rho function is
-        set to `TukeyBiWeight(c=3)` and the scale rho function to `Huber(b=2.5)`.
+        Huber M-estimator of location and scale with one step each, as the R function
+        ``estLocScale`` of the package cellWise with ``type = "hubhub"``.
+
+        The location takes one Huber step (b = 1.5) from the median, with the MAD as scale. The
+        scale takes one step of the Huber scale M-estimator (b = 1.5) around that location,
+        starting from the MAD around the location.
+
+        Args:
+            center (bool, optional): If False, the location is fixed at 0 and the scale is
+                computed around 0 (``center = FALSE`` in cellWise). Defaults to True.
+
+        References:
+            - Raymaekers, J., & Rousseeuw, P. J. (2023). cellWise: Analyzing Data with Cellwise
+              Outliers. R package, ``src/LocScaleEstimators.cpp``.
+        """
+        super().__init__(
+            loc_rho=Huber(b=1.5), scale_rho=Huber(b=1.5), delta=0.7784655, center=center
+        )
+
+
+class CellwiseOneStepM(_CellwiseLocScale):
+    _type = "1stepM"
+
+    def __init__(self, center: bool = True):
+        """
+        The single step M-estimators of location and scale (robLoc and robScale) of
+        Rousseeuw & Van den Bossche (2018), as the R function ``estLocScale`` of the package
+        cellWise with ``type = "1stepM"``, which DDC uses by default.
+
+        The location takes one step with the biweight weight function from the median (with
+        c = 3 relative to the unnormalized MAD). The scale takes one step of the Huber scale
+        M-estimator with b = 2.5 * qnorm(0.75) around that location, starting from the MAD
+        around the location.
+
+        Args:
+            center (bool, optional): If False, the location is fixed at 0 and the scale is
+                computed around 0 (``center = FALSE`` in cellWise). Defaults to True.
 
         References:
             - Rousseeuw, P. J., & Van Den Bossche, W.  (2018). Detecting deviating data cells.
               Technometrics, 60(2), 135-145.
         """
-        super().__init__(loc_rho=TukeyBisquare(c=3), scale_rho=Huber(b=2.5), delta=0.845)
+        super().__init__(
+            loc_rho=TukeyBisquare(c=3), scale_rho=Huber(b=2.5), delta=0.845, center=center
+        )
 
 
 class OneStepWrapping(RobustScale):
-    def __init__(self):
+    def __init__(self, center: bool = True):
         """
-        Analogous to the R function estLocScale in the package cellWise using type = `wrap`.
-        (cfr. https://github.com/cran/cellWise/blob/master/src/LocScaleEstimators.cpp)
+        Location and scale as the R function ``estLocScale`` of the package cellWise with
+        ``type = "wrap"`` (its default): the reweighted univariate MCD of cellWise (alpha = 0.5,
+        with its finite-sample corrections), followed by one step of the location M-estimator
+        with the hyperbolic tangent (wrapping) weight function. The scale is the MCD scale.
+
+        Args:
+            center (bool, optional): If False, the location is fixed at 0 and the scale is
+                computed around 0 (``center = FALSE`` in cellWise). Defaults to True.
+
+        References:
+            - Raymaekers, J., & Rousseeuw, P. J. (2023). cellWise: Analyzing Data with Cellwise
+              Outliers. R package, ``src/LocScaleEstimators.cpp``.
         """
         super().__init__()
+        self.center = center
 
     def _calculate(self, X: np.ndarray):
         """
@@ -108,30 +162,5 @@ class OneStepWrapping(RobustScale):
             X (np.ndarray):
                 univariate data
         """
-
-        # initial estimates: univariate MCD
-        initial_estimates = UnivariateMCD().fit(X)
-
-        # one step M estimator for location using hyperbolic tangent weight function:
-        X_standardized = (X - initial_estimates.location) / initial_estimates.scale
-        weights = np.array([self._tanh_weights(val) for val in X_standardized])
-        self.location_ = np.sum(weights * X) / np.sum(weights)
-
-        self.scale_ = initial_estimates.scale
-
-    def _tanh_weights(self, val: float) -> float:
-        b = 1.5
-        c = 4
-        if np.abs(val) < b:
-            return 1.0
-        elif np.abs(val) > c:
-            return 0.0
-        else:
-            A = 0.7532528
-            B = 0.8430849
-            k = 4.1517212
-            return (
-                np.sqrt(A * (k - 1))
-                * np.tanh(0.5 * np.sqrt((k - 1) * B**2 / A) * (c - np.abs(val)))
-                / (np.abs(val))
-            )
+        self.location_, self.scale_ = loc_scale_1d(X, "wrap", center=self.center)
+        return self

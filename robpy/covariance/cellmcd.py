@@ -7,10 +7,9 @@ import matplotlib.pyplot as plt
 
 from scipy.stats import chi2, median_abs_deviation
 from typing import Literal, Optional
-from robpy.covariance.utils.alter_covariance import truncated_covariance
+from robpy.covariance.utils.alter_covariance import covariance_to_correlation
 from robpy.covariance.base import RobustCovariance
 from robpy.utils.logging import get_logger
-from robpy.covariance.utils.cellmcd_utils import objective_function
 from robpy.utils.general import inverse_submatrix
 from robpy.covariance.utils.cellmcd_visualization_utils import (
     annote_outliers,
@@ -25,6 +24,15 @@ from robpy.covariance.initial_ddcw import InitialDDCW
 from sklearn.exceptions import NotFittedError
 
 
+def _truncate_eigenvalues_svd(sigma: np.ndarray, min_eigenvalue: float):
+    """Symmetrize sigma and raise its singular values to at least min_eigenvalue; return the
+    result and its inverse (``truncEig`` in the C++ code of cellWise)."""
+    sigma = 0.5 * (sigma + sigma.T)
+    U, s, _ = np.linalg.svd(sigma)
+    s = np.maximum(s, min_eigenvalue)
+    return (U * s) @ U.T, (U / s) @ U.T
+
+
 class CellMCD(RobustCovariance):
     def __init__(
         self,
@@ -34,16 +42,21 @@ class CellMCD(RobustCovariance):
         crit: float = 1e-4,
         max_c_steps: int = 100,
         min_eigenvalue: float = 1e-4,
+        fixed_center: bool = False,
         verbosity: int = logging.WARNING,
     ):
         """
         Cell MCD estimator based on the algorithm proposed in Raymaekers, J., & Rousseeuw, P. J.
-        (2024).
+        (2024), following the function ``cellMCD`` of the R package cellWise (version 2.5.7):
+        the data are standardized with ``estLocScale(type = "wrap")``, the initial estimate is
+        ``DDCWcov`` (see :class:`InitialDDCW`), and C-steps are taken until the covariance matrix
+        of the standardized data changes by less than ``crit``. The data checks of
+        ``cellWise::checkDataSet`` are not applied.
 
         Args:
             alpha (float, optional):
-                Percentage indicating how many cells must remain unflagged in each column.
-                Must lie within 0.5 to 1.0. Defaults to 0.75.
+                Percentage indicating how many cells must remain unflagged in each column
+                (h = ceil(alpha * n)). Must lie within 0.5 to 1.0. Defaults to 0.75.
             quantile (float, optional):
                 Cutoff value to flag cells.
                 Defaults to 0.99.
@@ -58,10 +71,18 @@ class CellMCD(RobustCovariance):
                 Lower bound on the minimum eigenvalue of the covariance estimator
                 on the standardized data. Should be at least 1e-6.
                 Defaults to 1e-4.
+            fixed_center (bool, optional):
+                If True, the center is fixed at 0 and only the covariance (around 0) is
+                estimated (``fixedCenter`` in cellWise). This is used for symmetrized data, e.g.
+                pairwise differences of observations. Defaults to False.
 
         Attributes (after fit):
-            location_ (np.ndarray): Robust location estimate.
-            covariance_ (np.ndarray): Robust covariance estimate.
+            location_ (np.ndarray): Robust location estimate (0 with ``fixed_center``).
+            covariance_ (np.ndarray): Robust covariance estimate, as ``S`` in cellWise: the
+                correlation matrix of the cellMCD estimate, rescaled with the robust scales of
+                the initial standardization.
+            raw_covariance_ (np.ndarray): The cellMCD covariance estimate itself, as ``raw.S`` in
+                cellWise.
             cellwise_outliers_ (np.ndarray): Boolean array of shape (n_samples, n_features), True
                 for a cell of the training data that is flagged as outlying. Missing cells are
                 False.
@@ -69,7 +90,10 @@ class CellMCD(RobustCovariance):
                 flagged or missing cell (so W == 0 also includes the missing cells).
             predictions, conditional_stds, residuals, X_imputed (np.ndarray): Per-cell
                 predictions given the unflagged cells of the same row, their conditional standard
-                deviations, the standardized residuals and the imputed training data.
+                deviations, the standardized residuals (observed value minus prediction, divided
+                by the conditional standard deviation) and the imputed training data, as
+                ``preds``, ``csds``, ``Zres`` and ``Ximp`` in cellWise.
+            n_c_steps_ (int): Number of C-steps taken.
 
         Use `predict` and `impute` to flag and impute cells of new data.
 
@@ -85,48 +109,45 @@ class CellMCD(RobustCovariance):
         self.crit = crit
         self.max_c_steps = max_c_steps
         self.min_eigenvalue = min_eigenvalue
+        self.fixed_center = fixed_center
         self.logger = get_logger("CellMCD", level=verbosity)
         self.verbosity = verbosity
 
     def calculate_covariance(self, X: np.ndarray) -> np.ndarray:
-        # check that alpha creates a h-subset larger than [n/2]+1
-        n = X.shape[0]
-        if 0.5 <= self.alpha <= 1:
-            if self.alpha < (int(n / 2) + 1.0) / n:
-                self.logger.warning(
-                    f"h = alpha*n is too small and therefore set to [n/2] + 1"
-                    f" ({(int(n / 2) + 1.0) / n})."
-                )
-            self.alpha = np.max([self.alpha, (int(n / 2) + 1.0) / n])
-        else:
+        if not 0.5 <= self.alpha <= 1:
             raise ValueError(f"alpha must a float between 0.5 and 1, but received {self.alpha}.")
+        X = np.array(X, dtype=float)
+        X[np.isinf(X)] = np.nan
 
-        # Step 0: robustly standardize the data
+        # Step 0: robustly standardize the data (around 0 with a fixed center)
         mads = median_abs_deviation(X, nan_policy="omit", axis=0)
         if np.min(mads) < 1e-8:
             raise ValueError("At least one variable has an almost zero median absolute deviation.")
-        scaler = RobustScaler(scale_estimator=OneStepWrapping())
+        scaler = RobustScaler(scale_estimator=OneStepWrapping(center=not self.fixed_center))
         scaler.fit(X, ignore_nan=True)
         X_scaled = scaler.transform(X)
 
         # Step 1: Check that there aren't too many marginal outliers and too many nan's.
-        #         Check that there are enough observations compared to variables.
+        #         Warn if there are few observations compared to variables.
         self._check_data(X_scaled)
 
         # Step 2: calculate the initial estimates
-        ddcw = InitialDDCW(alpha=self.alpha, min_eigenvalue=self.min_eigenvalue)
+        ddcw = InitialDDCW(
+            alpha=self.alpha, min_eigenvalue=self.min_eigenvalue, fixed_center=self.fixed_center
+        )
         ddcw.fit(X_scaled)
-        initial_location = ddcw.location_
+        initial_location = np.zeros(X.shape[1]) if self.fixed_center else ddcw.location_
         initial_cov = ddcw.covariance_
-        initial_cov_inv = ddcw.precision_
         X_scaled[np.abs(X_scaled) > 3] = np.nan
         q = (
-            chi2.ppf(self.quantile, 1) - np.log(np.diag(initial_cov_inv)) + np.log(2 * np.pi)
+            chi2.ppf(self.quantile, 1)
+            - np.log(np.diag(np.linalg.inv(initial_cov)))
+            + np.log(2 * np.pi)
         )  # equation (21)
 
         # Step 3: MCD iterations (we work with X_scaled)
         location, cov, cov_inv, W = self._C_steps_until_convergence(
-            X_scaled, initial_location, initial_cov, initial_cov_inv, q
+            X_scaled, initial_location, initial_cov, q
         )
         # Step 4: make prediction
         predictions, conditional_variances = self._make_predictions(
@@ -134,17 +155,15 @@ class CellMCD(RobustCovariance):
         )
 
         # Step 5: transform back
+        scales = scaler.scales_
         location_scaled, cov_scaled = location, cov
-        cov = np.diag(scaler.scales_) @ cov @ np.diag(scaler.scales_)
-        location = scaler.locations_ + location * scaler.scales_
-        predictions = scaler.locations_ + predictions * scaler.scales_
-        conditional_stds = np.sqrt(conditional_variances) * scaler.scales_
+        raw_cov = np.diag(scales) @ cov @ np.diag(scales)
+        location = scaler.locations_ + location * scales
+        predictions = scaler.locations_ + predictions * scales
+        conditional_stds = np.sqrt(conditional_variances) * scales
         X_imputed = X.copy()
         X_imputed[W == 0] = predictions[W == 0]
         residuals = (X - predictions) / conditional_stds
-        scaler_residuals = RobustScaler(scale_estimator=OneStepWrapping())
-        scaler_residuals.fit(residuals, ignore_nan=True)
-        residuals = residuals / scaler_residuals.scales_
 
         # state needed to flag and impute new data (all in the robustly scaled space)
         self._scaler = scaler
@@ -161,10 +180,11 @@ class CellMCD(RobustCovariance):
         self.conditional_stds = conditional_stds
         self.X_imputed = X_imputed
         self.residuals = residuals
-        self.covariance_ = cov
+        self.raw_covariance_ = raw_cov
         self.X = X
 
-        return cov
+        # as ``S`` in cellWise: correlation matrix of the estimate, rescaled with the scales
+        return covariance_to_correlation(cov) * np.outer(scales, scales)
 
     def predict(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
         """Flag the cellwise outliers in (new) data using the fitted location and covariance.
@@ -482,53 +502,32 @@ class CellMCD(RobustCovariance):
         X_scaled: np.ndarray,
         initial_location: np.array,
         initial_cov: np.ndarray,
-        initial_cov_inv: np.ndarray,
         q: np.ndarray,
     ):
-        """Perform C-steps (update W, location and covariance) until convergence.
+        """Perform C-steps (update W, location and covariance) until the covariance matrix
+        changes by less than crit (``iterMCD_cpp`` in cellWise). The covariance matrix is
+        symmetrized and its eigenvalues are raised to at least min_eigenvalue after each step.
 
         Arguments:
         - X_scaled (np.ndarray): scaled data
         - initial_location (np.array): initial location estimate
         - initial_cov (np.ndarray): initial covariance estimate
-        - initial_cov_inv (np.ndarray): inverse of the initial covariance estimate
         - q (np.ndarray): per-column penalties for flagging a cell, equation (21)
         """
         n, p = X_scaled.shape
-
-        h = round(self.alpha * n)
-        initial_W = np.ones([n, p])
-        initial_W[np.isnan(X_scaled)] = 0
-        objective_values = np.full(self.max_c_steps + 1, np.nan)
+        h = int(np.ceil(self.alpha * n))
+        W = np.where(np.isnan(X_scaled), 0.0, 1.0)
+        location = np.array(initial_location, dtype=float)
+        cov, cov_inv = _truncate_eigenvalues_svd(initial_cov, self.min_eigenvalue)
+        convergence_criterion = self.crit + 1.0
         step = 0
-        penalty = np.sum(q * np.sum(1 - initial_W, axis=0))
-        objective_values[step] = (
-            objective_function(X_scaled, initial_W, initial_location, initial_cov, initial_cov_inv)
-            + penalty
-        )
-        convergence_criteria = 1
-        W_old = initial_W
-        location_old = initial_location
-        cov_old = initial_cov
-        cov_inv_old = initial_cov_inv
-        while convergence_criteria > self.crit and step < self.max_c_steps:
-            W, location, cov = self._C_step(
-                X_scaled, W_old, location_old, cov_old, cov_inv_old, q, h
-            )
-            convergence_criteria = np.max(np.abs(cov - cov_old))
-            cov = truncated_covariance(cov, self.min_eigenvalue)
-            cov_inv = np.linalg.inv(cov)
-            penalty = np.sum(q * np.sum(1 - W, axis=0))
-            objective_value = objective_function(X_scaled, W, location, cov, cov_inv) + penalty
-            if objective_value > objective_values[step]:
-                return location_old, cov_old, cov_inv_old, W_old
-            step = step + 1
-            objective_values[step] = objective_value
-            W_old = W
-            location_old = location
+        while convergence_criterion > self.crit and step < self.max_c_steps:
             cov_old = cov
-            cov_inv_old = cov_inv
-
+            W, location, cov = self._C_step(X_scaled, W, location, cov, cov_inv, q, h)
+            cov, cov_inv = _truncate_eigenvalues_svd(cov, self.min_eigenvalue)
+            convergence_criterion = np.max(np.abs(cov - cov_old))
+            step += 1
+        self.n_c_steps_ = step
         return location, cov, cov_inv, W
 
     def _C_step(
@@ -546,34 +545,35 @@ class CellMCD(RobustCovariance):
         # first update W
         W = self._update_W(X, W, mu, sigma, sigma_inv, q, h)
 
-        # next: update mu & sigma
+        # next: one EM step for mu & sigma (mu stays fixed with a fixed center)
         X_imputed = np.copy(X)
         bias = np.zeros([p, p])
-        for i in range(n):
-            missing_col_idx = np.where(W[i, :] == 0)[0]
-            observed_col_idx = np.where(W[i, :] == 1)[0]
-            if len(missing_col_idx) > 0:
-                if len(missing_col_idx) == p:  # if all are missing
-                    X_imputed[i, :] = mu
-                    bias = bias + sigma
-                else:
-                    sigma_inv_mis_inv = np.linalg.inv(
-                        sigma_inv[np.ix_(missing_col_idx, missing_col_idx)]
-                    )
-                    X_imputed[np.ix_([i], missing_col_idx)] = (
-                        mu[missing_col_idx]
-                        - (
-                            sigma_inv_mis_inv
-                            @ sigma_inv[np.ix_(missing_col_idx, observed_col_idx)]
-                            @ (X[np.ix_([i], observed_col_idx)] - mu[observed_col_idx]).T
-                        ).flatten()
-                    )
-                    bias[np.ix_(missing_col_idx, missing_col_idx)] = (
-                        bias[np.ix_(missing_col_idx, missing_col_idx)] + sigma_inv_mis_inv
-                    )
-        mu = np.mean(X_imputed, axis=0)
+        for w in np.unique(W, axis=0):
+            rows = np.flatnonzero(np.all(W == w, axis=1))
+            missing = np.flatnonzero(w == 0)
+            observed = np.flatnonzero(w == 1)
+            if missing.size == 0:
+                continue
+            if missing.size == p:  # all cells of the row are flagged or missing
+                X_imputed[rows] = mu
+                bias += sigma * rows.size
+                continue
+            sigma_inv_mis_inv = np.linalg.inv(sigma_inv[np.ix_(missing, missing)])
+            bias[np.ix_(missing, missing)] += sigma_inv_mis_inv * rows.size
+            X_imputed[np.ix_(rows, missing)] = (
+                mu[missing]
+                - (
+                    sigma_inv_mis_inv
+                    @ sigma_inv[np.ix_(missing, observed)]
+                    @ (X[np.ix_(rows, observed)] - mu[observed]).T
+                ).T
+            )
         bias = bias / n
-        sigma = np.cov(X_imputed, rowvar=False) * (n - 1) / n + bias
+        if self.fixed_center:
+            sigma = X_imputed.T @ X_imputed / n + bias
+        else:
+            mu = np.mean(X_imputed, axis=0)
+            sigma = np.cov(X_imputed, rowvar=False, bias=True) + bias
 
         return W, mu, sigma
 
@@ -772,32 +772,28 @@ class CellMCD(RobustCovariance):
         return predictions, conditional_variances
 
     def _check_data(self, X_scaled: np.ndarray):
-        """Checks that there aren't too many nans or marginal outliers per column. Checks
-        that there are enough observations.
+        """Checks that there aren't too many nans or marginal outliers per column, as cellWise
+        does, and warns if there are fewer than 5 cases per variable.
 
         Arguments:
             X_scaled (np.ndarray): robustly standardized data set."""
 
-        X = np.copy(X_scaled)
-
-        cutoff = np.sqrt(chi2.ppf(self.quantile, 1))
-        n_marginal_outliers = np.sum(np.abs(X) > cutoff, axis=0) / X.shape[0]
-        if np.max(n_marginal_outliers) > 1 - self.alpha:
+        cutoff = np.sqrt(chi2.ppf(0.99, 1))
+        with np.errstate(invalid="ignore"):
+            marginal = np.abs(X_scaled) > cutoff
+        if np.max(marginal.sum(axis=0) / X_scaled.shape[0]) > 1 - self.alpha:
             raise ValueError(
                 f"\nAt least one variable has more than {100 * (1 - self.alpha)}% of "
                 "marginal  outliers."
             )
-
-        X[np.abs(X) > cutoff] = np.nan
-        n_bad_values = np.isnan(X).sum(axis=0) / X.shape[0]
-        if np.max(n_bad_values) > 1 - self.alpha:
+        if np.max(np.mean(marginal | np.isnan(X_scaled), axis=0)) > 1 - self.alpha:
             raise ValueError(
                 f"\nAt least one variable has more than {100 * (1 - self.alpha)}% of nan's or "
                 "marginal outliers."
             )
-
-        if X.shape[0] < 5 * X.shape[1]:
-            raise ValueError(
-                "There are not enough observations compared to the number of "
-                f"variables, n/p = {X.shape[0]/X.shape[1]} < 5."
+        if X_scaled.shape[0] < 5 * X_scaled.shape[1]:
+            self.logger.warning(
+                "There are fewer than 5 cases per dimension in this data set. It is not "
+                "recommended to run cellMCD on these data. Consider reducing the number of "
+                "variables."
             )

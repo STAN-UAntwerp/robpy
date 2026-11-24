@@ -45,3 +45,8 @@ Wrapping Covariance
    :members: 
    :undoc-members:
 
+Cellwise Robust Covariance (cellRCov)
+---------------------------------------
+.. automodule:: robpy.covariance.cellrcov
+   :members: CellRCov
+   :show-inheritance:

@@ -62,11 +62,26 @@ def contaminated(n: int, p: int, seed: int, missing: float = 0.03) -> np.ndarray
     return X
 
 
+def regression(n: int, seed: int) -> np.ndarray:
+    """Linear regression data (y last) with cellwise outliers and missing values in the
+    predictors and outliers in the response."""
+    rng = np.random.default_rng(seed)
+    X = correlated(n, 4, seed, rho=0.5) * np.array([1.0, 2.0, 0.5, 1.5]) + np.array([5, 0, -2, 1])
+    y = 1.0 + X @ np.array([2.0, -1.0, 0.5, 1.0]) + rng.normal(size=n)
+    cells = rng.random(X.shape) < 0.04
+    X[cells] += rng.choice([-6.0, 6.0], cells.sum()) * X.std(axis=0)[np.nonzero(cells)[1]]
+    y[: n // 25] += 10.0
+    X[rng.random(X.shape) < 0.03] = np.nan
+    return np.column_stack([X, y])
+
+
 def main():
     _write("univariate", univariate(), prefix="v")
     _write("ddc_small", contaminated(400, 8, seed=11))
     _write("ddc_neighbors", contaminated(120, 12, seed=12, missing=0.0))
     _write("cellmcd", contaminated(300, 5, seed=13))
+    _write("cell_lts", regression(400, seed=14))
+    _write("cell_lts_new", regression(100, seed=15))
 
 
 if __name__ == "__main__":

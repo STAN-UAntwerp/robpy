@@ -11,6 +11,7 @@ from robpy.covariance.utils.alter_covariance import covariance_to_correlation
 from robpy.covariance.base import RobustCovariance
 from robpy.utils.logging import get_logger
 from robpy.utils.general import inverse_submatrix
+from robpy.covariance.utils.cellmcd_utils import group_rows_by_pattern
 from robpy.covariance.utils.cellmcd_visualization_utils import (
     annote_outliers,
     annote_outliers_ellipse,
@@ -446,55 +447,43 @@ class CellMCD(RobustCovariance):
     def _make_predictions(
         X: np.ndarray, sigma: np.ndarray, sigma_inv: np.ndarray, mu: np.ndarray, W: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Calculate the predictions of the cells given the other clean cells in the same row."""
+        """Calculate the predictions of the cells given the other clean cells in the same row
+        (``allpreds_cpp`` in cellWise), per pattern of kept cells.
+
+        For a pattern with kept cells O: a flagged or missing cell is predicted from O, and a
+        kept cell j from O without j. All of these follow from one inverse,
+        Omega = (Sigma_OO)^-1: the prediction of a kept cell is
+        mu_j - Omega_j,-j (x_-j - mu_-j) / Omega_jj with conditional variance 1 / Omega_jj."""
 
         n, p = X.shape
         predictions = np.zeros([n, p])
         conditional_variances = np.zeros([n, p])
-        unique_rows = np.unique(W, axis=0)
-
-        for w in unique_rows:  # iterate over all w patterns
-            row_idx_w = np.where(np.all(W == w, axis=1))[0]  # rows with the corresponding w pattern
-            missing_col_idx = np.where(w == 0)[0]
-            observed_col_idx = np.where(w == 1)[0]
-
-            if len(missing_col_idx) < p and len(missing_col_idx) > 0:
-                # there are both observed and missing values
-
-                # predict the missing values
-                predictions, conditional_variances = CellMCD._predict_missing_values(
-                    X,
-                    predictions,
-                    conditional_variances,
-                    row_idx_w,
-                    missing_col_idx,
-                    observed_col_idx,
-                    mu,
-                    sigma,
-                    sigma_inv,
+        for w, rows in group_rows_by_pattern(W):
+            observed = np.flatnonzero(w)
+            missing = np.flatnonzero(~w)
+            if observed.size == 0:
+                # nothing to condition on: the marginal means and variances
+                predictions[rows] = mu
+                conditional_variances[rows] = np.diag(sigma)
+                continue
+            omega = inverse_submatrix(sigma, sigma_inv, observed)
+            centered = X[rows[:, None], observed] - mu[observed]
+            if missing.size > 0:
+                coefficients = omega @ sigma[observed[:, None], missing]
+                predictions[rows[:, None], missing] = mu[missing] + centered @ coefficients
+                conditional_variances[rows[:, None], missing] = np.diag(sigma)[missing] - np.sum(
+                    sigma[observed[:, None], missing] * coefficients, axis=0
                 )
-
-                # predict the observed values
-                predictions, conditional_variances = CellMCD._predict_observed_values(
-                    X,
-                    predictions,
-                    conditional_variances,
-                    row_idx_w,
-                    observed_col_idx,
-                    mu,
-                    sigma,
-                    sigma_inv,
-                )
-
-            elif len(missing_col_idx) == 0:  # no missings in the w-pattern
-                predictions, conditional_variances = CellMCD._predict_no_missing(
-                    X, predictions, conditional_variances, row_idx_w, mu, sigma, sigma_inv
-                )
-
-            else:  # all missings in the w-pattern
-                predictions, conditional_variances = CellMCD._predict_all_missing(
-                    predictions, conditional_variances, row_idx_w, mu, sigma
-                )
+            if observed.size == 1:
+                predictions[rows[:, None], observed] = mu[observed]
+                conditional_variances[rows[:, None], observed] = sigma[observed, observed]
+                continue
+            diagonal = np.diag(omega)
+            # mu_j - (Omega (x_O - mu_O))_j / Omega_jj + (x_j - mu_j): the own term cancels
+            predictions[rows[:, None], observed] = (
+                mu[observed] - (centered @ omega - centered * diagonal) / diagonal
+            )
+            conditional_variances[rows[:, None], observed] = 1.0 / diagonal
 
         return predictions, conditional_variances
 
@@ -549,10 +538,9 @@ class CellMCD(RobustCovariance):
         # next: one EM step for mu & sigma (mu stays fixed with a fixed center)
         X_imputed = np.copy(X)
         bias = np.zeros([p, p])
-        for w in np.unique(W, axis=0):
-            rows = np.flatnonzero(np.all(W == w, axis=1))
-            missing = np.flatnonzero(w == 0)
-            observed = np.flatnonzero(w == 1)
+        for w, rows in group_rows_by_pattern(W):
+            missing = np.flatnonzero(~w)
+            observed = np.flatnonzero(w)
             if missing.size == 0:
                 continue
             if missing.size == p:  # all cells of the row are flagged or missing
@@ -614,163 +602,40 @@ class CellMCD(RobustCovariance):
         mu: np.ndarray,
         j,
     ):
-        """Calculates the  delta's from equation (20) for the column j (without q_j)."""
+        """Calculates the deltas of equation (20) for column j (without q_j): for each row with
+        an observed x_ij, -2 log of the conditional density of x_ij given the kept cells of the
+        same row other than j.
 
-        n = X.shape[0]
+        delta_ij depends on row i only through x_i and its pattern of kept cells without j, so
+        the rows are grouped by that pattern. Rows whose other cells are all kept need no
+        submatrix inverse: with Theta = Sigma^-1, the conditional mean is
+        mu_j - Theta_j,-j (x_-j - mu_-j) / Theta_jj and the conditional variance 1 / Theta_jj."""
+
+        n, p = X.shape
         delta = np.full(n, np.inf)
-        unique_rows = np.unique(W, axis=0)
-        for w in unique_rows:
-            x = X[:, j]
-            row_idx_w = np.where(np.all(W == w, axis=1))[0]  # rows with current w pattern
-            finite_rows = row_idx_w[np.isfinite(x[row_idx_w])]  # row_idx_w with finite/not-nan x_j
-            if len(finite_rows) > 0:  # if there are rows that aren't nans or infs
-                x = x[finite_rows]  # the relevant entries
-                w1 = w.copy()  # current W pattern
-                w0 = w.copy()
-                w0[j] = 0  # current W pattern, but W_ij is set to zero
-                if np.any(w0):  # current W pattern contains nonzeros (without looking at j)
-                    w1[j] = 1  # current W pattern, but W_ij is set to one
-                    index_0 = np.nonzero(w0)[0]  # ones in current W pattern (without j)
-                    index_1 = np.nonzero(w1)[0]
-                    mu_0 = mu[index_0]
-                    mu_1 = mu[index_1]
-                    sigma_1 = sigma[np.ix_(index_1, index_1)]
-                    sigma_inv_0 = inverse_submatrix(sigma, sigma_inv, index_0)
-
-                    jtemp = np.where(index_1 == j)[0]  # current j in index 1
-                    jtemp_n = np.where(index_1 != j)[0]  # ones in index 1 (without j)
-                    Xtemp = X[np.ix_(finite_rows, index_0)] - mu_0
-                    x_hat = mu_1[jtemp] + (Xtemp @ sigma_inv_0 @ sigma_1[np.ix_(jtemp_n, jtemp)]).T
-
-                    c = (
-                        sigma_1[np.ix_(jtemp, jtemp)]
-                        - sigma_1[np.ix_(jtemp, jtemp_n)]
-                        @ sigma_inv_0
-                        @ sigma_1[np.ix_(jtemp_n, jtemp)]
-                    )
-
-                    delta[finite_rows] = (x - x_hat) ** 2 / c + np.log(c) + np.log(2 * np.pi)
-
-                else:  # current W pattern has zeros everywhere (except on j)
-                    delta[finite_rows] = (
-                        (x - mu[j]) ** 2 / sigma[j, j] + np.log(sigma[j, j]) + np.log(2 * np.pi)
-                    )
+        x = X[:, j]
+        finite = np.flatnonzero(np.isfinite(x))
+        if finite.size == 0:
+            return delta
+        kept_others = W[finite].astype(bool)
+        kept_others[:, j] = False
+        log_2pi = np.log(2 * np.pi)
+        for w0, positions in group_rows_by_pattern(kept_others):
+            rows = finite[positions]
+            index_0 = np.flatnonzero(w0)
+            if index_0.size == 0:  # no other kept cells: the marginal distribution
+                delta[rows] = (x[rows] - mu[j]) ** 2 / sigma[j, j] + np.log(sigma[j, j]) + log_2pi
+                continue
+            if index_0.size == p - 1:  # all other cells kept: use the precision matrix
+                coefficients = -sigma_inv[j, index_0] / sigma_inv[j, j]
+                c = 1.0 / sigma_inv[j, j]
+            else:
+                coefficients = inverse_submatrix(sigma, sigma_inv, index_0) @ sigma[index_0, j]
+                c = sigma[j, j] - sigma[j, index_0] @ coefficients
+            x_hat = mu[j] + (X[rows[:, None], index_0] - mu[index_0]) @ coefficients
+            delta[rows] = (x[rows] - x_hat) ** 2 / c + np.log(c) + log_2pi
 
         return delta
-
-    @staticmethod
-    def _predict_missing_values(
-        X: np.ndarray,
-        predictions: np.ndarray,
-        conditional_variances: np.ndarray,
-        row_idx_w: np.array,
-        missing_col_idx: np.array,
-        observed_col_idx: np.array,
-        mu: np.array,
-        sigma: np.ndarray,
-        sigma_inv: np.ndarray,
-    ):
-        """Predict the missing values when there are both observed and missing values."""
-
-        sigma_observed_inv = inverse_submatrix(sigma, sigma_inv, observed_col_idx)
-        conditional_variance_missing = np.diag(
-            sigma[np.ix_(missing_col_idx, missing_col_idx)]
-            - sigma[np.ix_(missing_col_idx, observed_col_idx)]
-            @ sigma_observed_inv
-            @ sigma[np.ix_(observed_col_idx, missing_col_idx)]
-        )
-
-        # predict the missing values
-        for index in row_idx_w:
-            conditional_variances[np.ix_([index], missing_col_idx)] = conditional_variance_missing
-            predictions[np.ix_([index], missing_col_idx)] = (
-                mu[missing_col_idx]
-                + (X[np.ix_([index], observed_col_idx)] - mu[observed_col_idx])
-                @ sigma_observed_inv
-                @ sigma[np.ix_(observed_col_idx, missing_col_idx)]
-            )
-
-        return predictions, conditional_variances
-
-    @staticmethod
-    def _predict_observed_values(
-        X: np.ndarray,
-        predictions: np.ndarray,
-        conditional_variances: np.ndarray,
-        row_idx_w: np.ndarray,
-        observed_col_idx: np.ndarray,
-        mu: np.ndarray,
-        sigma: np.ndarray,
-        sigma_inv: np.ndarray,
-    ):
-        """Predict the observed values when there are both observed and missing values."""
-
-        if len(observed_col_idx) == 1:  # only 1 observed value
-            for index in row_idx_w:
-                predictions[np.ix_([index], observed_col_idx)] = mu[observed_col_idx]
-                conditional_variances[np.ix_([index], observed_col_idx)] = sigma[
-                    observed_col_idx, observed_col_idx
-                ]
-        else:  # multiple observed values
-            for obs in observed_col_idx:
-                other_observations = observed_col_idx[observed_col_idx != obs]
-                sigma_others_inv = inverse_submatrix(sigma, sigma_inv, other_observations)
-                regression_coefs = sigma_others_inv @ sigma[other_observations, obs]
-                conditional_variance_others = (
-                    sigma[obs, obs] - sigma[obs, other_observations] @ regression_coefs
-                )
-
-                predictions[row_idx_w, obs] = (
-                    mu[obs]
-                    + (X[np.ix_(row_idx_w, other_observations)] - mu[other_observations])
-                    @ regression_coefs
-                )
-                conditional_variances[row_idx_w, obs] = conditional_variance_others
-
-        return predictions, conditional_variances
-
-    @staticmethod
-    def _predict_no_missing(
-        X: np.ndarray,
-        predictions: np.ndarray,
-        conditional_variances: np.ndarray,
-        row_idx_w: np.ndarray,
-        mu: np.ndarray,
-        sigma: np.ndarray,
-        sigma_inv: np.ndarray,
-    ):
-        """Make predictions when no values in the w-pattern are missing."""
-
-        p = X.shape[1]
-        conditional_variance_nomissings = 1.0 / np.diag(sigma_inv)
-        for index in row_idx_w:
-            conditional_variances[index, :] = conditional_variance_nomissings
-        for j in range(p):
-            j_neg = np.arange(p)
-            j_neg = j_neg[j_neg != j]
-            sigma_jneg_inv = inverse_submatrix(sigma, sigma_inv, j_neg)
-            Xtemp = X[np.ix_(row_idx_w, j_neg)] - mu[j_neg]
-            predictions[np.ix_(row_idx_w, [j])] = (
-                mu[j] + Xtemp @ sigma_jneg_inv @ sigma[np.ix_(j_neg, [j])]
-            )
-
-        return predictions, conditional_variances
-
-    @staticmethod
-    def _predict_all_missing(
-        predictions: np.ndarray,
-        conditional_variances: np.ndarray,
-        row_idx_w: np.array,
-        mu: np.array,
-        sigma: np.ndarray,
-    ):
-        """Make predictions when all values in the w-pattern are missing: with no unflagged
-        cells to condition on, these are the marginal means and variances."""
-        for index in row_idx_w:
-            predictions[index, :] = mu
-            conditional_variances[index, :] = np.diag(sigma)
-
-        return predictions, conditional_variances
 
     def _check_data(self, X_scaled: np.ndarray):
         """Checks that there aren't too many nans or marginal outliers per column, as cellWise

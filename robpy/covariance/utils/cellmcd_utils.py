@@ -3,6 +3,30 @@ import numpy as np
 from robpy.utils.general import inverse_submatrix
 
 
+def group_rows_by_pattern(B: np.ndarray) -> list[tuple[np.ndarray, np.ndarray]]:
+    """Group the rows of a 0/1 matrix by their pattern.
+
+    The patterns are packed into bytes and sorted once (``np.unique`` with ``return_inverse``),
+    and the rows are split by group with one stable sort, instead of comparing every row with
+    every pattern. The groups come in the order of ``np.unique(B, axis=0)``.
+
+    Args:
+        B (np.ndarray): Matrix of zeros and ones (or booleans), shape (n, p).
+
+    Returns:
+        list of (pattern, rows): the boolean pattern of each group and the indices of its rows.
+    """
+    B = np.asarray(B, dtype=bool)
+    if B.shape[0] == 0:
+        return []
+    keys = np.packbits(B, axis=1)
+    _, first, inverse = np.unique(keys, axis=0, return_index=True, return_inverse=True)
+    inverse = inverse.ravel()
+    order = np.argsort(inverse, kind="stable")
+    bounds = np.flatnonzero(np.diff(inverse[order])) + 1
+    return [(B[first[g]], rows) for g, rows in enumerate(np.split(order, bounds))]
+
+
 def objective_function(
     X: np.ndarray, W: np.ndarray, location: np.ndarray, cov: np.ndarray, cov_inv: np.ndarray
 ) -> float:
@@ -20,10 +44,8 @@ def objective_function(
     """
 
     objective = 0
-    unique_rows = np.unique(W, axis=0)
-    for w in unique_rows:
-        row_idx_w = np.where(np.all(W == w, axis=1))[0]
-        w_ones = np.where(w)[0]
+    for w, row_idx_w in group_rows_by_pattern(W):
+        w_ones = np.flatnonzero(w)
 
         subset_location = np.array(location)[w_ones]
         subset_cov = cov[np.ix_(w_ones, w_ones)]

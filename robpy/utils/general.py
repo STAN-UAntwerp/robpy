@@ -12,20 +12,19 @@ def inverse_submatrix(A: np.ndarray, A_inv: np.ndarray, indices: np.array) -> np
     """
 
     p = A.shape[1]
+    indices = np.asarray(indices)
     n_submatrix = len(indices)
-    indices_neg = np.setdiff1d(np.arange(p), indices)
-    result = np.zeros([n_submatrix, n_submatrix])
 
     if n_submatrix < p and n_submatrix > p / 2.0:  # in this scenario it useful to use the trick
-        result = (
-            A_inv[np.ix_(indices, indices)]
-            - A_inv[np.ix_(indices, indices_neg)]
-            @ np.linalg.inv(A_inv[np.ix_(indices_neg, indices_neg)])
-            @ A_inv[np.ix_(indices_neg, indices)]
+        complement = np.ones(p, dtype=bool)
+        complement[indices] = False
+        indices_neg = np.flatnonzero(complement)
+        return (
+            A_inv[indices[:, None], indices]
+            - A_inv[indices[:, None], indices_neg]
+            @ np.linalg.inv(A_inv[indices_neg[:, None], indices_neg])
+            @ A_inv[indices_neg[:, None], indices]
         )
-    elif n_submatrix < p and n_submatrix <= p / 2.0:  # don't use the trick
-        result = np.linalg.inv(A[np.ix_(indices, indices)])
-    else:  # submatrix is the original matrix
-        result = A_inv
-
-    return result
+    if n_submatrix < p:  # don't use the trick
+        return np.linalg.inv(A[indices[:, None], indices])
+    return A_inv  # submatrix is the original matrix

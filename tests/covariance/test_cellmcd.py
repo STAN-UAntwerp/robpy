@@ -263,3 +263,63 @@ def test_initial_ddcw_matches_cellwise(fixed_center):
         np.testing.assert_allclose(ddcw.location_, _reference("ddcw_center")[:, 0], atol=1e-10)
     else:
         np.testing.assert_array_equal(ddcw.location_, 0.0)
+
+
+# ------------------------------------------------------------------ per-pattern computations
+
+
+def test_group_rows_by_pattern():
+    from robpy.covariance.utils.cellmcd_utils import group_rows_by_pattern
+
+    rng = np.random.default_rng(0)
+    W = (rng.random((200, 11)) > 0.3).astype(float)  # 11 columns: two bytes when packed
+    groups = group_rows_by_pattern(W)
+    patterns = np.unique(W, axis=0)
+    assert len(groups) == len(patterns)
+    for (pattern, rows), expected in zip(groups, patterns):
+        np.testing.assert_array_equal(pattern, expected.astype(bool))
+        np.testing.assert_array_equal(rows, np.flatnonzero(np.all(W == expected, axis=1)))
+
+
+def _conditional(sigma, mu, x, given, j):
+    """Conditional mean and variance of variable j given the variables in `given`."""
+    if len(given) == 0:
+        return mu[j], sigma[j, j]
+    coefficients = np.linalg.solve(sigma[np.ix_(given, given)], sigma[given, j])
+    return (
+        mu[j] + (x[given] - mu[given]) @ coefficients,
+        sigma[j, j] - sigma[j, given] @ coefficients,
+    )
+
+
+def test_deltas_and_predictions_match_direct_computation():
+    rng = np.random.default_rng(1)
+    n, p = 120, 6
+    A = rng.normal(size=(p, p))
+    sigma = A @ A.T / p + 0.3 * np.eye(p)
+    sigma_inv, mu = np.linalg.inv(sigma), rng.normal(size=p)
+    X = rng.normal(size=(n, p)) + mu
+    X[rng.random((n, p)) < 0.05] = np.nan
+    W = (rng.random((n, p)) > 0.3).astype(float)
+    W[np.isnan(X)] = 0
+    W[0] = 0  # all cells flagged
+    W[1] = 0
+    X[1, 2], W[1, 2] = 0.5, 1  # a single kept cell
+    for j in range(p):
+        delta = CellMCD._calculate_delta(X, W, sigma, sigma_inv, mu, j)
+        for i in range(n):
+            if np.isnan(X[i, j]):
+                assert delta[i] == np.inf
+                continue
+            given = [k for k in range(p) if k != j and W[i, k] == 1]
+            mean, var = _conditional(sigma, mu, X[i], given, j)
+            expected = (X[i, j] - mean) ** 2 / var + np.log(var) + np.log(2 * np.pi)
+            np.testing.assert_allclose(delta[i], expected, rtol=1e-10)
+    X0 = np.where(np.isnan(X), 0.0, X)
+    predictions, variances = CellMCD._make_predictions(X0, sigma, sigma_inv, mu, W)
+    for i in range(n):
+        for j in range(p):
+            given = [k for k in range(p) if k != j and W[i, k] == 1]
+            mean, var = _conditional(sigma, mu, X0[i], given, j)
+            np.testing.assert_allclose(predictions[i, j], mean, rtol=1e-10, atol=1e-12)
+            np.testing.assert_allclose(variances[i, j], var, rtol=1e-10)
